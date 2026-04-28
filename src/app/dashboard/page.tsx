@@ -40,41 +40,41 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
-      <div className="flex-1 p-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-teal-800 tracking-tight">Dashboard</h2>
+      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+        <div className="mb-6">
+          <h2 className="text-xl md:text-2xl font-semibold text-teal-800 tracking-tight">Dashboard</h2>
           <p className="text-sm text-teal-600 mt-1">Welcome back, {userEmail}</p>
         </div>
 
-        <div className="grid grid-cols-4 gap-5 mb-8">
-          <div className="bg-white rounded-xl p-5 border border-teal-100">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-6">
+          <div className="bg-white rounded-xl p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-2">PATIENTS TODAY</p>
-            <p className="text-3xl font-semibold text-teal-800">{todayPatients}</p>
+            <p className="text-2xl md:text-3xl font-semibold text-teal-800">{todayPatients}</p>
             <p className="text-xs text-teal-400 mt-1">Treated today</p>
           </div>
-          <div className="bg-white rounded-xl p-5 border border-teal-100">
+          <div className="bg-white rounded-xl p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-2">REVENUE TODAY</p>
-            <p className="text-3xl font-semibold text-teal-800">Rs {todayRevenue.toLocaleString()}</p>
+            <p className="text-2xl md:text-3xl font-semibold text-teal-800">Rs {todayRevenue.toLocaleString()}</p>
             <p className="text-xs text-teal-400 mt-1">Collected today</p>
           </div>
-          <div className="bg-white rounded-xl p-5 border border-teal-100">
+          <div className="bg-white rounded-xl p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-2">PENDING LABS</p>
-            <p className="text-3xl font-semibold text-teal-800">{pendingLabs}</p>
+            <p className="text-2xl md:text-3xl font-semibold text-teal-800">{pendingLabs}</p>
             <p className="text-xs text-teal-400 mt-1">Awaiting delivery</p>
           </div>
-          <div className="bg-orange-50 rounded-xl p-5 border border-orange-100">
+          <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
             <p className="text-xs font-medium text-orange-600 mb-2">PENDING FEES</p>
-            <p className="text-3xl font-semibold text-orange-700">Rs {pendingFees.toLocaleString()}</p>
+            <p className="text-2xl md:text-3xl font-semibold text-orange-700">Rs {pendingFees.toLocaleString()}</p>
             <p className="text-xs text-orange-400 mt-1">Still to collect</p>
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-5 border border-teal-100">
+        <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 overflow-x-auto">
           <h3 className="text-sm font-semibold text-teal-800 mb-4">Recent Patients</h3>
           {recentPatients.length === 0 ? (
             <p className="text-sm text-teal-400 text-center py-8">No patients added yet</p>
           ) : (
-            <table className="w-full text-sm">
+            <table className="w-full text-sm min-w-max">
               <thead className="bg-teal-50">
                 <tr>
                   <th className="text-left px-4 py-2 text-teal-700 font-medium">Name</th>

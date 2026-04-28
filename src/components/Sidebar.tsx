@@ -14,7 +14,7 @@ const navItems = [
   { label: "Expenses", href: "/dashboard/expenses" },
   { label: "Reports", href: "/dashboard/reports" },
   { label: "Staff", href: "/dashboard/staff" },
-  { label: "⚙️ Settings", href: "/dashboard/settings" },
+  { label: "Settings", href: "/dashboard/settings" },
 ];
 
 export default function Sidebar() {
@@ -31,22 +31,28 @@ export default function Sidebar() {
   return (
     <>
       {/* Mobile Top Bar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-teal-800 text-white flex items-center justify-between px-4 py-3">
+      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-teal-800 text-white flex items-center justify-between px-4 py-3 shadow-lg">
         <h1 className="text-lg font-semibold">
           Dent<span className="text-teal-300">Ease</span>
         </h1>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-white text-2xl font-bold"
+          className="text-white text-xl font-bold w-8 h-8 flex items-center justify-center"
         >
-          {menuOpen ? "✕" : "☰"}
+          {menuOpen ? "X" : "="}
         </button>
       </div>
 
-      {/* Mobile Menu Overlay */}
+      {/* Mobile Dropdown Menu */}
       {menuOpen && (
-        <div className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50" onClick={() => setMenuOpen(false)}>
-          <div className="bg-teal-800 w-64 h-full flex flex-col p-5" onClick={e => e.stopPropagation()}>
+        <div
+          className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
+          onClick={() => setMenuOpen(false)}
+        >
+          <div
+            className="bg-teal-800 w-64 h-full flex flex-col p-5 overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
             <h1 className="text-xl font-semibold mb-6 text-white tracking-tight">
               Dent<span className="text-teal-300">Ease</span>
             </h1>
@@ -57,7 +63,12 @@ export default function Sidebar() {
                   ? "px-4 py-2.5 rounded-lg text-sm bg-teal-600 text-white font-medium"
                   : "px-4 py-2.5 rounded-lg text-sm text-teal-200 hover:bg-teal-700";
                 return (
-                  <a key={item.href} href={item.href} className={cls} onClick={() => setMenuOpen(false)}>
+                  
+                    key={item.href}
+                    href={item.href}
+                    className={cls}
+                    onClick={() => setMenuOpen(false)}
+                  >
                     {item.label}
                   </a>
                 );
