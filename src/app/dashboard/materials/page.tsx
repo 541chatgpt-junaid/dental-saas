@@ -13,6 +13,7 @@ interface Material {
   min_quantity: number;
   price: number;
   supplier: string;
+  user_id: string;
 }
 
 export default function Materials() {
@@ -27,7 +28,8 @@ export default function Materials() {
 
   const fetchMaterials = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("materials").select("*").order("name", { ascending: true });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("materials").select("*").eq("user_id", user?.id).order("name", { ascending: true });
     if (data) setMaterials(data);
   };
 
@@ -44,6 +46,7 @@ export default function Materials() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("materials").insert([{
       name: form.name,
       category: form.category,
@@ -52,6 +55,7 @@ export default function Materials() {
       min_quantity: parseInt(form.min_quantity) || 0,
       price: parseInt(form.price) || 0,
       supplier: form.supplier,
+      user_id: user?.id,
     }]);
     setForm({ name: "", category: "Consumable", quantity: "", unit: "Box", min_quantity: "", price: "", supplier: "" });
     setShowForm(false);
@@ -83,7 +87,6 @@ export default function Materials() {
           </button>
         </div>
 
-        {/* Low Stock Alert */}
         {lowStock.length > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
             <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Low Stock Alert!</p>
@@ -126,9 +129,7 @@ export default function Materials() {
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Material"}
               </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
@@ -160,11 +161,7 @@ export default function Materials() {
                     <td className="px-4 py-3 text-teal-700">Rs {m.price}</td>
                     <td className="px-4 py-3 text-teal-700">{m.supplier}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        m.quantity <= m.min_quantity
-                          ? "bg-red-100 text-red-700"
-                          : "bg-green-100 text-green-700"
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${m.quantity <= m.min_quantity ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
                         {m.quantity <= m.min_quantity ? "Low Stock" : "In Stock"}
                       </span>
                     </td>

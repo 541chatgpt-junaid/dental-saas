@@ -23,8 +23,10 @@ export default function Reports() {
 
   const fetchData = async () => {
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { router.push("/"); return; }
 
-    const { data: patients } = await supabase.from("patients").select("*");
+    const { data: patients } = await supabase.from("patients").select("*").eq("user_id", user.id);
     if (patients) {
       setAllPatients(patients);
       const filtered = patients.filter(p => {
@@ -37,7 +39,7 @@ export default function Reports() {
       setPendingFees(filtered.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0));
     }
 
-    const { data: labs } = await supabase.from("labs").select("fee_paid, created_at");
+    const { data: labs } = await supabase.from("labs").select("fee_paid, created_at").eq("user_id", user.id);
     if (labs) {
       const filtered = labs.filter(l => {
         if (filter === "today") return l.created_at?.startsWith(today);
@@ -47,7 +49,7 @@ export default function Reports() {
       setLabCost(filtered.reduce((sum, l) => sum + (l.fee_paid || 0), 0));
     }
 
-    const { data: expenses } = await supabase.from("expenses").select("*");
+    const { data: expenses } = await supabase.from("expenses").select("*").eq("user_id", user.id);
     if (expenses) {
       setAllExpenses(expenses);
       const filtered = expenses.filter(e => {
@@ -58,76 +60,45 @@ export default function Reports() {
       setManualExpenses(filtered.reduce((sum, e) => sum + (e.amount || 0), 0));
     }
 
-    const { data: materials } = await supabase.from("materials").select("price, quantity");
+    const { data: materials } = await supabase.from("materials").select("price, quantity").eq("user_id", user.id);
     if (materials) {
       setMaterialCost(materials.reduce((sum, m) => sum + ((m.price || 0) * (m.quantity || 0)), 0));
     }
 
-    const { data: purchases } = await supabase.from("purchases").select("*");
+    const { data: purchases } = await supabase.from("purchases").select("*").eq("user_id", user.id);
     if (purchases) setAllPurchases(purchases);
   };
 
   useEffect(() => {
-    const checkUser = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) router.push("/");
-    };
-    checkUser();
     fetchData();
-  }, [router, filter]);
+  }, [filter]);
 
   const totalExpenses = labCost + manualExpenses + materialCost;
   const profit = income - totalExpenses;
 
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
-
-    // Patients Sheet
     const patientsData = allPatients.map(p => ({
-      ID: p.id,
-      Name: p.name,
-      Phone: p.phone,
-      Age: p.age,
-      Gender: p.gender,
-      Doctor: p.doctor_name,
-      Treatment: p.treatment,
-      Tooth: p.tooth_number,
-      "Total Fee": p.fee_total,
-      "Fee Paid": p.fee_paid,
-      "Remaining": p.fee_total - p.fee_paid,
-      Status: p.status,
+      ID: p.id, Name: p.name, Phone: p.phone, Age: p.age,
+      Gender: p.gender, Doctor: p.doctor_name, Treatment: p.treatment,
+      Tooth: p.tooth_number, "Total Fee": p.fee_total, "Fee Paid": p.fee_paid,
+      Remaining: p.fee_total - p.fee_paid, Status: p.status,
       Date: new Date(p.created_at).toLocaleDateString(),
     }));
-    const ws1 = XLSX.utils.json_to_sheet(patientsData);
-    XLSX.utils.book_append_sheet(wb, ws1, "Patients");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(patientsData), "Patients");
 
-    // Expenses Sheet
     const expensesData = allExpenses.map(e => ({
-      Title: e.title,
-      Category: e.category,
-      Amount: e.amount,
-      Date: e.date,
-      Notes: e.notes,
+      Title: e.title, Category: e.category, Amount: e.amount, Date: e.date, Notes: e.notes,
     }));
-    const ws2 = XLSX.utils.json_to_sheet(expensesData);
-    XLSX.utils.book_append_sheet(wb, ws2, "Expenses");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), "Expenses");
 
-    // Purchases Sheet
     const purchasesData = allPurchases.map(p => ({
-      Item: p.item_name,
-      Category: p.category,
-      Quantity: p.quantity,
-      Unit: p.unit,
-      "Price/Unit": p.price_per_unit,
-      Total: p.total_price,
-      Supplier: p.supplier,
-      Date: p.date,
+      Item: p.item_name, Category: p.category, Quantity: p.quantity,
+      Unit: p.unit, "Price/Unit": p.price_per_unit, Total: p.total_price,
+      Supplier: p.supplier, Date: p.date,
     }));
-    const ws3 = XLSX.utils.json_to_sheet(purchasesData);
-    XLSX.utils.book_append_sheet(wb, ws3, "Purchases");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purchasesData), "Purchases");
 
-    // Summary Sheet
     const summaryData = [
       { Category: "Total Patients", Value: patientCount },
       { Category: "Total Income", Value: income },
@@ -138,8 +109,7 @@ export default function Reports() {
       { Category: "Total Expenses", Value: totalExpenses },
       { Category: "Net Profit", Value: profit },
     ];
-    const ws4 = XLSX.utils.json_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(wb, ws4, "Summary");
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Summary");
 
     const date = new Date().toLocaleDateString().replace(/\//g, "-");
     XLSX.writeFile(wb, `DentEase-Report-${date}.xlsx`);
@@ -154,10 +124,7 @@ export default function Reports() {
             <h2 className="text-2xl font-semibold text-teal-800">Reports</h2>
             <p className="text-sm text-teal-600 mt-1">Profit & Loss Summary</p>
           </div>
-          <button
-            onClick={exportToExcel}
-            className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2"
-          >
+          <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
             📊 Export to Excel
           </button>
         </div>
@@ -231,8 +198,7 @@ export default function Reports() {
           <div className="space-y-3">
             <div>
               <div className="flex justify-between text-xs text-teal-600 mb-1">
-                <span>Income</span>
-                <span>Rs {income.toLocaleString()}</span>
+                <span>Income</span><span>Rs {income.toLocaleString()}</span>
               </div>
               <div className="w-full bg-teal-100 rounded-full h-4">
                 <div className="bg-green-500 h-4 rounded-full" style={{ width: income > 0 ? "100%" : "0%" }}></div>
@@ -240,8 +206,7 @@ export default function Reports() {
             </div>
             <div>
               <div className="flex justify-between text-xs text-teal-600 mb-1">
-                <span>Expenses</span>
-                <span>Rs {totalExpenses.toLocaleString()}</span>
+                <span>Expenses</span><span>Rs {totalExpenses.toLocaleString()}</span>
               </div>
               <div className="w-full bg-teal-100 rounded-full h-4">
                 <div className="bg-red-500 h-4 rounded-full" style={{ width: income > 0 ? `${Math.min((totalExpenses / income) * 100, 100)}%` : "0%" }}></div>
@@ -249,8 +214,7 @@ export default function Reports() {
             </div>
             <div>
               <div className="flex justify-between text-xs text-teal-600 mb-1">
-                <span>Net Profit</span>
-                <span>Rs {profit.toLocaleString()}</span>
+                <span>Net Profit</span><span>Rs {profit.toLocaleString()}</span>
               </div>
               <div className="w-full bg-teal-100 rounded-full h-4">
                 <div className={`h-4 rounded-full ${profit >= 0 ? "bg-teal-500" : "bg-red-700"}`} style={{ width: income > 0 ? `${Math.min(Math.abs(profit / income) * 100, 100)}%` : "0%" }}></div>
@@ -258,7 +222,6 @@ export default function Reports() {
             </div>
           </div>
         </div>
-
       </div>
     </div>
   );

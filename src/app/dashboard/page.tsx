@@ -22,7 +22,7 @@ export default function Dashboard() {
       if (!user) { router.push("/"); return; }
       setUserEmail(user.email || "");
 
-      const { data: patients } = await supabase.from("patients").select("*").order("created_at", { ascending: false });
+      const { data: patients } = await supabase.from("patients").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
       if (patients) {
         const todayP = patients.filter(p => p.created_at?.startsWith(today));
         setTodayPatients(todayP.length);
@@ -31,7 +31,7 @@ export default function Dashboard() {
         setRecentPatients(patients.slice(0, 5));
       }
 
-      const { data: labs } = await supabase.from("labs").select("status");
+      const { data: labs } = await supabase.from("labs").select("status").eq("user_id", user.id);
       if (labs) setPendingLabs(labs.filter(l => l.status === "Pending").length);
     };
     fetchData();

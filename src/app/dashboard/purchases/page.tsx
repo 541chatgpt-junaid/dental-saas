@@ -16,6 +16,7 @@ interface Purchase {
   supplier: string;
   date: string;
   notes: string;
+  user_id: string;
 }
 
 export default function Purchases() {
@@ -32,7 +33,8 @@ export default function Purchases() {
 
   const fetchPurchases = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("purchases").select("*").order("date", { ascending: false });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("purchases").select("*").eq("user_id", user?.id).order("date", { ascending: false });
     if (data) setPurchases(data);
   };
 
@@ -49,6 +51,7 @@ export default function Purchases() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     const qty = parseInt(form.quantity) || 0;
     const price = parseInt(form.price_per_unit) || 0;
     const total = qty * price;
@@ -62,6 +65,7 @@ export default function Purchases() {
       supplier: form.supplier,
       date: form.date,
       notes: form.notes,
+      user_id: user?.id,
     }]);
     setForm({ item_name: "", category: "Consumable", quantity: "", unit: "Box", price_per_unit: "", supplier: "", date: "", notes: "" });
     setShowForm(false);
@@ -148,7 +152,6 @@ export default function Purchases() {
               </div>
               <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
             </div>
-
             {form.quantity && form.price_per_unit && (
               <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between items-center">
                 <span className="text-sm text-teal-600">Total Amount:</span>
@@ -157,14 +160,11 @@ export default function Purchases() {
                 </span>
               </div>
             )}
-
             <div className="flex gap-3 mt-4">
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Purchase"}
               </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}

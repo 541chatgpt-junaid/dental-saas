@@ -13,6 +13,7 @@ interface Appointment {
   treatment: string;
   status: string;
   notes: string;
+  user_id: string;
 }
 
 interface Doctor {
@@ -33,13 +34,15 @@ export default function Appointments() {
 
   const fetchAppointments = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("appointments").select("*").order("date", { ascending: true });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("appointments").select("*").eq("user_id", user?.id).order("date", { ascending: true });
     if (data) setAppointments(data);
   };
 
   const fetchDoctors = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active");
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active").eq("user_id", user?.id);
     if (data) setDoctors(data);
   };
 
@@ -57,6 +60,7 @@ export default function Appointments() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("appointments").insert([{
       patient_name: form.patient_name,
       doctor_name: form.doctor_name,
@@ -65,6 +69,7 @@ export default function Appointments() {
       treatment: form.treatment,
       status: form.status,
       notes: form.notes,
+      user_id: user?.id,
     }]);
     setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" });
     setShowForm(false);
@@ -101,9 +106,7 @@ export default function Appointments() {
               <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option value="">Select Doctor</option>
-                {doctors.map(d => (
-                  <option key={d.id} value={d.name}>{d.name}</option>
-                ))}
+                {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
               </select>
               <div>
                 <label className="block text-xs text-teal-600 mb-1">Date</label>
@@ -113,7 +116,7 @@ export default function Appointments() {
                 <label className="block text-xs text-teal-600 mb-1">Time</label>
                 <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
-              <input placeholder="Treatment (e.g. Filling, RCT)" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Scheduled</option>
                 <option>Completed</option>
@@ -125,9 +128,7 @@ export default function Appointments() {
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Appointment"}
               </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
@@ -157,11 +158,7 @@ export default function Appointments() {
                       <td className="px-4 py-3 text-teal-700">{a.time}</td>
                       <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          a.status === "Completed" ? "bg-green-100 text-green-700" :
-                          a.status === "Scheduled" ? "bg-blue-100 text-blue-700" :
-                          "bg-red-100 text-red-700"
-                        }`}>{a.status}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${a.status === "Completed" ? "bg-green-100 text-green-700" : a.status === "Scheduled" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"}`}>{a.status}</span>
                       </td>
                       <td className="px-4 py-3 flex gap-2">
                         {a.status === "Scheduled" && (
@@ -205,11 +202,7 @@ export default function Appointments() {
                       <td className="px-4 py-3 text-teal-700">{a.time}</td>
                       <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          a.status === "Completed" ? "bg-green-100 text-green-700" :
-                          a.status === "Scheduled" ? "bg-blue-100 text-blue-700" :
-                          "bg-red-100 text-red-700"
-                        }`}>{a.status}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${a.status === "Completed" ? "bg-green-100 text-green-700" : a.status === "Scheduled" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"}`}>{a.status}</span>
                       </td>
                     </tr>
                   ))

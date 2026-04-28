@@ -11,6 +11,7 @@ interface Staff {
   role: string;
   status: string;
   permissions: string;
+  user_id: string;
 }
 
 const allPages = [
@@ -32,7 +33,8 @@ export default function StaffPage() {
 
   const fetchStaff = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("staff").select("*").order("id", { ascending: false });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("staff").select("*").eq("user_id", user?.id).order("id", { ascending: false });
     if (data) setStaff(data);
   };
 
@@ -61,12 +63,14 @@ export default function StaffPage() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("staff").insert([{
       name: form.name,
       email: form.email,
       role: form.role,
       status: form.status,
       permissions: selectedPermissions.join(","),
+      user_id: user?.id,
     }]);
     setForm({ name: "", email: "", role: "Receptionist", status: "Active" });
     setSelectedPermissions([]);
@@ -105,13 +109,11 @@ export default function StaffPage() {
       <Sidebar />
       <div className="flex-1 p-8">
 
-        {/* Edit Permissions Modal */}
         {editingStaff && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl">
               <h3 className="text-lg font-semibold text-teal-800 mb-1">Edit Permissions</h3>
               <p className="text-sm text-teal-500 mb-4">{editingStaff.name} — {editingStaff.role}</p>
-
               <div className="flex justify-between items-center mb-3">
                 <p className="text-xs font-semibold text-teal-700">Page Access</p>
                 <div className="flex gap-2">
@@ -120,32 +122,22 @@ export default function StaffPage() {
                   <button onClick={() => setEditPermissions([])} className="text-xs text-red-400 hover:underline">Clear All</button>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-2 mb-5">
                 {allPages.map(page => (
                   <label key={page} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-teal-50">
-                    <input
-                      type="checkbox"
-                      checked={editPermissions.includes(page)}
-                      onChange={() => toggleEditPermission(page)}
-                      className="accent-teal-600 w-4 h-4"
-                    />
+                    <input type="checkbox" checked={editPermissions.includes(page)} onChange={() => toggleEditPermission(page)} className="accent-teal-600 w-4 h-4" />
                     <span className="text-sm text-teal-700">{page}</span>
                   </label>
                 ))}
               </div>
-
               {editPermissions.length > 0 && (
                 <p className="text-xs text-teal-500 mb-4">✅ {editPermissions.length} pages selected</p>
               )}
-
               <div className="flex gap-3">
                 <button onClick={handleEditPermissions} disabled={loading} className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
                   {loading ? "Saving..." : "Save Permissions"}
                 </button>
-                <button onClick={() => setEditingStaff(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm">
-                  Cancel
-                </button>
+                <button onClick={() => setEditingStaff(null)} className="flex-1 border border-gray-200 text-gray-600 py-2.5 rounded-xl text-sm">Cancel</button>
               </div>
             </div>
           </div>
@@ -183,7 +175,6 @@ export default function StaffPage() {
                 <option>Inactive</option>
               </select>
             </div>
-
             <div className="border border-teal-100 rounded-xl p-4 mb-4">
               <div className="flex justify-between items-center mb-3">
                 <p className="text-sm font-semibold text-teal-800">Page Access Permissions</p>
@@ -196,28 +187,17 @@ export default function StaffPage() {
               <div className="grid grid-cols-2 gap-2">
                 {allPages.map(page => (
                   <label key={page} className="flex items-center gap-2 cursor-pointer p-2 rounded-lg hover:bg-teal-50">
-                    <input
-                      type="checkbox"
-                      checked={selectedPermissions.includes(page)}
-                      onChange={() => togglePermission(page)}
-                      className="accent-teal-600 w-4 h-4"
-                    />
+                    <input type="checkbox" checked={selectedPermissions.includes(page)} onChange={() => togglePermission(page)} className="accent-teal-600 w-4 h-4" />
                     <span className="text-sm text-teal-700">{page}</span>
                   </label>
                 ))}
               </div>
-              {selectedPermissions.length > 0 && (
-                <p className="text-xs text-teal-500 mt-3">✅ {selectedPermissions.length} pages selected</p>
-              )}
             </div>
-
             <div className="flex gap-3">
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Adding..." : "Add Staff Member"}
               </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
@@ -243,12 +223,7 @@ export default function StaffPage() {
                     <td className="px-4 py-3 font-medium text-teal-800">{s.name}</td>
                     <td className="px-4 py-3 text-teal-700">{s.email}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        s.role === "Doctor" ? "bg-blue-100 text-blue-700" :
-                        s.role === "Receptionist" ? "bg-purple-100 text-purple-700" :
-                        s.role === "Manager" ? "bg-yellow-100 text-yellow-700" :
-                        "bg-gray-100 text-gray-700"
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${s.role === "Doctor" ? "bg-blue-100 text-blue-700" : s.role === "Receptionist" ? "bg-purple-100 text-purple-700" : s.role === "Manager" ? "bg-yellow-100 text-yellow-700" : "bg-gray-100 text-gray-700"}`}>
                         {s.role}
                       </span>
                     </td>
@@ -266,9 +241,7 @@ export default function StaffPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col gap-1">
-                        <button onClick={() => openEdit(s)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">
-                          ✏️ Edit Permissions
-                        </button>
+                        <button onClick={() => openEdit(s)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">✏️ Edit Permissions</button>
                         <button onClick={() => toggleStatus(s)} className="text-xs font-medium text-gray-500 hover:text-gray-700">
                           {s.status === "Active" ? "Deactivate" : "Activate"}
                         </button>

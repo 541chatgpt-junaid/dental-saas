@@ -11,6 +11,7 @@ interface Doctor {
   phone: string;
   email: string;
   status: string;
+  user_id: string;
 }
 
 export default function Doctors() {
@@ -24,7 +25,8 @@ export default function Doctors() {
 
   const fetchDoctors = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("doctors").select("*").order("id", { ascending: false });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("doctors").select("*").eq("user_id", user?.id).order("id", { ascending: false });
     if (data) setDoctors(data);
   };
 
@@ -41,12 +43,14 @@ export default function Doctors() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("doctors").insert([{
       name: form.name,
       specialization: form.specialization,
       phone: form.phone,
       email: form.email,
       status: form.status,
+      user_id: user?.id,
     }]);
     setForm({ name: "", specialization: "", phone: "", email: "", status: "Active" });
     setShowForm(false);
@@ -80,7 +84,7 @@ export default function Doctors() {
             <h3 className="text-sm font-semibold text-teal-800 mb-4">New Doctor</h3>
             <div className="grid grid-cols-2 gap-4">
               <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Specialization (e.g. Orthodontist)" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <input placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
@@ -92,9 +96,7 @@ export default function Doctors() {
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Doctor"}
               </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}

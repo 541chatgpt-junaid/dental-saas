@@ -19,6 +19,7 @@ interface Patient {
   fee_total: number;
   fee_paid: number;
   status: string;
+  user_id: string;
 }
 
 interface Visit {
@@ -69,13 +70,15 @@ export default function Patients() {
 
   const fetchPatients = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("patients").select("*").order("created_at", { ascending: false });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("patients").select("*").eq("user_id", user?.id).order("created_at", { ascending: false });
     if (data) setPatients(data);
   };
 
   const fetchDoctors = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active");
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active").eq("user_id", user?.id);
     if (data) setDoctors(data);
   };
 
@@ -111,6 +114,7 @@ export default function Patients() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
     const status = fee_paid >= fee_total ? "Paid" : "Pending";
@@ -119,6 +123,7 @@ export default function Patients() {
       age: parseInt(form.age) || 0, gender: form.gender,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
       doctor_name: form.doctor_name, fee_total, fee_paid, status,
+      user_id: user?.id,
     }]);
     setForm({ name: "", phone: "", address: "", age: "", gender: "Male", treatment: "", doctor_name: "", fee_total: "", fee_paid: "" });
     setSelectedTeeth([]);
@@ -203,12 +208,9 @@ export default function Patients() {
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
       <div className="flex-1 p-8">
-
-        {/* Receipt Modal */}
         {showReceipt && receiptPatient && (
           <Receipt patient={receiptPatient} onClose={() => setShowReceipt(false)} />
         )}
-
         {selectedPatient ? (
           <div>
             <button onClick={() => setSelectedPatient(null)} className="text-teal-600 text-sm mb-4 hover:underline">← Back to Patients</button>
@@ -219,15 +221,8 @@ export default function Patients() {
                   <p className="text-sm text-teal-500">{selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} years · {selectedPatient.address}</p>
                 </div>
                 <div className="flex gap-2">
-                  <button
-                    onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }}
-                    className="border border-teal-300 text-teal-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-50"
-                  >
-                    🖨️ Receipt
-                  </button>
-                  <button onClick={() => setShowVisitForm(!showVisitForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                    + Add Visit
-                  </button>
+                  <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-teal-300 text-teal-700 px-4 py-2 rounded-lg text-sm font-medium hover:bg-teal-50">🖨️ Receipt</button>
+                  <button onClick={() => setShowVisitForm(!showVisitForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-lg text-sm font-medium">+ Add Visit</button>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-4 mt-4">
@@ -245,7 +240,6 @@ export default function Patients() {
                 </div>
               </div>
             </div>
-
             {showVisitForm && (
               <div className="bg-white rounded-xl p-6 border border-teal-100 mb-6">
                 <h3 className="text-sm font-semibold text-teal-800 mb-4">New Visit for {selectedPatient.name}</h3>
@@ -261,14 +255,11 @@ export default function Patients() {
                 </div>
                 <ToothChart selected={visitTeeth} onToggle={toggleVisitTooth} />
                 <div className="flex gap-3 mt-4">
-                  <button onClick={handleAddVisit} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                    {loading ? "Saving..." : "Save Visit"}
-                  </button>
+                  <button onClick={handleAddVisit} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Save Visit"}</button>
                   <button onClick={() => setShowVisitForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
             )}
-
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
               <div className="px-5 py-4 border-b border-teal-50">
                 <h3 className="text-sm font-semibold text-teal-800">Visit History</h3>
@@ -303,15 +294,11 @@ export default function Patients() {
                 <h2 className="text-2xl font-semibold text-teal-800">Patients</h2>
                 <p className="text-sm text-teal-600 mt-1">Total: {patients.length} patients</p>
               </div>
-              <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
-                + Add Patient
-              </button>
+              <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">+ Add Patient</button>
             </div>
-
             <div className="mb-5">
               <input placeholder="Search by patient name or ID..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-teal-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
             </div>
-
             {showForm && (
               <div className="bg-white rounded-xl p-6 border border-teal-100 mb-6">
                 <h3 className="text-sm font-semibold text-teal-800 mb-4">New Patient</h3>
@@ -336,14 +323,11 @@ export default function Patients() {
                   <input placeholder="Fee Paid (Rs)" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                 </div>
                 <div className="flex gap-3 mt-4">
-                  <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                    {loading ? "Saving..." : "Save Patient"}
-                  </button>
+                  <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Save Patient"}</button>
                   <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
             )}
-
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
               <table className="w-full text-sm">
                 <thead className="bg-teal-50">
@@ -378,25 +362,16 @@ export default function Patients() {
                         <td className="px-4 py-3 text-teal-700">Rs {p.fee_paid}</td>
                         <td className="px-4 py-3 text-teal-700">Rs {p.fee_total - p.fee_paid}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-                            {p.status}
-                          </span>
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{p.status}</span>
                         </td>
                         <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                           <div className="flex gap-2">
-                            <button
-                              onClick={() => { setReceiptPatient(p); setShowReceipt(true); }}
-                              className="text-teal-600 hover:text-teal-800 text-xs font-medium"
-                            >
-                              🖨️
-                            </button>
+                            <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">🖨️</button>
                             {p.status !== "Paid" && (
                               <button onClick={() => {
                                 const amount = prompt(`Enter payment for ${p.name}:`);
                                 if (amount) handlePayment(p, parseInt(amount));
-                              }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">
-                                Add Payment
-                              </button>
+                              }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">Add Payment</button>
                             )}
                           </div>
                         </td>

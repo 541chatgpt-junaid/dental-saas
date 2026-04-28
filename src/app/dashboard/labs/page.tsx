@@ -18,6 +18,7 @@ interface Lab {
   fee_paid: number;
   status: string;
   notes: string;
+  user_id: string;
 }
 
 export default function Labs() {
@@ -34,7 +35,8 @@ export default function Labs() {
 
   const fetchLabs = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("labs").select("*").order("id", { ascending: false });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("labs").select("*").eq("user_id", user?.id).order("id", { ascending: false });
     if (data) setLabs(data);
   };
 
@@ -51,6 +53,7 @@ export default function Labs() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("labs").insert([{
       patient_name: form.patient_name,
       lab_name: form.lab_name,
@@ -64,6 +67,7 @@ export default function Labs() {
       fee_paid: parseInt(form.fee_paid) || 0,
       status: form.status,
       notes: form.notes,
+      user_id: user?.id,
     }]);
     setForm({
       patient_name: "", lab_name: "", work_type: "Crown",
@@ -118,7 +122,7 @@ export default function Labs() {
                 <option>Night Guard</option>
               </select>
               <input placeholder="Units" type="number" value={form.units} onChange={e => setForm({...form, units: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Shade (e.g. A1, A2, B1)" value={form.shade} onChange={e => setForm({...form, shade: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Shade (e.g. A1, A2)" value={form.shade} onChange={e => setForm({...form, shade: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.material} onChange={e => setForm({...form, material: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Zirconia</option>
                 <option>PFM</option>
@@ -142,9 +146,7 @@ export default function Labs() {
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Record"}
               </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
@@ -181,30 +183,19 @@ export default function Labs() {
                     <td className="px-4 py-3 text-teal-700">Rs {l.fee_paid}</td>
                     <td className="px-4 py-3 text-teal-700">Rs {l.fee - l.fee_paid}</td>
                     <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        l.status === "Delivered" ? "bg-green-100 text-green-700" :
-                        l.status === "Pending" ? "bg-orange-100 text-orange-700" :
-                        "bg-red-100 text-red-700"
-                      }`}>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${l.status === "Delivered" ? "bg-green-100 text-green-700" : l.status === "Pending" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
                         {l.status}
                       </span>
                     </td>
                     <td className="px-4 py-3 flex flex-col gap-1">
                       {l.fee_paid < l.fee && (
-                        <button
-                          onClick={() => {
-                            const amount = prompt(`Add payment for ${l.patient_name}:`);
-                            if (amount) handlePayment(l, parseInt(amount));
-                          }}
-                          className="text-teal-600 hover:text-teal-800 text-xs font-medium"
-                        >
-                          Add Payment
-                        </button>
+                        <button onClick={() => {
+                          const amount = prompt(`Add payment for ${l.patient_name}:`);
+                          if (amount) handlePayment(l, parseInt(amount));
+                        }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">Add Payment</button>
                       )}
                       {l.status === "Pending" && (
-                        <button onClick={() => updateStatus(l, "Delivered")} className="text-green-600 hover:text-green-800 text-xs font-medium">
-                          Mark Delivered
-                        </button>
+                        <button onClick={() => updateStatus(l, "Delivered")} className="text-green-600 hover:text-green-800 text-xs font-medium">Mark Delivered</button>
                       )}
                     </td>
                   </tr>

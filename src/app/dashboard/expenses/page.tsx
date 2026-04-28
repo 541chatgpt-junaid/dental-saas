@@ -11,6 +11,7 @@ interface Expense {
   amount: number;
   date: string;
   notes: string;
+  user_id: string;
 }
 
 export default function Expenses() {
@@ -27,15 +28,17 @@ export default function Expenses() {
 
   const fetchExpenses = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("expenses").select("*").order("date", { ascending: false });
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data } = await supabase.from("expenses").select("*").eq("user_id", user?.id).order("date", { ascending: false });
     if (data) setExpenses(data);
   };
 
   const fetchAutoCosts = async () => {
     const supabase = createClient();
-    const { data: labs } = await supabase.from("labs").select("fee_paid");
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data: labs } = await supabase.from("labs").select("fee_paid").eq("user_id", user?.id);
     if (labs) setLabCost(labs.reduce((sum, l) => sum + (l.fee_paid || 0), 0));
-    const { data: materials } = await supabase.from("materials").select("price, quantity");
+    const { data: materials } = await supabase.from("materials").select("price, quantity").eq("user_id", user?.id);
     if (materials) setMaterialCost(materials.reduce((sum, m) => sum + ((m.price || 0) * (m.quantity || 0)), 0));
   };
 
@@ -53,12 +56,14 @@ export default function Expenses() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("expenses").insert([{
       title: form.title,
       category: form.category,
       amount: parseInt(form.amount) || 0,
       date: form.date,
       notes: form.notes,
+      user_id: user?.id,
     }]);
     setForm({ title: "", category: "Rent", amount: "", date: "", notes: "" });
     setShowForm(false);
@@ -92,7 +97,6 @@ export default function Expenses() {
           </button>
         </div>
 
-        {/* Summary Cards */}
         <div className="grid grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">LAB COSTS</p>
@@ -140,14 +144,11 @@ export default function Expenses() {
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Expense"}
               </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">
-                Cancel
-              </button>
+              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
 
-        {/* Filter */}
         <div className="flex gap-2 mb-4">
           {["all", "today", "month"].map(f => (
             <button key={f} onClick={() => setFilter(f)} className={`px-4 py-1.5 rounded-lg text-xs font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
