@@ -51,10 +51,6 @@ export default function Home() {
     }
   };
 
-  const whatsappNumber = "+92-310-5913101";
-  const whatsappLink = "https://wa.me/923105913101";
-  const supportEmail = "support@dentease.com";
-
   return (
     <main className="min-h-screen flex flex-col items-center justify-center bg-teal-50 px-4">
       <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
@@ -81,8 +77,12 @@ export default function Home() {
           </button>
         </div>
 
-        {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg mb-5">{error}</div>}
-        {success && <div className="bg-green-50 text-green-600 text-sm px-4 py-3 rounded-lg mb-5">{success}</div>}
+        {error && (
+          <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg mb-5">{error}</div>
+        )}
+        {success && (
+          <div className="bg-green-50 text-green-600 text-sm px-4 py-3 rounded-lg mb-5">{success}</div>
+        )}
 
         <div className="space-y-4">
           {!isLogin && (
@@ -114,7 +114,7 @@ export default function Home() {
             <div className="relative">
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder="••••••••"
+                placeholder="........"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-700 pr-16"
@@ -148,33 +148,11 @@ export default function Home() {
           </button>
         </div>
 
-        <div className="mt-6 bg-teal-50 rounded-xl p-4 text-center">
-          <p className="text-xs text-teal-600 font-medium mb-2">Need Help? Contact Support</p>
-          
-            href={whatsappLink}
-            target="_blank"
-            rel="noreferrer"
-            className="block text-xs text-white bg-green-500 hover:bg-green-600 py-2 px-4 rounded-lg mb-2 transition-colors"
-          >
-            {"WhatsApp: " + whatsappNumber}
-          </a>
-          
-            href={"mailto:" + supportEmail}
-            className="text-xs text-teal-500 hover:underline block"
-          >
-            {supportEmail}
-          </a>
-        </div>
-
         <div className="mt-5 text-center border-t border-teal-100 pt-4">
-          <p className="text-xs text-teal-400">{"© 2026 DentEase. All rights reserved."}</p>
+          <p className="text-xs text-teal-400">2026 DentEase. All rights reserved.</p>
           <p className="text-xs text-teal-300 mt-1">
-            {"Designed & Developed by "}
-            <span className="text-teal-500 font-medium">Junaid Mazhar</span>
-            {" · "}
-            <a href={whatsappLink} target="_blank" rel="noreferrer" className="text-teal-400 hover:underline">
-              {whatsappNumber}
-            </a>
+            Designed and Developed by
+            <span className="text-teal-500 font-medium"> Junaid Mazhar</span>
           </p>
         </div>
 
