@@ -151,8 +151,8 @@ export default function Home() {
         <div className="mt-5 text-center border-t border-teal-100 pt-4">
           <p className="text-xs text-teal-400">2026 DentEase. All rights reserved.</p>
           <p className="text-xs text-teal-300 mt-1">
-            Designed and Developed by
-            <span className="text-teal-500 font-medium"> Junaid Mazhar</span>
+            Designed and Developed by{" "}
+            <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" className="text-teal-600 font-medium hover:underline">Junaid Mazhar</a>
           </p>
         </div>
 
