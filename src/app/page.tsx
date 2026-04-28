@@ -1,130 +1,156 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
-import Sidebar from "@/components/Sidebar";
 
-export default function Dashboard() {
-  const [userEmail, setUserEmail] = useState("");
-  const [todayPatients, setTodayPatients] = useState(0);
-  const [todayRevenue, setTodayRevenue] = useState(0);
-  const [pendingLabs, setPendingLabs] = useState(0);
-  const [pendingFees, setPendingFees] = useState(0);
-  const [recentPatients, setRecentPatients] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+export default function Home() {
+  const [isLogin, setIsLogin] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [clinicName, setClinicName] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const today = new Date().toISOString().split("T")[0];
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        router.replace("/");
-        return;
-      }
-      setUserEmail(user.email || "");
-
-      const { data: patients } = await supabase
-        .from("patients")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (patients) {
-        const todayP = patients.filter(p => p.created_at?.startsWith(today));
-        setTodayPatients(todayP.length);
-        setTodayRevenue(todayP.reduce((sum, p) => sum + (p.fee_paid || 0), 0));
-        setPendingFees(patients.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0));
-        setRecentPatients(patients.slice(0, 5));
-      }
-
-      const { data: labs } = await supabase
-        .from("labs")
-        .select("status")
-        .eq("user_id", user.id);
-      if (labs) setPendingLabs(labs.filter(l => l.status === "Pending").length);
-
+  const handleLogin = async () => {
+    setLoading(true);
+    setError("");
+    const supabase = createClient();
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError("Invalid email or password.");
       setLoading(false);
-    };
-    fetchData();
-  }, [router, today]);
+    } else {
+      router.push("/dashboard");
+    }
+  };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-teal-50">
-        <p className="text-teal-600">Loading...</p>
-      </div>
-    );
-  }
+  const handleSignUp = async () => {
+    setLoading(true);
+    setError("");
+    setSuccess("");
+    if (!clinicName) {
+      setError("Please enter your clinic name.");
+      setLoading(false);
+      return;
+    }
+    const supabase = createClient();
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { clinic_name: clinicName } }
+    });
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+    } else {
+      setSuccess("Account created! You can now sign in.");
+      setLoading(false);
+    }
+  };
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
-      <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
-        <div className="mb-6">
-          <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Dashboard</h2>
-          <p className="text-sm text-teal-600 mt-1">Welcome back, {userEmail}</p>
+    <main className="min-h-screen flex flex-col items-center justify-center bg-teal-50 px-4">
+      <div className="bg-white rounded-2xl shadow-lg p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-semibold text-teal-800 tracking-tight">
+            Dent<span className="text-teal-500">Ease</span>
+          </h1>
+          <p className="text-sm text-teal-600 mt-1">Dental Practice Management</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-2">PATIENTS TODAY</p>
-            <p className="text-2xl md:text-3xl font-semibold text-teal-800">{todayPatients}</p>
-            <p className="text-xs text-teal-400 mt-1">Treated today</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-2">REVENUE TODAY</p>
-            <p className="text-2xl md:text-3xl font-semibold text-teal-800">Rs {todayRevenue.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">Collected today</p>
-          </div>
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-2">PENDING LABS</p>
-            <p className="text-2xl md:text-3xl font-semibold text-teal-800">{pendingLabs}</p>
-            <p className="text-xs text-teal-400 mt-1">Awaiting delivery</p>
-          </div>
-          <div className="bg-orange-50 rounded-xl p-4 border border-orange-100">
-            <p className="text-xs font-medium text-orange-600 mb-2">PENDING FEES</p>
-            <p className="text-2xl md:text-3xl font-semibold text-orange-700">Rs {pendingFees.toLocaleString()}</p>
-            <p className="text-xs text-orange-400 mt-1">Still to collect</p>
-          </div>
+        <div className="flex mb-6 bg-teal-50 rounded-xl p-1">
+          <button
+            onClick={() => { setIsLogin(true); setError(""); setSuccess(""); }}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${isLogin ? "bg-white text-teal-700 shadow-sm" : "text-teal-500"}`}
+          >
+            Sign In
+          </button>
+          <button
+            onClick={() => { setIsLogin(false); setError(""); setSuccess(""); }}
+            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!isLogin ? "bg-white text-teal-700 shadow-sm" : "text-teal-500"}`}
+          >
+            Create Account
+          </button>
         </div>
 
-        <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 overflow-x-auto">
-          <h3 className="text-sm font-semibold text-teal-800 mb-4">Recent Patients</h3>
-          {recentPatients.length === 0 ? (
-            <p className="text-sm text-teal-400 text-center py-8">No patients added yet</p>
-          ) : (
-            <table className="w-full text-sm min-w-max">
-              <thead className="bg-teal-50">
-                <tr>
-                  <th className="text-left px-4 py-2 text-teal-700 font-medium">Name</th>
-                  <th className="text-left px-4 py-2 text-teal-700 font-medium">Doctor</th>
-                  <th className="text-left px-4 py-2 text-teal-700 font-medium">Treatment</th>
-                  <th className="text-left px-4 py-2 text-teal-700 font-medium">Fee</th>
-                  <th className="text-left px-4 py-2 text-teal-700 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {recentPatients.map(p => (
-                  <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
-                    <td className="px-4 py-2 font-medium text-teal-800">{p.name}</td>
-                    <td className="px-4 py-2 text-teal-700">{p.doctor_name || "-"}</td>
-                    <td className="px-4 py-2 text-teal-700">{p.treatment}</td>
-                    <td className="px-4 py-2 text-teal-700">Rs {p.fee_paid}</td>
-                    <td className="px-4 py-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
-                        {p.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        {error && <div className="bg-red-50 text-red-600 text-sm px-4 py-3 rounded-lg mb-5">{error}</div>}
+        {success && <div className="bg-green-50 text-green-600 text-sm px-4 py-3 rounded-lg mb-5">{success}</div>}
+
+        <div className="space-y-4">
+          {!isLogin && (
+            <div>
+              <label className="block text-sm font-medium text-teal-700 mb-1">Clinic Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Dr. Ahmed Dental Care"
+                value={clinicName}
+                onChange={(e) => setClinicName(e.target.value)}
+                className="w-full px-4 py-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-700"
+              />
+            </div>
           )}
+
+          <div>
+            <label className="block text-sm font-medium text-teal-700 mb-1">Email Address</label>
+            <input
+              type="email"
+              placeholder="doctor@clinic.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-teal-700 mb-1">Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="........"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full px-4 py-2.5 border border-teal-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 text-gray-700 pr-16"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-teal-400 hover:text-teal-600 text-xs font-medium"
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
+          {isLogin && (
+            <div className="flex items-center justify-between text-sm">
+              <label className="flex items-center gap-2 text-teal-700">
+                <input type="checkbox" className="accent-teal-500" />
+                Remember me
+              </label>
+              <a href="#" className="text-teal-500 hover:underline">Forgot password?</a>
+            </div>
+          )}
+
+          <button
+            onClick={isLogin ? handleLogin : handleSignUp}
+            disabled={loading}
+            className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:opacity-60"
+          >
+            {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
+          </button>
+        </div>
+
+        <div className="mt-5 text-center border-t border-teal-100 pt-4">
+          <p className="text-xs text-teal-400">2026 DentEase. All rights reserved.</p>
+          <p className="text-xs text-teal-300 mt-1">
+            Designed and Developed by
+            <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" className="text-teal-500 font-medium"> Junaid Mazhar</a>
+          </p>
         </div>
       </div>
-    </div>
+    </main>
   );
 }
