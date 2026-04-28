@@ -17,6 +17,18 @@ const navItems = [
   { label: "Settings", href: "/dashboard/settings" },
 ];
 
+function NavLink({ href, label, pathname, onClick }: { href: string; label: string; pathname: string; onClick?: () => void }) {
+  const isActive = pathname === href;
+  const cls = isActive
+    ? "px-4 py-2.5 rounded-lg text-sm bg-teal-600 text-white font-medium block"
+    : "px-4 py-2.5 rounded-lg text-sm text-teal-200 hover:bg-teal-700 block";
+  return (
+    <a href={href} className={cls} onClick={onClick}>
+      {label}
+    </a>
+  );
+}
+
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
@@ -30,20 +42,18 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Mobile Top Bar */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-teal-800 text-white flex items-center justify-between px-4 py-3 shadow-lg">
         <h1 className="text-lg font-semibold">
           Dent<span className="text-teal-300">Ease</span>
         </h1>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-white text-xl font-bold w-8 h-8 flex items-center justify-center"
+          className="text-white text-xl font-bold w-8 h-8 flex items-center justify-center rounded bg-teal-700"
         >
-          {menuOpen ? "X" : "="}
+          {menuOpen ? "X" : "M"}
         </button>
       </div>
 
-      {/* Mobile Dropdown Menu */}
       {menuOpen && (
         <div
           className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
@@ -57,22 +67,15 @@ export default function Sidebar() {
               Dent<span className="text-teal-300">Ease</span>
             </h1>
             <nav className="flex flex-col gap-1 flex-1">
-              {navItems.map((item) => {
-                const isActive = pathname === item.href;
-                const cls = isActive
-                  ? "px-4 py-2.5 rounded-lg text-sm bg-teal-600 text-white font-medium"
-                  : "px-4 py-2.5 rounded-lg text-sm text-teal-200 hover:bg-teal-700";
-                return (
-                  
-                    key={item.href}
-                    href={item.href}
-                    className={cls}
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    {item.label}
-                  </a>
-                );
-              })}
+              {navItems.map((item) => (
+                <NavLink
+                  key={item.href}
+                  href={item.href}
+                  label={item.label}
+                  pathname={pathname}
+                  onClick={() => setMenuOpen(false)}
+                />
+              ))}
             </nav>
             <button
               onClick={handleLogout}
@@ -84,23 +87,19 @@ export default function Sidebar() {
         </div>
       )}
 
-      {/* Desktop Sidebar */}
       <div className="hidden md:flex w-56 bg-teal-800 text-white flex-col p-5 min-h-screen">
         <h1 className="text-xl font-semibold mb-8 tracking-tight">
           Dent<span className="text-teal-300">Ease</span>
         </h1>
         <nav className="flex flex-col gap-1 flex-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            const cls = isActive
-              ? "px-4 py-2.5 rounded-lg text-sm bg-teal-600 text-white font-medium"
-              : "px-4 py-2.5 rounded-lg text-sm text-teal-200 hover:bg-teal-700";
-            return (
-              <a key={item.href} href={item.href} className={cls}>
-                {item.label}
-              </a>
-            );
-          })}
+          {navItems.map((item) => (
+            <NavLink
+              key={item.href}
+              href={item.href}
+              label={item.label}
+              pathname={pathname}
+            />
+          ))}
         </nav>
         <button
           onClick={handleLogout}
