@@ -163,7 +163,7 @@ export default function Home() {
                 <input type="checkbox" className="accent-teal-500" />
                 Remember me
               </label>
-              <a href="#" className="text-teal-500 hover:underline">Forgot password?</a>
+              <a href="/forgot-password" className="text-teal-500 hover:underline">Forgot password?</a>
             </div>
           )}
 
