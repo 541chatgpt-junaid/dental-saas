@@ -1,16 +1,23 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef<HCaptcha>(null);
 
   const handleReset = async () => {
     if (!email) {
       setError("Please enter your email address.");
+      return;
+    }
+    if (!captchaToken) {
+      setError("Please complete the captcha.");
       return;
     }
     setLoading(true);
@@ -18,7 +25,10 @@ export default function ForgotPassword() {
     const supabase = createClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: "https://dental-saas-lac.vercel.app/reset-password",
+      captchaToken,
     });
+    captchaRef.current?.resetCaptcha();
+    setCaptchaToken("");
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -55,9 +65,18 @@ export default function ForgotPassword() {
               />
             </div>
 
+            <div className="flex justify-center">
+              <HCaptcha
+                sitekey="6fec9dbc-a6d4-4e7a-b9ca-79f08b62d37e"
+                onVerify={(token) => setCaptchaToken(token)}
+                onExpire={() => setCaptchaToken("")}
+                ref={captchaRef}
+              />
+            </div>
+
             <button
               onClick={handleReset}
-              disabled={loading}
+              disabled={loading || !captchaToken}
               className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:opacity-60"
             >
               {loading ? "Sending..." : "Send Reset Email"}
