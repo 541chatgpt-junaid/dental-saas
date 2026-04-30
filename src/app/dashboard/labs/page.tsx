@@ -55,19 +55,12 @@ export default function Labs() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("labs").insert([{
-      patient_name: form.patient_name,
-      lab_name: form.lab_name,
-      work_type: form.work_type,
-      units: parseInt(form.units) || 1,
-      shade: form.shade,
-      material: form.material,
-      given_date: form.given_date,
-      delivery_date: form.delivery_date,
-      fee: parseInt(form.fee) || 0,
-      fee_paid: parseInt(form.fee_paid) || 0,
-      status: form.status,
-      notes: form.notes,
-      user_id: user?.id,
+      patient_name: form.patient_name, lab_name: form.lab_name,
+      work_type: form.work_type, units: parseInt(form.units) || 1,
+      shade: form.shade, material: form.material,
+      given_date: form.given_date, delivery_date: form.delivery_date,
+      fee: parseInt(form.fee) || 0, fee_paid: parseInt(form.fee_paid) || 0,
+      status: form.status, notes: form.notes, user_id: user?.id,
     }]);
     setForm({
       patient_name: "", lab_name: "", work_type: "Crown",
@@ -97,21 +90,21 @@ export default function Labs() {
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-teal-800">Lab Records</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Lab Records</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {labs.length} records</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
-            + Add Lab Record
+          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+            + Add
           </button>
         </div>
 
         {showForm && (
-          <div className="bg-white rounded-xl p-6 border border-teal-100 mb-6">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">New Lab Record</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <input placeholder="Lab Name" value={form.lab_name} onChange={e => setForm({...form, lab_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.work_type} onChange={e => setForm({...form, work_type: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
@@ -140,7 +133,7 @@ export default function Labs() {
               </div>
               <input placeholder="Total Fee (Rs)" type="number" value={form.fee} onChange={e => setForm({...form, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <input placeholder="Fee Paid (Rs)" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 col-span-2" />
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
@@ -152,57 +145,98 @@ export default function Labs() {
         )}
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-teal-50">
-              <tr>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Lab</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Work</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Delivery</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Total Fee</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Paid</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Remaining</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {labs.length === 0 ? (
-                <tr><td colSpan={9} className="text-center py-10 text-teal-400">No lab records yet</td></tr>
-              ) : (
-                labs.map(l => (
-                  <tr key={l.id} className="border-t border-teal-50 hover:bg-teal-50">
-                    <td className="px-4 py-3 font-medium text-teal-800">{l.patient_name}</td>
-                    <td className="px-4 py-3 text-teal-700">{l.lab_name}</td>
-                    <td className="px-4 py-3 text-teal-700">
-                      {l.work_type} x{l.units}
-                      <p className="text-xs text-teal-400">{l.shade} · {l.material}</p>
-                    </td>
-                    <td className="px-4 py-3 text-teal-700">{l.delivery_date}</td>
-                    <td className="px-4 py-3 text-teal-700">Rs {l.fee}</td>
-                    <td className="px-4 py-3 text-teal-700">Rs {l.fee_paid}</td>
-                    <td className="px-4 py-3 text-teal-700">Rs {l.fee - l.fee_paid}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${l.status === "Delivered" ? "bg-green-100 text-green-700" : l.status === "Pending" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
-                        {l.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 flex flex-col gap-1">
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-teal-50">
+            {labs.length === 0 ? (
+              <p className="text-center py-10 text-teal-400 text-sm">No lab records yet</p>
+            ) : (
+              labs.map(l => (
+                <div key={l.id} className="p-4">
+                  <div className="flex justify-between items-start mb-1">
+                    <div>
+                      <p className="font-medium text-teal-800 text-sm">{l.patient_name}</p>
+                      <p className="text-xs text-teal-500">{l.lab_name}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${l.status === "Delivered" ? "bg-green-100 text-green-700" : l.status === "Pending" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
+                      {l.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-teal-600">{l.work_type} x{l.units} · {l.shade} · {l.material}</p>
+                  <p className="text-xs text-teal-400 mt-1">Delivery: {l.delivery_date}</p>
+                  <div className="flex justify-between items-center mt-2">
+                    <p className="text-xs text-teal-600">Paid: Rs {l.fee_paid} / Rs {l.fee}</p>
+                    <div className="flex gap-2">
                       {l.fee_paid < l.fee && (
                         <button onClick={() => {
                           const amount = prompt(`Add payment for ${l.patient_name}:`);
                           if (amount) handlePayment(l, parseInt(amount));
-                        }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">Add Payment</button>
+                        }} className="text-teal-600 text-xs font-medium">Pay</button>
                       )}
                       {l.status === "Pending" && (
-                        <button onClick={() => updateStatus(l, "Delivered")} className="text-green-600 hover:text-green-800 text-xs font-medium">Mark Delivered</button>
+                        <button onClick={() => updateStatus(l, "Delivered")} className="text-green-600 text-xs font-medium">Delivered</button>
                       )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-teal-50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Lab</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Work</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Delivery</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Total Fee</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Paid</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Remaining</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {labs.length === 0 ? (
+                  <tr><td colSpan={9} className="text-center py-10 text-teal-400">No lab records yet</td></tr>
+                ) : (
+                  labs.map(l => (
+                    <tr key={l.id} className="border-t border-teal-50 hover:bg-teal-50">
+                      <td className="px-4 py-3 font-medium text-teal-800">{l.patient_name}</td>
+                      <td className="px-4 py-3 text-teal-700">{l.lab_name}</td>
+                      <td className="px-4 py-3 text-teal-700">
+                        {l.work_type} x{l.units}
+                        <p className="text-xs text-teal-400">{l.shade} · {l.material}</p>
+                      </td>
+                      <td className="px-4 py-3 text-teal-700">{l.delivery_date}</td>
+                      <td className="px-4 py-3 text-teal-700">Rs {l.fee}</td>
+                      <td className="px-4 py-3 text-teal-700">Rs {l.fee_paid}</td>
+                      <td className="px-4 py-3 text-teal-700">Rs {l.fee - l.fee_paid}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${l.status === "Delivered" ? "bg-green-100 text-green-700" : l.status === "Pending" ? "bg-orange-100 text-orange-700" : "bg-red-100 text-red-700"}`}>
+                          {l.status}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          {l.fee_paid < l.fee && (
+                            <button onClick={() => {
+                              const amount = prompt(`Add payment for ${l.patient_name}:`);
+                              if (amount) handlePayment(l, parseInt(amount));
+                            }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">Add Payment</button>
+                          )}
+                          {l.status === "Pending" && (
+                            <button onClick={() => updateStatus(l, "Delivered")} className="text-green-600 hover:text-green-800 text-xs font-medium">Mark Delivered</button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

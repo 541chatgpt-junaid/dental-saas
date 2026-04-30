@@ -84,25 +84,34 @@ export default function Appointments() {
   };
 
   const today = new Date().toISOString().split("T")[0];
+  const todayAppts = appointments.filter(a => a.date === today);
+
+  const StatusBadge = ({ status }: { status: string }) => (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+      status === "Completed" ? "bg-green-100 text-green-700" :
+      status === "Scheduled" ? "bg-blue-100 text-blue-700" :
+      "bg-red-100 text-red-700"
+    }`}>{status}</span>
+  );
 
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-teal-800">Appointments</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Appointments</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {appointments.length} appointments</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
-            + Add Appointment
+          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+            + Add
           </button>
         </div>
 
         {showForm && (
-          <div className="bg-white rounded-xl p-6 border border-teal-100 mb-6">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">New Appointment</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option value="">Select Doctor</option>
@@ -122,7 +131,7 @@ export default function Appointments() {
                 <option>Completed</option>
                 <option>Cancelled</option>
               </select>
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 col-span-2" />
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
@@ -133,82 +142,128 @@ export default function Appointments() {
           </div>
         )}
 
+        {/* Today's Appointments */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-teal-800 mb-3">Today's Appointments</h3>
           <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-teal-50">
-                <tr>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Time</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.filter(a => a.date === today).length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-6 text-teal-400">No appointments today</td></tr>
-                ) : (
-                  appointments.filter(a => a.date === today).map(a => (
-                    <tr key={a.id} className="border-t border-teal-50 hover:bg-teal-50">
-                      <td className="px-4 py-3 font-medium text-teal-800">{a.patient_name}</td>
-                      <td className="px-4 py-3 text-teal-700">{a.doctor_name}</td>
-                      <td className="px-4 py-3 text-teal-700">{a.time}</td>
-                      <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${a.status === "Completed" ? "bg-green-100 text-green-700" : a.status === "Scheduled" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"}`}>{a.status}</span>
-                      </td>
-                      <td className="px-4 py-3 flex gap-2">
-                        {a.status === "Scheduled" && (
-                          <>
-                            <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 hover:text-green-800 text-xs font-medium">Done</button>
-                            <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 hover:text-red-700 text-xs font-medium">Cancel</button>
-                          </>
-                        )}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y divide-teal-50">
+              {todayAppts.length === 0 ? (
+                <p className="text-center py-6 text-teal-400 text-sm">No appointments today</p>
+              ) : (
+                todayAppts.map(a => (
+                  <div key={a.id} className="p-4">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-medium text-teal-800 text-sm">{a.patient_name}</p>
+                      <StatusBadge status={a.status} />
+                    </div>
+                    <p className="text-xs text-teal-600">{a.treatment} · Dr. {a.doctor_name}</p>
+                    <div className="flex justify-between items-center mt-2">
+                      <p className="text-xs text-teal-400">{a.time}</p>
+                      {a.status === "Scheduled" && (
+                        <div className="flex gap-2">
+                          <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
+                          <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-teal-50">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Time</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayAppts.length === 0 ? (
+                    <tr><td colSpan={6} className="text-center py-6 text-teal-400">No appointments today</td></tr>
+                  ) : (
+                    todayAppts.map(a => (
+                      <tr key={a.id} className="border-t border-teal-50 hover:bg-teal-50">
+                        <td className="px-4 py-3 font-medium text-teal-800">{a.patient_name}</td>
+                        <td className="px-4 py-3 text-teal-700">{a.doctor_name}</td>
+                        <td className="px-4 py-3 text-teal-700">{a.time}</td>
+                        <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
+                        <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
+                        <td className="px-4 py-3">
+                          {a.status === "Scheduled" && (
+                            <div className="flex gap-2">
+                              <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 hover:text-green-800 text-xs font-medium">Done</button>
+                              <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 hover:text-red-700 text-xs font-medium">Cancel</button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
 
+        {/* All Appointments */}
         <div>
           <h3 className="text-sm font-semibold text-teal-800 mb-3">All Appointments</h3>
           <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-teal-50">
-                <tr>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Time</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {appointments.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-teal-400">No appointments yet</td></tr>
-                ) : (
-                  appointments.map(a => (
-                    <tr key={a.id} className="border-t border-teal-50 hover:bg-teal-50">
-                      <td className="px-4 py-3 font-medium text-teal-800">{a.patient_name}</td>
-                      <td className="px-4 py-3 text-teal-700">{a.doctor_name}</td>
-                      <td className="px-4 py-3 text-teal-700">{a.date}</td>
-                      <td className="px-4 py-3 text-teal-700">{a.time}</td>
-                      <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${a.status === "Completed" ? "bg-green-100 text-green-700" : a.status === "Scheduled" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700"}`}>{a.status}</span>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+            {/* Mobile Cards */}
+            <div className="md:hidden divide-y divide-teal-50">
+              {appointments.length === 0 ? (
+                <p className="text-center py-10 text-teal-400 text-sm">No appointments yet</p>
+              ) : (
+                appointments.map(a => (
+                  <div key={a.id} className="p-4">
+                    <div className="flex justify-between items-start mb-1">
+                      <p className="font-medium text-teal-800 text-sm">{a.patient_name}</p>
+                      <StatusBadge status={a.status} />
+                    </div>
+                    <p className="text-xs text-teal-600">{a.treatment} · Dr. {a.doctor_name}</p>
+                    <p className="text-xs text-teal-400 mt-1">{a.date} · {a.time}</p>
+                  </div>
+                ))
+              )}
+            </div>
+            {/* Desktop Table */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-teal-50">
+                  <tr>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Time</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
+                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {appointments.length === 0 ? (
+                    <tr><td colSpan={6} className="text-center py-10 text-teal-400">No appointments yet</td></tr>
+                  ) : (
+                    appointments.map(a => (
+                      <tr key={a.id} className="border-t border-teal-50 hover:bg-teal-50">
+                        <td className="px-4 py-3 font-medium text-teal-800">{a.patient_name}</td>
+                        <td className="px-4 py-3 text-teal-700">{a.doctor_name}</td>
+                        <td className="px-4 py-3 text-teal-700">{a.date}</td>
+                        <td className="px-4 py-3 text-teal-700">{a.time}</td>
+                        <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
+                        <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>

@@ -61,17 +61,13 @@ export default function Reports() {
     }
 
     const { data: materials } = await supabase.from("materials").select("price, quantity").eq("user_id", user.id);
-    if (materials) {
-      setMaterialCost(materials.reduce((sum, m) => sum + ((m.price || 0) * (m.quantity || 0)), 0));
-    }
+    if (materials) setMaterialCost(materials.reduce((sum, m) => sum + ((m.price || 0) * (m.quantity || 0)), 0));
 
     const { data: purchases } = await supabase.from("purchases").select("*").eq("user_id", user.id);
     if (purchases) setAllPurchases(purchases);
   };
 
-  useEffect(() => {
-    fetchData();
-  }, [filter]);
+  useEffect(() => { fetchData(); }, [filter]);
 
   const totalExpenses = labCost + manualExpenses + materialCost;
   const profit = income - totalExpenses;
@@ -81,24 +77,21 @@ export default function Reports() {
     const patientsData = allPatients.map(p => ({
       ID: p.id, Name: p.name, Phone: p.phone, Age: p.age,
       Gender: p.gender, Doctor: p.doctor_name, Treatment: p.treatment,
-      Tooth: p.tooth_number, "Total Fee": p.fee_total, "Fee Paid": p.fee_paid,
+      "Total Fee": p.fee_total, "Fee Paid": p.fee_paid,
       Remaining: p.fee_total - p.fee_paid, Status: p.status,
       Date: new Date(p.created_at).toLocaleDateString(),
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(patientsData), "Patients");
-
     const expensesData = allExpenses.map(e => ({
       Title: e.title, Category: e.category, Amount: e.amount, Date: e.date, Notes: e.notes,
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), "Expenses");
-
     const purchasesData = allPurchases.map(p => ({
       Item: p.item_name, Category: p.category, Quantity: p.quantity,
       Unit: p.unit, "Price/Unit": p.price_per_unit, Total: p.total_price,
       Supplier: p.supplier, Date: p.date,
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(purchasesData), "Purchases");
-
     const summaryData = [
       { Category: "Total Patients", Value: patientCount },
       { Category: "Total Income", Value: income },
@@ -110,7 +103,6 @@ export default function Reports() {
       { Category: "Net Profit", Value: profit },
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Summary");
-
     const date = new Date().toLocaleDateString().replace(/\//g, "-");
     XLSX.writeFile(wb, `DentEase-Report-${date}.xlsx`);
   };
@@ -118,46 +110,48 @@ export default function Reports() {
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-teal-800">Reports</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Reports</h2>
             <p className="text-sm text-teal-600 mt-1">Profit & Loss Summary</p>
           </div>
-          <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
-            📊 Export to Excel
+          <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+            📊 Export
           </button>
         </div>
 
         <div className="flex gap-2 mb-6">
           {["today", "month", "all"].map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-5 py-2 rounded-lg text-sm font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
-              {f === "today" ? "Today" : f === "month" ? "This Month" : "All Time"}
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+              {f === "today" ? "Today" : f === "month" ? "Month" : "All Time"}
             </button>
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-5 mb-6">
-          <div className="bg-white rounded-xl p-5 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-2">TOTAL PATIENTS</p>
-            <p className="text-3xl font-semibold text-teal-800">{patientCount}</p>
-            <p className="text-xs text-teal-400 mt-1">Patients treated</p>
+        {/* Top 3 stats */}
+        <div className="grid grid-cols-3 gap-3 md:gap-5 mb-6">
+          <div className="bg-white rounded-xl p-3 md:p-5 border border-teal-100">
+            <p className="text-xs font-medium text-teal-600 mb-1 md:mb-2">PATIENTS</p>
+            <p className="text-2xl md:text-3xl font-semibold text-teal-800">{patientCount}</p>
+            <p className="text-xs text-teal-400 mt-1 hidden md:block">Patients treated</p>
           </div>
-          <div className="bg-white rounded-xl p-5 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-2">PENDING FEES</p>
-            <p className="text-3xl font-semibold text-orange-500">Rs {pendingFees.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">Still to collect</p>
+          <div className="bg-white rounded-xl p-3 md:p-5 border border-teal-100">
+            <p className="text-xs font-medium text-teal-600 mb-1 md:mb-2">PENDING</p>
+            <p className="text-lg md:text-3xl font-semibold text-orange-500">Rs {pendingFees.toLocaleString()}</p>
+            <p className="text-xs text-teal-400 mt-1 hidden md:block">Still to collect</p>
           </div>
-          <div className={`rounded-xl p-5 border ${profit >= 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}>
-            <p className={`text-xs font-medium mb-2 ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>NET PROFIT</p>
-            <p className={`text-3xl font-semibold ${profit >= 0 ? "text-green-700" : "text-red-700"}`}>Rs {profit.toLocaleString()}</p>
-            <p className={`text-xs mt-1 ${profit >= 0 ? "text-green-400" : "text-red-400"}`}>{profit >= 0 ? "Profit" : "Loss"}</p>
+          <div className={`rounded-xl p-3 md:p-5 border ${profit >= 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}>
+            <p className={`text-xs font-medium mb-1 md:mb-2 ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>PROFIT</p>
+            <p className={`text-lg md:text-3xl font-semibold ${profit >= 0 ? "text-green-700" : "text-red-700"}`}>Rs {profit.toLocaleString()}</p>
+            <p className={`text-xs mt-1 hidden md:block ${profit >= 0 ? "text-green-400" : "text-red-400"}`}>{profit >= 0 ? "Profit" : "Loss"}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-5 mb-6">
-          <div className="bg-white rounded-xl p-5 border border-teal-100">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">💰 Income Breakdown</h3>
+        {/* Income & Expenses — stack on mobile */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-6">
+          <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
+            <h3 className="text-sm font-semibold text-teal-800 mb-4">💰 Income</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-teal-50">
                 <span className="text-sm text-teal-700">Patient Fees Collected</span>
@@ -170,8 +164,8 @@ export default function Reports() {
             </div>
           </div>
 
-          <div className="bg-white rounded-xl p-5 border border-teal-100">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">💸 Expenses Breakdown</h3>
+          <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
+            <h3 className="text-sm font-semibold text-teal-800 mb-4">💸 Expenses</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-teal-50">
                 <span className="text-sm text-teal-700">Lab Costs</span>
@@ -193,7 +187,8 @@ export default function Reports() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-5 border border-teal-100">
+        {/* Bar Chart */}
+        <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
           <h3 className="text-sm font-semibold text-teal-800 mb-4">📊 Income vs Expenses</h3>
           <div className="space-y-3">
             <div>

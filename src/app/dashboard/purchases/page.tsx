@@ -54,18 +54,12 @@ export default function Purchases() {
     const { data: { user } } = await supabase.auth.getUser();
     const qty = parseInt(form.quantity) || 0;
     const price = parseInt(form.price_per_unit) || 0;
-    const total = qty * price;
     await supabase.from("purchases").insert([{
-      item_name: form.item_name,
-      category: form.category,
-      quantity: qty,
-      unit: form.unit,
-      price_per_unit: price,
-      total_price: total,
-      supplier: form.supplier,
-      date: form.date,
-      notes: form.notes,
-      user_id: user?.id,
+      item_name: form.item_name, category: form.category,
+      quantity: qty, unit: form.unit,
+      price_per_unit: price, total_price: qty * price,
+      supplier: form.supplier, date: form.date,
+      notes: form.notes, user_id: user?.id,
     }]);
     setForm({ item_name: "", category: "Consumable", quantity: "", unit: "Box", price_per_unit: "", supplier: "", date: "", notes: "" });
     setShowForm(false);
@@ -92,41 +86,41 @@ export default function Purchases() {
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-teal-800">Purchase History</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Purchases</h2>
             <p className="text-sm text-teal-600 mt-1">Track all inventory purchases</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
-            + Add Purchase
+          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+            + Add
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">TOTAL PURCHASES</p>
-            <p className="text-2xl font-semibold text-teal-800">{filteredPurchases.length}</p>
-            <p className="text-xs text-teal-400 mt-1">Items purchased</p>
+        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
+            <p className="text-xs font-medium text-teal-600 mb-1">TOTAL</p>
+            <p className="text-xl md:text-2xl font-semibold text-teal-800">{filteredPurchases.length}</p>
+            <p className="text-xs text-teal-400 mt-1">Items</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">TOTAL SPENT</p>
-            <p className="text-2xl font-semibold text-red-600">Rs {totalSpent.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">All purchases combined</p>
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
+            <p className="text-xs font-medium text-teal-600 mb-1">SPENT</p>
+            <p className="text-lg md:text-2xl font-semibold text-red-600">Rs {totalSpent.toLocaleString()}</p>
+            <p className="text-xs text-teal-400 mt-1">Combined</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">SUPPLIERS</p>
-            <p className="text-2xl font-semibold text-teal-800">
+            <p className="text-xl md:text-2xl font-semibold text-teal-800">
               {new Set(filteredPurchases.map(p => p.supplier)).size}
             </p>
-            <p className="text-xs text-teal-400 mt-1">Unique suppliers</p>
+            <p className="text-xs text-teal-400 mt-1">Unique</p>
           </div>
         </div>
 
         {showForm && (
-          <div className="bg-white rounded-xl p-6 border border-teal-100 mb-6">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">New Purchase</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Consumable</option>
@@ -169,51 +163,79 @@ export default function Purchases() {
           </div>
         )}
 
-        <div className="flex gap-3 mb-4">
+        <div className="flex flex-col md:flex-row gap-3 mb-4">
           <input placeholder="Search item or supplier..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border border-teal-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
-          {["all", "today", "month"].map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-lg text-xs font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
-              {f === "all" ? "All Time" : f === "today" ? "Today" : "This Month"}
-            </button>
-          ))}
+          <div className="flex gap-2">
+            {["all", "today", "month"].map(f => (
+              <button key={f} onClick={() => setFilter(f)} className={`flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+                {f === "all" ? "All" : f === "today" ? "Today" : "Month"}
+              </button>
+            ))}
+          </div>
         </div>
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-teal-50">
-              <tr>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Item</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Quantity</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Price/Unit</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Total</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Supplier</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPurchases.length === 0 ? (
-                <tr><td colSpan={7} className="text-center py-10 text-teal-400">No purchases found</td></tr>
-              ) : (
-                filteredPurchases.map(p => (
-                  <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
-                    <td className="px-4 py-3">
-                      <p className="font-medium text-teal-800">{p.item_name}</p>
-                      {p.notes && <p className="text-xs text-teal-400">{p.notes}</p>}
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{p.category}</span>
-                    </td>
-                    <td className="px-4 py-3 text-teal-700">{p.quantity} {p.unit}</td>
-                    <td className="px-4 py-3 text-teal-700">Rs {p.price_per_unit?.toLocaleString()}</td>
-                    <td className="px-4 py-3 font-semibold text-red-600">Rs {p.total_price?.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-teal-700">{p.supplier}</td>
-                    <td className="px-4 py-3 text-teal-700">{p.date}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-teal-50">
+            {filteredPurchases.length === 0 ? (
+              <p className="text-center py-10 text-teal-400 text-sm">No purchases found</p>
+            ) : (
+              filteredPurchases.map(p => (
+                <div key={p.id} className="p-4">
+                  <div className="flex justify-between items-start mb-1">
+                    <div>
+                      <p className="font-medium text-teal-800 text-sm">{p.item_name}</p>
+                      <p className="text-xs text-teal-500">{p.category} · {p.supplier}</p>
+                    </div>
+                    <p className="font-semibold text-red-600 text-sm">Rs {p.total_price?.toLocaleString()}</p>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <p className="text-xs text-teal-400">{p.quantity} {p.unit} · Rs {p.price_per_unit}/unit</p>
+                    <p className="text-xs text-teal-400">{p.date}</p>
+                  </div>
+                  {p.notes && <p className="text-xs text-teal-400 mt-1">📝 {p.notes}</p>}
+                </div>
+              ))
+            )}
+          </div>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-teal-50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Item</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Quantity</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Price/Unit</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Total</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Supplier</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPurchases.length === 0 ? (
+                  <tr><td colSpan={7} className="text-center py-10 text-teal-400">No purchases found</td></tr>
+                ) : (
+                  filteredPurchases.map(p => (
+                    <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
+                      <td className="px-4 py-3">
+                        <p className="font-medium text-teal-800">{p.item_name}</p>
+                        {p.notes && <p className="text-xs text-teal-400">{p.notes}</p>}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{p.category}</span>
+                      </td>
+                      <td className="px-4 py-3 text-teal-700">{p.quantity} {p.unit}</td>
+                      <td className="px-4 py-3 text-teal-700">Rs {p.price_per_unit?.toLocaleString()}</td>
+                      <td className="px-4 py-3 font-semibold text-red-600">Rs {p.total_price?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-teal-700">{p.supplier}</td>
+                      <td className="px-4 py-3 text-teal-700">{p.date}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>

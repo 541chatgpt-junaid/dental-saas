@@ -77,14 +77,14 @@ export default function Settings() {
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
-      <div className="flex-1 p-8">
-        <div className="mb-8">
-          <h2 className="text-2xl font-semibold text-teal-800">Clinic Settings</h2>
+      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+        <div className="mb-6 md:mb-8">
+          <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Clinic Settings</h2>
           <p className="text-sm text-teal-600 mt-1">Setup your clinic information</p>
         </div>
 
-        <div className="bg-white rounded-xl p-6 border border-teal-100 max-w-2xl">
-          <h3 className="text-sm font-semibold text-teal-800 mb-6">Clinic Information</h3>
+        <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 w-full md:max-w-2xl">
+          <h3 className="text-sm font-semibold text-teal-800 mb-5">Clinic Information</h3>
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium text-teal-700 mb-1">Clinic Name</label>
@@ -112,12 +112,12 @@ export default function Settings() {
               {selectedCurrency && (
                 <div className="mt-2 bg-teal-50 rounded-lg px-4 py-2 flex items-center gap-2">
                   <span className="text-lg font-bold text-teal-700">{selectedCurrency.symbol}</span>
-                  <span className="text-sm text-teal-600">{selectedCurrency.name} — All amounts will show in {selectedCurrency.code}</span>
+                  <span className="text-sm text-teal-600">{selectedCurrency.name} — {selectedCurrency.code}</span>
                 </div>
               )}
             </div>
           </div>
-          <div className="mt-6 flex items-center gap-4">
+          <div className="mt-6 flex flex-wrap items-center gap-4">
             <button onClick={handleSave} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium disabled:opacity-60">
               {loading ? "Saving..." : "Save Settings"}
             </button>

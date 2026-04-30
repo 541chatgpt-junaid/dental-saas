@@ -58,12 +58,9 @@ export default function Expenses() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("expenses").insert([{
-      title: form.title,
-      category: form.category,
+      title: form.title, category: form.category,
       amount: parseInt(form.amount) || 0,
-      date: form.date,
-      notes: form.notes,
-      user_id: user?.id,
+      date: form.date, notes: form.notes, user_id: user?.id,
     }]);
     setForm({ title: "", category: "Rent", amount: "", date: "", notes: "" });
     setShowForm(false);
@@ -86,44 +83,45 @@ export default function Expenses() {
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
-      <div className="flex-1 p-8">
+      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-semibold text-teal-800">Expenses</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Expenses</h2>
             <p className="text-sm text-teal-600 mt-1">Track all clinic expenses</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium">
-            + Add Expense
+          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+            + Add
           </button>
         </div>
 
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
+        {/* Stats — 2x2 on mobile, 4 cols on desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">LAB COSTS</p>
-            <p className="text-2xl font-semibold text-teal-800">Rs {labCost.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">Auto from Lab Records</p>
+            <p className="text-lg md:text-2xl font-semibold text-teal-800">Rs {labCost.toLocaleString()}</p>
+            <p className="text-xs text-teal-400 mt-1">From Lab Records</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">MATERIAL COSTS</p>
-            <p className="text-2xl font-semibold text-teal-800">Rs {materialCost.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">Auto from Materials</p>
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
+            <p className="text-xs font-medium text-teal-600 mb-1">MATERIALS</p>
+            <p className="text-lg md:text-2xl font-semibold text-teal-800">Rs {materialCost.toLocaleString()}</p>
+            <p className="text-xs text-teal-400 mt-1">From Materials</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">OTHER EXPENSES</p>
-            <p className="text-2xl font-semibold text-teal-800">Rs {manualTotal.toLocaleString()}</p>
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
+            <p className="text-xs font-medium text-teal-600 mb-1">OTHER</p>
+            <p className="text-lg md:text-2xl font-semibold text-teal-800">Rs {manualTotal.toLocaleString()}</p>
             <p className="text-xs text-teal-400 mt-1">Rent, Salary etc</p>
           </div>
-          <div className="bg-red-50 rounded-xl p-4 border border-red-100">
-            <p className="text-xs font-medium text-red-600 mb-1">TOTAL EXPENSES</p>
-            <p className="text-2xl font-semibold text-red-700">Rs {grandTotal.toLocaleString()}</p>
+          <div className="bg-red-50 rounded-xl p-3 md:p-4 border border-red-100">
+            <p className="text-xs font-medium text-red-600 mb-1">TOTAL</p>
+            <p className="text-lg md:text-2xl font-semibold text-red-700">Rs {grandTotal.toLocaleString()}</p>
             <p className="text-xs text-red-400 mt-1">All combined</p>
           </div>
         </div>
 
         {showForm && (
-          <div className="bg-white rounded-xl p-6 border border-teal-100 mb-6">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">New Expense</h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Expense Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Rent</option>
@@ -138,7 +136,7 @@ export default function Expenses() {
                 <label className="block text-xs text-teal-600 mb-1">Date</label>
                 <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 col-span-2" />
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
@@ -151,41 +149,66 @@ export default function Expenses() {
 
         <div className="flex gap-2 mb-4">
           {["all", "today", "month"].map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-4 py-1.5 rounded-lg text-xs font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
-              {f === "all" ? "All Time" : f === "today" ? "Today" : "This Month"}
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+              {f === "all" ? "All" : f === "today" ? "Today" : "Month"}
             </button>
           ))}
         </div>
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-teal-50">
-              <tr>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Title</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Amount</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
-                <th className="text-left px-4 py-3 text-teal-700 font-medium">Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredExpenses.length === 0 ? (
-                <tr><td colSpan={5} className="text-center py-10 text-teal-400">No expenses added yet</td></tr>
-              ) : (
-                filteredExpenses.map(e => (
-                  <tr key={e.id} className="border-t border-teal-50 hover:bg-teal-50">
-                    <td className="px-4 py-3 font-medium text-teal-800">{e.title}</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{e.category}</span>
-                    </td>
-                    <td className="px-4 py-3 text-red-600 font-medium">Rs {e.amount?.toLocaleString()}</td>
-                    <td className="px-4 py-3 text-teal-700">{e.date}</td>
-                    <td className="px-4 py-3 text-teal-400">{e.notes}</td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+          {/* Mobile Cards */}
+          <div className="md:hidden divide-y divide-teal-50">
+            {filteredExpenses.length === 0 ? (
+              <p className="text-center py-10 text-teal-400 text-sm">No expenses added yet</p>
+            ) : (
+              filteredExpenses.map(e => (
+                <div key={e.id} className="p-4">
+                  <div className="flex justify-between items-start mb-1">
+                    <div>
+                      <p className="font-medium text-teal-800 text-sm">{e.title}</p>
+                      <span className="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded-full">{e.category}</span>
+                    </div>
+                    <p className="text-red-600 font-medium text-sm">Rs {e.amount?.toLocaleString()}</p>
+                  </div>
+                  <div className="flex justify-between mt-1">
+                    <p className="text-xs text-teal-400">{e.notes}</p>
+                    <p className="text-xs text-teal-400">{e.date}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-teal-50">
+                <tr>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Title</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Amount</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Notes</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredExpenses.length === 0 ? (
+                  <tr><td colSpan={5} className="text-center py-10 text-teal-400">No expenses added yet</td></tr>
+                ) : (
+                  filteredExpenses.map(e => (
+                    <tr key={e.id} className="border-t border-teal-50 hover:bg-teal-50">
+                      <td className="px-4 py-3 font-medium text-teal-800">{e.title}</td>
+                      <td className="px-4 py-3">
+                        <span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{e.category}</span>
+                      </td>
+                      <td className="px-4 py-3 text-red-600 font-medium">Rs {e.amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-teal-700">{e.date}</td>
+                      <td className="px-4 py-3 text-teal-400">{e.notes}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </div>
