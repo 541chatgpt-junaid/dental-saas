@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function Home() {
   const [isLogin, setIsLogin] = useState(true);
@@ -12,13 +13,25 @@ export default function Home() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef<HCaptcha>(null);
   const router = useRouter();
 
   const handleLogin = async () => {
+    if (!captchaToken) {
+      setError("Please complete the captcha.");
+      return;
+    }
     setLoading(true);
     setError("");
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      options: { captchaToken },
+    });
+    captchaRef.current?.resetCaptcha();
+    setCaptchaToken("");
     if (error) {
       setError("Invalid email or password. Please try again.");
       setLoading(false);
@@ -28,6 +41,10 @@ export default function Home() {
   };
 
   const handleSignUp = async () => {
+    if (!captchaToken) {
+      setError("Please complete the captcha.");
+      return;
+    }
     setLoading(true);
     setError("");
     setSuccess("");
@@ -40,8 +57,13 @@ export default function Home() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { clinic_name: clinicName } }
+      options: {
+        captchaToken,
+        data: { clinic_name: clinicName }
+      }
     });
+    captchaRef.current?.resetCaptcha();
+    setCaptchaToken("");
     if (error) {
       setError(error.message);
       setLoading(false);
@@ -74,13 +96,13 @@ export default function Home() {
 
         <div className="flex mb-6 bg-teal-50 rounded-xl p-1">
           <button
-            onClick={() => { setIsLogin(true); setError(""); setSuccess(""); }}
+            onClick={() => { setIsLogin(true); setError(""); setSuccess(""); setCaptchaToken(""); captchaRef.current?.resetCaptcha(); }}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${isLogin ? "bg-white text-teal-700 shadow-sm" : "text-teal-500"}`}
           >
             Sign In
           </button>
           <button
-            onClick={() => { setIsLogin(false); setError(""); setSuccess(""); }}
+            onClick={() => { setIsLogin(false); setError(""); setSuccess(""); setCaptchaToken(""); captchaRef.current?.resetCaptcha(); }}
             className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${!isLogin ? "bg-white text-teal-700 shadow-sm" : "text-teal-500"}`}
           >
             Create Account
@@ -145,9 +167,18 @@ export default function Home() {
             </div>
           )}
 
+          <div className="flex justify-center">
+            <HCaptcha
+              sitekey="6fec9dbc-a6d4-4e7a-b9ca-79f08b62d37e"
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken("")}
+              ref={captchaRef}
+            />
+          </div>
+
           <button
             onClick={isLogin ? handleLogin : handleSignUp}
-            disabled={loading}
+            disabled={loading || !captchaToken}
             className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:opacity-60"
           >
             {loading ? "Please wait..." : isLogin ? "Sign In" : "Create Account"}
