@@ -48,6 +48,17 @@ interface Appointment {
   status: string;
 }
 
+interface MedicalHistory {
+  id: number;
+  patient_id: number;
+  allergies: string;
+  blood_group: string;
+  medical_conditions: string;
+  current_medications: string;
+  previous_surgeries: string;
+  notes: string;
+}
+
 interface Doctor {
   id: number;
   name: string;
@@ -70,12 +81,18 @@ export default function Patients() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [medicalHistory, setMedicalHistory] = useState<MedicalHistory | null>(null);
   const [showVisitForm, setShowVisitForm] = useState(false);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
+  const [showMedicalForm, setShowMedicalForm] = useState(false);
   const [visitTeeth, setVisitTeeth] = useState<number[]>([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptPatient, setReceiptPatient] = useState<Patient | null>(null);
-  const [activeTab, setActiveTab] = useState<"visits"|"appointments">("visits");
+  const [activeTab, setActiveTab] = useState<"visits"|"appointments"|"medical">("visits");
+  const [medicalForm, setMedicalForm] = useState({
+    allergies: "", blood_group: "", medical_conditions: "",
+    current_medications: "", previous_surgeries: "", notes: "",
+  });
   const [appointmentForm, setAppointmentForm] = useState({
     date: "", time: "", treatment: "", notes: "",
   });
@@ -92,11 +109,9 @@ export default function Patients() {
   const fetchPatients = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    // Fetch all patients ordered by created_at ascending for correct numbering
     const { data } = await supabase.from("patients").select("*").eq("user_id", user?.id).order("created_at", { ascending: true });
     if (data) {
       setAllPatients(data);
-      // Reverse for display (newest first)
       setPatients([...data].reverse());
     }
   };
@@ -120,6 +135,25 @@ export default function Patients() {
     if (data) setAppointments(data);
   };
 
+  const fetchMedicalHistory = async (patientId: number) => {
+    const supabase = createClient();
+    const { data } = await supabase.from("medical_history").select("*").eq("patient_id", patientId).single();
+    if (data) {
+      setMedicalHistory(data);
+      setMedicalForm({
+        allergies: data.allergies || "",
+        blood_group: data.blood_group || "",
+        medical_conditions: data.medical_conditions || "",
+        current_medications: data.current_medications || "",
+        previous_surgeries: data.previous_surgeries || "",
+        notes: data.notes || "",
+      });
+    } else {
+      setMedicalHistory(null);
+      setMedicalForm({ allergies: "", blood_group: "", medical_conditions: "", current_medications: "", previous_surgeries: "", notes: "" });
+    }
+  };
+
   useEffect(() => {
     const checkUser = async () => {
       const supabase = createClient();
@@ -131,7 +165,6 @@ export default function Patients() {
     fetchDoctors();
   }, [router]);
 
-  // Get clinic-specific sequential number for a patient
   const getClinicPatientNumber = (patientId: number) => {
     const index = allPatients.findIndex(p => p.id === patientId);
     return index + 1;
@@ -208,6 +241,38 @@ export default function Patients() {
     fetchPatients();
   };
 
+  const handleSaveMedical = async () => {
+    if (!selectedPatient) return;
+    setLoading(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (medicalHistory) {
+      await supabase.from("medical_history").update({
+        allergies: medicalForm.allergies,
+        blood_group: medicalForm.blood_group,
+        medical_conditions: medicalForm.medical_conditions,
+        current_medications: medicalForm.current_medications,
+        previous_surgeries: medicalForm.previous_surgeries,
+        notes: medicalForm.notes,
+      }).eq("id", medicalHistory.id);
+    } else {
+      await supabase.from("medical_history").insert([{
+        patient_id: selectedPatient.id,
+        patient_name: selectedPatient.name,
+        user_id: user?.id,
+        allergies: medicalForm.allergies,
+        blood_group: medicalForm.blood_group,
+        medical_conditions: medicalForm.medical_conditions,
+        current_medications: medicalForm.current_medications,
+        previous_surgeries: medicalForm.previous_surgeries,
+        notes: medicalForm.notes,
+      }]);
+    }
+    setShowMedicalForm(false);
+    setLoading(false);
+    fetchMedicalHistory(selectedPatient.id);
+  };
+
   const handleAddVisit = async () => {
     if (!selectedPatient) return;
     setLoading(true);
@@ -271,6 +336,7 @@ export default function Patients() {
     setActiveTab("visits");
     fetchVisits(patient.id);
     fetchAppointments(patient.id);
+    fetchMedicalHistory(patient.id);
   };
 
   const filteredPatients = patients.filter(p =>
@@ -407,16 +473,21 @@ export default function Patients() {
               </div>
             )}
 
+            {/* Tabs */}
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-              <div className="flex border-b border-teal-100">
-                <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-sm font-medium ${activeTab === "visits" ? "bg-teal-50 text-teal-800 border-b-2 border-teal-600" : "text-teal-500"}`}>
-                  Visit History ({visits.length})
+              <div className="flex border-b border-teal-100 overflow-x-auto">
+                <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "visits" ? "bg-teal-50 text-teal-800 border-b-2 border-teal-600" : "text-teal-500"}`}>
+                  Visits ({visits.length})
                 </button>
-                <button onClick={() => setActiveTab("appointments")} className={`flex-1 py-3 text-sm font-medium ${activeTab === "appointments" ? "bg-blue-50 text-blue-800 border-b-2 border-blue-600" : "text-teal-500"}`}>
+                <button onClick={() => setActiveTab("appointments")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "appointments" ? "bg-blue-50 text-blue-800 border-b-2 border-blue-600" : "text-teal-500"}`}>
                   Appointments ({appointments.length})
+                </button>
+                <button onClick={() => setActiveTab("medical")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "medical" ? "bg-red-50 text-red-800 border-b-2 border-red-400" : "text-teal-500"}`}>
+                  🩺 Medical
                 </button>
               </div>
 
+              {/* Visits Tab */}
               {activeTab === "visits" && (
                 <div>
                   {visits.length === 0 ? (
@@ -443,6 +514,7 @@ export default function Patients() {
                 </div>
               )}
 
+              {/* Appointments Tab */}
               {activeTab === "appointments" && (
                 <div>
                   {appointments.length === 0 ? (
@@ -460,14 +532,103 @@ export default function Patients() {
                             <StatusBadge status={a.status} />
                             {a.status === "Scheduled" && (
                               <div className="flex gap-2 mt-1">
-                                <button onClick={() => updateAppointmentStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium hover:underline">✓ Done</button>
-                                <button onClick={() => updateAppointmentStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium hover:underline">✗ Cancel</button>
+                                <button onClick={() => updateAppointmentStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
+                                <button onClick={() => updateAppointmentStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </div>
                             )}
                           </div>
                         </div>
                       </div>
                     ))
+                  )}
+                </div>
+              )}
+
+              {/* Medical History Tab */}
+              {activeTab === "medical" && (
+                <div className="p-4 md:p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-sm font-semibold text-teal-800">🩺 Medical History</h3>
+                    <button onClick={() => setShowMedicalForm(!showMedicalForm)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                      {medicalHistory ? "✏️ Edit" : "+ Add"}
+                    </button>
+                  </div>
+
+                  {showMedicalForm && (
+                    <div className="bg-red-50 rounded-xl p-4 mb-4 border border-red-100">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-red-700 mb-1">Blood Group</label>
+                          <select value={medicalForm.blood_group} onChange={e => setMedicalForm({...medicalForm, blood_group: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
+                            <option value="">Select Blood Group</option>
+                            <option>A+</option><option>A-</option>
+                            <option>B+</option><option>B-</option>
+                            <option>O+</option><option>O-</option>
+                            <option>AB+</option><option>AB-</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-red-700 mb-1">Allergies</label>
+                          <input placeholder="e.g. Penicillin, Latex" value={medicalForm.allergies} onChange={e => setMedicalForm({...medicalForm, allergies: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-medium text-red-700 mb-1">Medical Conditions</label>
+                          <input placeholder="e.g. Diabetes, Hypertension, Heart Disease" value={medicalForm.medical_conditions} onChange={e => setMedicalForm({...medicalForm, medical_conditions: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-medium text-red-700 mb-1">Current Medications</label>
+                          <input placeholder="e.g. Metformin, Aspirin" value={medicalForm.current_medications} onChange={e => setMedicalForm({...medicalForm, current_medications: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-medium text-red-700 mb-1">Previous Surgeries</label>
+                          <input placeholder="e.g. Appendectomy 2019" value={medicalForm.previous_surgeries} onChange={e => setMedicalForm({...medicalForm, previous_surgeries: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                        </div>
+                        <div className="md:col-span-2">
+                          <label className="block text-xs font-medium text-red-700 mb-1">Additional Notes</label>
+                          <textarea placeholder="Any other important medical information..." value={medicalForm.notes} onChange={e => setMedicalForm({...medicalForm, notes: e.target.value})} rows={3} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                        </div>
+                      </div>
+                      <div className="flex gap-3 mt-4">
+                        <button onClick={handleSaveMedical} disabled={loading} className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Save Medical History"}</button>
+                        <button onClick={() => setShowMedicalForm(false)} className="border border-red-200 text-red-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+                      </div>
+                    </div>
+                  )}
+
+                  {medicalHistory ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-red-50 rounded-lg p-3 border border-red-100">
+                        <p className="text-xs font-semibold text-red-700 mb-1">🩸 Blood Group</p>
+                        <p className="text-lg font-bold text-red-800">{medicalHistory.blood_group || "—"}</p>
+                      </div>
+                      <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
+                        <p className="text-xs font-semibold text-orange-700 mb-1">⚠️ Allergies</p>
+                        <p className="text-sm text-orange-800">{medicalHistory.allergies || "None recorded"}</p>
+                      </div>
+                      <div className="bg-teal-50 rounded-lg p-3 border border-teal-100">
+                        <p className="text-xs font-semibold text-teal-700 mb-1">🏥 Medical Conditions</p>
+                        <p className="text-sm text-teal-800">{medicalHistory.medical_conditions || "None recorded"}</p>
+                      </div>
+                      <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                        <p className="text-xs font-semibold text-blue-700 mb-1">💊 Current Medications</p>
+                        <p className="text-sm text-blue-800">{medicalHistory.current_medications || "None recorded"}</p>
+                      </div>
+                      <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
+                        <p className="text-xs font-semibold text-purple-700 mb-1">🔪 Previous Surgeries</p>
+                        <p className="text-sm text-purple-800">{medicalHistory.previous_surgeries || "None recorded"}</p>
+                      </div>
+                      {medicalHistory.notes && (
+                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                          <p className="text-xs font-semibold text-gray-700 mb-1">📝 Additional Notes</p>
+                          <p className="text-sm text-gray-800">{medicalHistory.notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-teal-400 text-sm mb-3">No medical history recorded yet</p>
+                      <button onClick={() => setShowMedicalForm(true)} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">+ Add Medical History</button>
+                    </div>
                   )}
                 </div>
               )}
