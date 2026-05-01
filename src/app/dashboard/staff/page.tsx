@@ -26,8 +26,10 @@ export default function StaffPage() {
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [editPermissions, setEditPermissions] = useState<string[]>([]);
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
+  const [addResult, setAddResult] = useState<{success?: boolean; error?: string} | null>(null);
   const [form, setForm] = useState({
     name: "", email: "", role: "Receptionist", status: "Active",
+    password: "DentEase@123",
   });
   const router = useRouter();
 
@@ -57,15 +59,45 @@ export default function StaffPage() {
   };
 
   const handleAdd = async () => {
+    if (!form.name || !form.email || !form.password) {
+      setAddResult({ error: "Name, email aur password zaroori hain!" });
+      return;
+    }
     setLoading(true);
+    setAddResult(null);
+
+    // Step 1: Supabase mein user create karo
+    const res = await fetch("/api/invite", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: form.email,
+        password: form.password,
+        name: form.name,
+      }),
+    });
+    const result = await res.json();
+
+    if (result.error) {
+      setAddResult({ error: result.error });
+      setLoading(false);
+      return;
+    }
+
+    // Step 2: Staff table mein save karo
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("staff").insert([{
-      name: form.name, email: form.email, role: form.role,
-      status: form.status, permissions: selectedPermissions.join(","),
+      name: form.name,
+      email: form.email,
+      role: form.role,
+      status: form.status,
+      permissions: selectedPermissions.join(","),
       user_id: user?.id,
     }]);
-    setForm({ name: "", email: "", role: "Receptionist", status: "Active" });
+
+    setAddResult({ success: true });
+    setForm({ name: "", email: "", role: "Receptionist", status: "Active", password: "DentEase@123" });
     setSelectedPermissions([]);
     setShowForm(false);
     setLoading(false);
@@ -91,6 +123,13 @@ export default function StaffPage() {
   const toggleStatus = async (s: Staff) => {
     const supabase = createClient();
     await supabase.from("staff").update({ status: s.status === "Active" ? "Inactive" : "Active" }).eq("id", s.id);
+    fetchStaff();
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this staff member?")) return;
+    const supabase = createClient();
+    await supabase.from("staff").delete().eq("id", id);
     fetchStaff();
   };
 
@@ -121,9 +160,6 @@ export default function StaffPage() {
                   </label>
                 ))}
               </div>
-              {editPermissions.length > 0 && (
-                <p className="text-xs text-teal-500 mb-3">✅ {editPermissions.length} pages selected</p>
-              )}
               <div className="flex gap-3">
                 <button onClick={handleEditPermissions} disabled={loading} className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
                   {loading ? "Saving..." : "Save Permissions"}
@@ -139,22 +175,34 @@ export default function StaffPage() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Staff</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {staff.length} members</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
-            + Add
+          <button onClick={() => { setShowForm(!showForm); setAddResult(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+            + Add Staff
           </button>
         </div>
 
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-6">
-          <p className="text-sm text-blue-700 font-medium">ℹ️ Default Password</p>
-          <p className="text-xs text-blue-500 mt-1">Naye staff member ka default password: <span className="font-bold">DentEase@123</span></p>
-        </div>
+        {addResult?.success && (
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
+            <p className="text-sm text-green-700 font-medium">✅ Staff member added successfully! Login credentials have been set.</p>
+          </div>
+        )}
+        {addResult?.error && (
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
+            <p className="text-sm text-red-700 font-medium">❌ Error: {addResult.error}</p>
+          </div>
+        )}
 
         {showForm && (
           <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">New Staff Member</h3>
+
+            <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
+              <p className="text-xs text-blue-700 font-medium">ℹ️ Staff member apni email aur password se login kar sakta hai</p>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
               <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <input placeholder="Email Address" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Receptionist</option>
                 <option>Doctor</option>
@@ -166,6 +214,7 @@ export default function StaffPage() {
                 <option>Inactive</option>
               </select>
             </div>
+
             <div className="border border-teal-100 rounded-xl p-4 mb-4">
               <div className="flex justify-between items-center mb-3">
                 <p className="text-sm font-semibold text-teal-800">Page Access</p>
@@ -184,9 +233,10 @@ export default function StaffPage() {
                 ))}
               </div>
             </div>
+
             <div className="flex gap-3">
               <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Adding..." : "Add Staff"}
+                {loading ? "Creating account..." : "Add Staff & Create Login"}
               </button>
               <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
@@ -224,10 +274,11 @@ export default function StaffPage() {
                     )}
                   </div>
                   <div className="flex gap-3 mt-2">
-                    <button onClick={() => openEdit(s)} className="text-teal-600 text-xs font-medium">✏️ Edit Permissions</button>
+                    <button onClick={() => openEdit(s)} className="text-teal-600 text-xs font-medium">✏️ Permissions</button>
                     <button onClick={() => toggleStatus(s)} className="text-xs font-medium text-gray-500">
                       {s.status === "Active" ? "Deactivate" : "Activate"}
                     </button>
+                    <button onClick={() => handleDelete(s.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                   </div>
                 </div>
               ))
@@ -272,11 +323,12 @@ export default function StaffPage() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex flex-col gap-1">
-                          <button onClick={() => openEdit(s)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">✏️ Edit Permissions</button>
-                          <button onClick={() => toggleStatus(s)} className="text-xs font-medium text-gray-500 hover:text-gray-700">
+                        <div className="flex gap-2">
+                          <button onClick={() => openEdit(s)} className="text-teal-600 text-xs font-medium">✏️ Permissions</button>
+                          <button onClick={() => toggleStatus(s)} className="text-xs font-medium text-gray-500">
                             {s.status === "Active" ? "Deactivate" : "Activate"}
                           </button>
+                          <button onClick={() => handleDelete(s.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                         </div>
                       </td>
                     </tr>
