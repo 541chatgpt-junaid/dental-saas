@@ -123,41 +123,7 @@ export default function Purchases() {
   });
 
   const totalSpent = filteredPurchases.reduce((sum, p) => sum + (p.total_price || 0), 0);
-
-  const PurchaseForm = ({ title }: { title: string }) => (
-    <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-      <h3 className="text-sm font-semibold text-teal-800 mb-4">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option>Consumable</option><option>Instrument</option><option>Medicine</option><option>PPE</option><option>Other</option>
-        </select>
-        <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
-        </select>
-        <input placeholder="Price Per Unit (Rs)" type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <div>
-          <label className="block text-xs text-teal-600 mb-1">Purchase Date</label>
-          <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        </div>
-        <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-      </div>
-      {form.quantity && form.price_per_unit && (
-        <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between">
-          <span className="text-sm text-teal-600">Total:</span>
-          <span className="text-sm font-bold text-teal-800">Rs {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}</span>
-        </div>
-      )}
-      <div className="flex gap-3 mt-4">
-        <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-          {loading ? "Saving..." : editingId ? "Update Purchase" : "Save Purchase"}
-        </button>
-        <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
-      </div>
-    </div>
-  );
+  const showAnyForm = showForm || !!editingId;
 
   return (
     <div className="min-h-screen flex bg-teal-50">
@@ -168,7 +134,7 @@ export default function Purchases() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Purchases</h2>
             <p className="text-sm text-teal-600 mt-1">Track all inventory purchases</p>
           </div>
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
         <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
@@ -189,8 +155,40 @@ export default function Purchases() {
           </div>
         </div>
 
-        {showForm && <PurchaseForm title="New Purchase" />}
-        {editingId && <PurchaseForm title="Edit Purchase" />}
+        {showAnyForm && (
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+            <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingId ? "Edit Purchase" : "New Purchase"}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <option>Consumable</option><option>Instrument</option><option>Medicine</option><option>PPE</option><option>Other</option>
+              </select>
+              <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
+              </select>
+              <input placeholder="Price Per Unit (Rs)" type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <div>
+                <label className="block text-xs text-teal-600 mb-1">Purchase Date</label>
+                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              </div>
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+            </div>
+            {form.quantity && form.price_per_unit && (
+              <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between">
+                <span className="text-sm text-teal-600">Total:</span>
+                <span className="text-sm font-bold text-teal-800">Rs {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}</span>
+              </div>
+            )}
+            <div className="flex gap-3 mt-4">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+                {loading ? "Saving..." : editingId ? "Update Purchase" : "Save Purchase"}
+              </button>
+              <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col md:flex-row gap-3 mb-4">
           <input placeholder="Search item or supplier..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border border-teal-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
@@ -204,7 +202,6 @@ export default function Purchases() {
         </div>
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          {/* Mobile */}
           <div className="md:hidden divide-y divide-teal-50">
             {filteredPurchases.length === 0 ? (
               <p className="text-center py-10 text-teal-400 text-sm">No purchases found</p>
@@ -229,14 +226,13 @@ export default function Purchases() {
               ))
             )}
           </div>
-          {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-teal-50">
                 <tr>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Item</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Quantity</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Qty</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Price/Unit</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Total</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Supplier</th>

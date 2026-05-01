@@ -109,31 +109,7 @@ export default function Materials() {
   };
 
   const lowStock = materials.filter(m => m.quantity <= m.min_quantity);
-
-  const MaterialForm = ({ title }: { title: string }) => (
-    <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-      <h3 className="text-sm font-semibold text-teal-800 mb-4">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        <input placeholder="Material Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option>Consumable</option><option>Instrument</option><option>Medicine</option><option>PPE</option><option>Other</option>
-        </select>
-        <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
-        </select>
-        <input placeholder="Min Quantity (Low Stock Alert)" type="number" value={form.min_quantity} onChange={e => setForm({...form, min_quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <input placeholder="Price per Unit (Rs)" type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
-      </div>
-      <div className="flex gap-3 mt-4">
-        <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-          {loading ? "Saving..." : editingId ? "Update Material" : "Save Material"}
-        </button>
-        <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
-      </div>
-    </div>
-  );
+  const showAnyForm = showForm || !!editingId;
 
   return (
     <div className="min-h-screen flex bg-teal-50">
@@ -144,7 +120,7 @@ export default function Materials() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Materials</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {materials.length} items</p>
           </div>
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
         {lowStock.length > 0 && (
@@ -160,11 +136,32 @@ export default function Materials() {
           </div>
         )}
 
-        {showForm && <MaterialForm title="New Material" />}
-        {editingId && <MaterialForm title="Edit Material" />}
+        {showAnyForm && (
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+            <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingId ? "Edit Material" : "New Material"}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <input placeholder="Material Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <option>Consumable</option><option>Instrument</option><option>Medicine</option><option>PPE</option><option>Other</option>
+              </select>
+              <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
+              </select>
+              <input placeholder="Min Quantity (Low Stock Alert)" type="number" value={form.min_quantity} onChange={e => setForm({...form, min_quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Price per Unit (Rs)" type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+                {loading ? "Saving..." : editingId ? "Update Material" : "Save Material"}
+              </button>
+              <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          {/* Mobile */}
           <div className="md:hidden divide-y divide-teal-50">
             {materials.length === 0 ? (
               <p className="text-center py-10 text-teal-400 text-sm">No materials added yet</p>
@@ -193,7 +190,6 @@ export default function Materials() {
               ))
             )}
           </div>
-          {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-teal-50">

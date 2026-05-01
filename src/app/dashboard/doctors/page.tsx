@@ -94,27 +94,8 @@ export default function Doctors() {
     fetchDoctors();
   };
 
-  const DoctorForm = ({ title }: { title: string }) => (
-    <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-      <h3 className="text-sm font-semibold text-teal-800 mb-4">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <input placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option>Active</option>
-          <option>Inactive</option>
-        </select>
-      </div>
-      <div className="flex gap-3 mt-4">
-        <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-          {loading ? "Saving..." : editingId ? "Update Doctor" : "Save Doctor"}
-        </button>
-        <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
-      </div>
-    </div>
-  );
+  const formTitle = editingId ? "Edit Doctor" : "New Doctor";
+  const showAnyForm = showForm || !!editingId;
 
   return (
     <div className="min-h-screen flex bg-teal-50">
@@ -125,16 +106,34 @@ export default function Doctors() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Doctors</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {doctors.length} doctors</p>
           </div>
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+          <button onClick={() => { setShowForm(!showForm); setEditingId(null); setForm({ name: "", specialization: "", phone: "", email: "", status: "Active" }); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
             + Add Doctor
           </button>
         </div>
 
-        {showForm && <DoctorForm title="New Doctor" />}
-        {editingId && <DoctorForm title="Edit Doctor" />}
+        {showAnyForm && (
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+            <h3 className="text-sm font-semibold text-teal-800 mb-4">{formTitle}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <option>Active</option>
+                <option>Inactive</option>
+              </select>
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+                {loading ? "Saving..." : editingId ? "Update Doctor" : "Save Doctor"}
+              </button>
+              <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-teal-50">
             {doctors.length === 0 ? (
               <p className="text-center py-10 text-teal-400 text-sm">No doctors added yet</p>
@@ -153,16 +152,13 @@ export default function Doctors() {
                   <p className="text-xs text-teal-400 mt-1">{d.phone} · {d.email}</p>
                   <div className="flex gap-3 mt-2">
                     <button onClick={() => openEdit(d)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
-                    <button onClick={() => toggleStatus(d)} className="text-teal-600 text-xs font-medium">
-                      {d.status === "Active" ? "Deactivate" : "Activate"}
-                    </button>
+                    <button onClick={() => toggleStatus(d)} className="text-teal-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
                     <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
                   </div>
                 </div>
               ))
             )}
           </div>
-          {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-teal-50">
@@ -186,17 +182,13 @@ export default function Doctors() {
                       <td className="px-4 py-3 text-teal-700">{d.phone}</td>
                       <td className="px-4 py-3 text-teal-700">{d.email}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${d.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
-                          {d.status}
-                        </span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${d.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>{d.status}</span>
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-3">
-                          <button onClick={() => openEdit(d)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">✏️ Edit</button>
-                          <button onClick={() => toggleStatus(d)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">
-                            {d.status === "Active" ? "Deactivate" : "Activate"}
-                          </button>
-                          <button onClick={() => handleDelete(d.id)} className="text-red-400 hover:text-red-600 text-xs font-medium">🗑️</button>
+                          <button onClick={() => openEdit(d)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => toggleStatus(d)} className="text-teal-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
+                          <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                         </div>
                       </td>
                     </tr>
