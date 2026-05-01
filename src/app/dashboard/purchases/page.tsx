@@ -22,6 +22,7 @@ interface Purchase {
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -48,6 +49,12 @@ export default function Purchases() {
     fetchPurchases();
   }, [router]);
 
+  const resetForm = () => {
+    setForm({ item_name: "", category: "Consumable", quantity: "", unit: "Box", price_per_unit: "", supplier: "", date: "", notes: "" });
+    setShowForm(false);
+    setEditingId(null);
+  };
+
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
@@ -61,9 +68,43 @@ export default function Purchases() {
       supplier: form.supplier, date: form.date,
       notes: form.notes, user_id: user?.id,
     }]);
-    setForm({ item_name: "", category: "Consumable", quantity: "", unit: "Box", price_per_unit: "", supplier: "", date: "", notes: "" });
-    setShowForm(false);
+    resetForm();
     setLoading(false);
+    fetchPurchases();
+  };
+
+  const handleEdit = async () => {
+    if (!editingId) return;
+    setLoading(true);
+    const supabase = createClient();
+    const qty = parseInt(form.quantity) || 0;
+    const price = parseInt(form.price_per_unit) || 0;
+    await supabase.from("purchases").update({
+      item_name: form.item_name, category: form.category,
+      quantity: qty, unit: form.unit,
+      price_per_unit: price, total_price: qty * price,
+      supplier: form.supplier, date: form.date, notes: form.notes,
+    }).eq("id", editingId);
+    resetForm();
+    setLoading(false);
+    fetchPurchases();
+  };
+
+  const openEdit = (p: Purchase) => {
+    setEditingId(p.id);
+    setForm({
+      item_name: p.item_name, category: p.category,
+      quantity: p.quantity.toString(), unit: p.unit,
+      price_per_unit: p.price_per_unit.toString(),
+      supplier: p.supplier || "", date: p.date, notes: p.notes || "",
+    });
+    setShowForm(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this purchase?")) return;
+    const supabase = createClient();
+    await supabase.from("purchases").delete().eq("id", id);
     fetchPurchases();
   };
 
@@ -83,6 +124,41 @@ export default function Purchases() {
 
   const totalSpent = filteredPurchases.reduce((sum, p) => sum + (p.total_price || 0), 0);
 
+  const PurchaseForm = ({ title }: { title: string }) => (
+    <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+      <h3 className="text-sm font-semibold text-teal-800 mb-4">{title}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+          <option>Consumable</option><option>Instrument</option><option>Medicine</option><option>PPE</option><option>Other</option>
+        </select>
+        <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+          <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
+        </select>
+        <input placeholder="Price Per Unit (Rs)" type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <div>
+          <label className="block text-xs text-teal-600 mb-1">Purchase Date</label>
+          <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        </div>
+        <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+      </div>
+      {form.quantity && form.price_per_unit && (
+        <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between">
+          <span className="text-sm text-teal-600">Total:</span>
+          <span className="text-sm font-bold text-teal-800">Rs {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}</span>
+        </div>
+      )}
+      <div className="flex gap-3 mt-4">
+        <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+          {loading ? "Saving..." : editingId ? "Update Purchase" : "Save Purchase"}
+        </button>
+        <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
@@ -92,9 +168,7 @@ export default function Purchases() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Purchases</h2>
             <p className="text-sm text-teal-600 mt-1">Track all inventory purchases</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
-            + Add
-          </button>
+          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
         <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
@@ -110,58 +184,13 @@ export default function Purchases() {
           </div>
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">SUPPLIERS</p>
-            <p className="text-xl md:text-2xl font-semibold text-teal-800">
-              {new Set(filteredPurchases.map(p => p.supplier)).size}
-            </p>
+            <p className="text-xl md:text-2xl font-semibold text-teal-800">{new Set(filteredPurchases.map(p => p.supplier)).size}</p>
             <p className="text-xs text-teal-400 mt-1">Unique</p>
           </div>
         </div>
 
-        {showForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">New Purchase</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                <option>Consumable</option>
-                <option>Instrument</option>
-                <option>Medicine</option>
-                <option>PPE</option>
-                <option>Other</option>
-              </select>
-              <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                <option>Box</option>
-                <option>Piece</option>
-                <option>Pack</option>
-                <option>Bottle</option>
-                <option>Tube</option>
-                <option>Roll</option>
-              </select>
-              <input placeholder="Price Per Unit (Rs)" type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <div>
-                <label className="block text-xs text-teal-600 mb-1">Purchase Date</label>
-                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              </div>
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-            </div>
-            {form.quantity && form.price_per_unit && (
-              <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between items-center">
-                <span className="text-sm text-teal-600">Total Amount:</span>
-                <span className="text-sm font-bold text-teal-800">
-                  Rs {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}
-                </span>
-              </div>
-            )}
-            <div className="flex gap-3 mt-4">
-              <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : "Save Purchase"}
-              </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
-            </div>
-          </div>
-        )}
+        {showForm && <PurchaseForm title="New Purchase" />}
+        {editingId && <PurchaseForm title="Edit Purchase" />}
 
         <div className="flex flex-col md:flex-row gap-3 mb-4">
           <input placeholder="Search item or supplier..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border border-teal-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
@@ -175,7 +204,7 @@ export default function Purchases() {
         </div>
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          {/* Mobile Cards */}
+          {/* Mobile */}
           <div className="md:hidden divide-y divide-teal-50">
             {filteredPurchases.length === 0 ? (
               <p className="text-center py-10 text-teal-400 text-sm">No purchases found</p>
@@ -190,15 +219,17 @@ export default function Purchases() {
                     <p className="font-semibold text-red-600 text-sm">Rs {p.total_price?.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between mt-1">
-                    <p className="text-xs text-teal-400">{p.quantity} {p.unit} · Rs {p.price_per_unit}/unit</p>
-                    <p className="text-xs text-teal-400">{p.date}</p>
+                    <p className="text-xs text-teal-400">{p.quantity} {p.unit} · {p.date}</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(p)} className="text-teal-600 text-xs font-medium">✏️</button>
+                      <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                    </div>
                   </div>
-                  {p.notes && <p className="text-xs text-teal-400 mt-1">📝 {p.notes}</p>}
                 </div>
               ))
             )}
           </div>
-          {/* Desktop Table */}
+          {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-teal-50">
@@ -210,11 +241,12 @@ export default function Purchases() {
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Total</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Supplier</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredPurchases.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-10 text-teal-400">No purchases found</td></tr>
+                  <tr><td colSpan={8} className="text-center py-10 text-teal-400">No purchases found</td></tr>
                 ) : (
                   filteredPurchases.map(p => (
                     <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
@@ -222,14 +254,18 @@ export default function Purchases() {
                         <p className="font-medium text-teal-800">{p.item_name}</p>
                         {p.notes && <p className="text-xs text-teal-400">{p.notes}</p>}
                       </td>
-                      <td className="px-4 py-3">
-                        <span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{p.category}</span>
-                      </td>
+                      <td className="px-4 py-3"><span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{p.category}</span></td>
                       <td className="px-4 py-3 text-teal-700">{p.quantity} {p.unit}</td>
                       <td className="px-4 py-3 text-teal-700">Rs {p.price_per_unit?.toLocaleString()}</td>
                       <td className="px-4 py-3 font-semibold text-red-600">Rs {p.total_price?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-teal-700">{p.supplier}</td>
                       <td className="px-4 py-3 text-teal-700">{p.date}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button onClick={() => openEdit(p)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}

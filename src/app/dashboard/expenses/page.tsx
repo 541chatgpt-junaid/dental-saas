@@ -19,6 +19,7 @@ export default function Expenses() {
   const [labCost, setLabCost] = useState(0);
   const [materialCost, setMaterialCost] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [form, setForm] = useState({
@@ -53,6 +54,12 @@ export default function Expenses() {
     fetchAutoCosts();
   }, [router]);
 
+  const resetForm = () => {
+    setForm({ title: "", category: "Rent", amount: "", date: "", notes: "" });
+    setShowForm(false);
+    setEditingId(null);
+  };
+
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
@@ -62,9 +69,39 @@ export default function Expenses() {
       amount: parseInt(form.amount) || 0,
       date: form.date, notes: form.notes, user_id: user?.id,
     }]);
-    setForm({ title: "", category: "Rent", amount: "", date: "", notes: "" });
-    setShowForm(false);
+    resetForm();
     setLoading(false);
+    fetchExpenses();
+  };
+
+  const handleEdit = async () => {
+    if (!editingId) return;
+    setLoading(true);
+    const supabase = createClient();
+    await supabase.from("expenses").update({
+      title: form.title, category: form.category,
+      amount: parseInt(form.amount) || 0,
+      date: form.date, notes: form.notes,
+    }).eq("id", editingId);
+    resetForm();
+    setLoading(false);
+    fetchExpenses();
+  };
+
+  const openEdit = (e: Expense) => {
+    setEditingId(e.id);
+    setForm({
+      title: e.title, category: e.category,
+      amount: e.amount.toString(),
+      date: e.date, notes: e.notes || "",
+    });
+    setShowForm(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this expense?")) return;
+    const supabase = createClient();
+    await supabase.from("expenses").delete().eq("id", id);
     fetchExpenses();
   };
 
@@ -80,6 +117,30 @@ export default function Expenses() {
   const manualTotal = filteredExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
   const grandTotal = manualTotal + labCost + materialCost;
 
+  const ExpenseForm = ({ title }: { title: string }) => (
+    <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+      <h3 className="text-sm font-semibold text-teal-800 mb-4">{title}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <input placeholder="Expense Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+          <option>Rent</option><option>Electricity</option><option>Salary</option><option>Internet</option><option>Maintenance</option><option>Other</option>
+        </select>
+        <input placeholder="Amount (Rs)" type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <div>
+          <label className="block text-xs text-teal-600 mb-1">Date</label>
+          <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        </div>
+        <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+      </div>
+      <div className="flex gap-3 mt-4">
+        <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+          {loading ? "Saving..." : editingId ? "Update Expense" : "Save Expense"}
+        </button>
+        <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
@@ -89,12 +150,9 @@ export default function Expenses() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Expenses</h2>
             <p className="text-sm text-teal-600 mt-1">Track all clinic expenses</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
-            + Add
-          </button>
+          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
-        {/* Stats — 2x2 on mobile, 4 cols on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">LAB COSTS</p>
@@ -118,34 +176,8 @@ export default function Expenses() {
           </div>
         </div>
 
-        {showForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">New Expense</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Expense Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                <option>Rent</option>
-                <option>Electricity</option>
-                <option>Salary</option>
-                <option>Internet</option>
-                <option>Maintenance</option>
-                <option>Other</option>
-              </select>
-              <input placeholder="Amount (Rs)" type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <div>
-                <label className="block text-xs text-teal-600 mb-1">Date</label>
-                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              </div>
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
-            </div>
-            <div className="flex gap-3 mt-4">
-              <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : "Save Expense"}
-              </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
-            </div>
-          </div>
-        )}
+        {showForm && <ExpenseForm title="New Expense" />}
+        {editingId && <ExpenseForm title="Edit Expense" />}
 
         <div className="flex gap-2 mb-4">
           {["all", "today", "month"].map(f => (
@@ -156,7 +188,7 @@ export default function Expenses() {
         </div>
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          {/* Mobile Cards */}
+          {/* Mobile */}
           <div className="md:hidden divide-y divide-teal-50">
             {filteredExpenses.length === 0 ? (
               <p className="text-center py-10 text-teal-400 text-sm">No expenses added yet</p>
@@ -170,15 +202,18 @@ export default function Expenses() {
                     </div>
                     <p className="text-red-600 font-medium text-sm">Rs {e.amount?.toLocaleString()}</p>
                   </div>
-                  <div className="flex justify-between mt-1">
-                    <p className="text-xs text-teal-400">{e.notes}</p>
-                    <p className="text-xs text-teal-400">{e.date}</p>
+                  <div className="flex justify-between mt-2">
+                    <p className="text-xs text-teal-400">{e.notes} · {e.date}</p>
+                    <div className="flex gap-2">
+                      <button onClick={() => openEdit(e)} className="text-teal-600 text-xs font-medium">✏️</button>
+                      <button onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                    </div>
                   </div>
                 </div>
               ))
             )}
           </div>
-          {/* Desktop Table */}
+          {/* Desktop */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-teal-50">
@@ -188,11 +223,12 @@ export default function Expenses() {
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Amount</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Notes</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredExpenses.length === 0 ? (
-                  <tr><td colSpan={5} className="text-center py-10 text-teal-400">No expenses added yet</td></tr>
+                  <tr><td colSpan={6} className="text-center py-10 text-teal-400">No expenses added yet</td></tr>
                 ) : (
                   filteredExpenses.map(e => (
                     <tr key={e.id} className="border-t border-teal-50 hover:bg-teal-50">
@@ -203,6 +239,12 @@ export default function Expenses() {
                       <td className="px-4 py-3 text-red-600 font-medium">Rs {e.amount?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-teal-700">{e.date}</td>
                       <td className="px-4 py-3 text-teal-400">{e.notes}</td>
+                      <td className="px-4 py-3">
+                        <div className="flex gap-2">
+                          <button onClick={() => openEdit(e)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                        </div>
+                      </td>
                     </tr>
                   ))
                 )}

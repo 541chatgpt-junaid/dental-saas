@@ -17,6 +17,7 @@ interface Doctor {
 export default function Doctors() {
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "", specialization: "", phone: "", email: "", status: "Active",
@@ -40,6 +41,12 @@ export default function Doctors() {
     fetchDoctors();
   }, [router]);
 
+  const resetForm = () => {
+    setForm({ name: "", specialization: "", phone: "", email: "", status: "Active" });
+    setShowForm(false);
+    setEditingId(null);
+  };
+
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
@@ -49,9 +56,34 @@ export default function Doctors() {
       phone: form.phone, email: form.email,
       status: form.status, user_id: user?.id,
     }]);
-    setForm({ name: "", specialization: "", phone: "", email: "", status: "Active" });
-    setShowForm(false);
+    resetForm();
     setLoading(false);
+    fetchDoctors();
+  };
+
+  const handleEdit = async () => {
+    if (!editingId) return;
+    setLoading(true);
+    const supabase = createClient();
+    await supabase.from("doctors").update({
+      name: form.name, specialization: form.specialization,
+      phone: form.phone, email: form.email, status: form.status,
+    }).eq("id", editingId);
+    resetForm();
+    setLoading(false);
+    fetchDoctors();
+  };
+
+  const openEdit = (d: Doctor) => {
+    setEditingId(d.id);
+    setForm({ name: d.name, specialization: d.specialization, phone: d.phone, email: d.email, status: d.status });
+    setShowForm(false);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm("Delete this doctor?")) return;
+    const supabase = createClient();
+    await supabase.from("doctors").delete().eq("id", id);
     fetchDoctors();
   };
 
@@ -62,6 +94,28 @@ export default function Doctors() {
     fetchDoctors();
   };
 
+  const DoctorForm = ({ title }: { title: string }) => (
+    <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+      <h3 className="text-sm font-semibold text-teal-800 mb-4">{title}</h3>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+        <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <input placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+        <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+          <option>Active</option>
+          <option>Inactive</option>
+        </select>
+      </div>
+      <div className="flex gap-3 mt-4">
+        <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+          {loading ? "Saving..." : editingId ? "Update Doctor" : "Save Doctor"}
+        </button>
+        <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
@@ -71,32 +125,13 @@ export default function Doctors() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Doctors</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {doctors.length} doctors</p>
           </div>
-          <button onClick={() => setShowForm(!showForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
             + Add Doctor
           </button>
         </div>
 
-        {showForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">New Doctor</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                <option>Active</option>
-                <option>Inactive</option>
-              </select>
-            </div>
-            <div className="flex gap-3 mt-4">
-              <button onClick={handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : "Save Doctor"}
-              </button>
-              <button onClick={() => setShowForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
-            </div>
-          </div>
-        )}
+        {showForm && <DoctorForm title="New Doctor" />}
+        {editingId && <DoctorForm title="Edit Doctor" />}
 
         <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
           {/* Mobile Cards */}
@@ -116,9 +151,13 @@ export default function Doctors() {
                     </span>
                   </div>
                   <p className="text-xs text-teal-400 mt-1">{d.phone} · {d.email}</p>
-                  <button onClick={() => toggleStatus(d)} className="mt-2 text-teal-600 text-xs font-medium">
-                    {d.status === "Active" ? "Deactivate" : "Activate"}
-                  </button>
+                  <div className="flex gap-3 mt-2">
+                    <button onClick={() => openEdit(d)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                    <button onClick={() => toggleStatus(d)} className="text-teal-600 text-xs font-medium">
+                      {d.status === "Active" ? "Deactivate" : "Activate"}
+                    </button>
+                    <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
+                  </div>
                 </div>
               ))
             )}
@@ -152,9 +191,13 @@ export default function Doctors() {
                         </span>
                       </td>
                       <td className="px-4 py-3">
-                        <button onClick={() => toggleStatus(d)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">
-                          {d.status === "Active" ? "Deactivate" : "Activate"}
-                        </button>
+                        <div className="flex gap-3">
+                          <button onClick={() => openEdit(d)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => toggleStatus(d)} className="text-teal-600 hover:text-teal-800 text-xs font-medium">
+                            {d.status === "Active" ? "Deactivate" : "Activate"}
+                          </button>
+                          <button onClick={() => handleDelete(d.id)} className="text-red-400 hover:text-red-600 text-xs font-medium">🗑️</button>
+                        </div>
                       </td>
                     </tr>
                   ))
