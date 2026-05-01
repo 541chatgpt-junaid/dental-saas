@@ -60,6 +60,7 @@ const lowerLeft = [31,32,33,34,35,36,37,38];
 
 export default function Patients() {
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [allPatients, setAllPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
@@ -91,8 +92,13 @@ export default function Patients() {
   const fetchPatients = async () => {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("patients").select("*").eq("user_id", user?.id).order("created_at", { ascending: false });
-    if (data) setPatients(data);
+    // Fetch all patients ordered by created_at ascending for correct numbering
+    const { data } = await supabase.from("patients").select("*").eq("user_id", user?.id).order("created_at", { ascending: true });
+    if (data) {
+      setAllPatients(data);
+      // Reverse for display (newest first)
+      setPatients([...data].reverse());
+    }
   };
 
   const fetchDoctors = async () => {
@@ -124,6 +130,12 @@ export default function Patients() {
     fetchPatients();
     fetchDoctors();
   }, [router]);
+
+  // Get clinic-specific sequential number for a patient
+  const getClinicPatientNumber = (patientId: number) => {
+    const index = allPatients.findIndex(p => p.id === patientId);
+    return index + 1;
+  };
 
   const resetForm = () => {
     setForm({ name: "", phone: "", address: "", age: "", gender: "Male", treatment: "", doctor_name: "", fee_total: "", fee_paid: "" });
@@ -263,7 +275,7 @@ export default function Patients() {
 
   const filteredPatients = patients.filter(p =>
     p.name?.toLowerCase().includes(search.toLowerCase()) ||
-    p.id?.toString().includes(search)
+    getClinicPatientNumber(p.id).toString().includes(search)
   );
 
   const ToothBtn = ({ num, selected, onToggle }: { num: number; selected: number[]; onToggle: (n: number) => void }) => (
@@ -323,7 +335,10 @@ export default function Patients() {
             <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
-                  <h2 className="text-lg md:text-xl font-semibold text-teal-800">{selectedPatient.name}</h2>
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg md:text-xl font-semibold text-teal-800">{selectedPatient.name}</h2>
+                    <span className="text-xs text-teal-400 bg-teal-50 px-2 py-0.5 rounded-full">#{getClinicPatientNumber(selectedPatient.id)}</span>
+                  </div>
                   <p className="text-xs md:text-sm text-teal-500">{selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} years · {selectedPatient.address}</p>
                   {selectedPatient.treatment && <p className="text-xs text-teal-400 mt-1">Treatment: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}</p>}
                 </div>
@@ -469,7 +484,7 @@ export default function Patients() {
             </div>
 
             <div className="mb-5">
-              <input placeholder="Search by patient name or ID..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-teal-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
+              <input placeholder="Search by name or patient number..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-teal-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
             </div>
 
             {showAnyForm && (
@@ -511,7 +526,10 @@ export default function Patients() {
                     <div key={p.id} className="p-4">
                       <div className="flex justify-between items-start mb-1" onClick={() => openPatient(p)}>
                         <div>
-                          <p className="font-medium text-teal-800 text-sm">{p.name}</p>
+                          <div className="flex items-center gap-1">
+                            <p className="font-medium text-teal-800 text-sm">{p.name}</p>
+                            <span className="text-xs text-teal-300">#{getClinicPatientNumber(p.id)}</span>
+                          </div>
                           <p className="text-xs text-teal-400">{p.phone} · {p.gender} · {p.age}y</p>
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{p.status}</span>
@@ -536,7 +554,7 @@ export default function Patients() {
                 <table className="w-full text-sm">
                   <thead className="bg-teal-50">
                     <tr>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">ID</th>
+                      <th className="text-left px-4 py-3 text-teal-700 font-medium">#</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Name</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
@@ -553,7 +571,7 @@ export default function Patients() {
                     ) : (
                       filteredPatients.map(p => (
                         <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
-                          <td className="px-4 py-3 text-teal-400 text-xs cursor-pointer" onClick={() => openPatient(p)}>#{p.id}</td>
+                          <td className="px-4 py-3 text-teal-400 text-xs cursor-pointer" onClick={() => openPatient(p)}>#{getClinicPatientNumber(p.id)}</td>
                           <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}>
                             <p className="font-medium text-teal-800">{p.name}</p>
                             <p className="text-xs text-teal-400">{p.phone} · {p.gender} · {p.age}y</p>
@@ -569,7 +587,7 @@ export default function Patients() {
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs font-medium">🖨️</button>
-                              <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                              <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
                               {p.status !== "Paid" && (
                                 <button onClick={() => { const amount = prompt(`Payment for ${p.name}:`); if (amount) handlePayment(p, parseInt(amount)); }} className="text-teal-600 text-xs font-medium">Pay</button>
                               )}
