@@ -35,6 +35,19 @@ interface Visit {
   fee_paid: number;
 }
 
+interface Appointment {
+  id: number;
+  created_at: string;
+  patient_id: number;
+  patient_name: string;
+  doctor_name: string;
+  date: string;
+  time: string;
+  treatment: string;
+  notes: string;
+  status: string;
+}
+
 interface Doctor {
   id: number;
   name: string;
@@ -54,13 +67,15 @@ export default function Patients() {
   const [selectedTeeth, setSelectedTeeth] = useState<number[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [showVisitForm, setShowVisitForm] = useState(false);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [visitTeeth, setVisitTeeth] = useState<number[]>([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptPatient, setReceiptPatient] = useState<Patient | null>(null);
+  const [activeTab, setActiveTab] = useState<"visits"|"appointments">("visits");
   const [appointmentForm, setAppointmentForm] = useState({
-    date: "", time: "", treatment: "", notes: "", status: "Scheduled",
+    date: "", time: "", treatment: "", notes: "",
   });
   const [visitForm, setVisitForm] = useState({
     doctor_name: "", treatment: "", notes: "", fee: "", fee_paid: "",
@@ -90,6 +105,12 @@ export default function Patients() {
     const supabase = createClient();
     const { data } = await supabase.from("visits").select("*").eq("patient_id", patientId).order("created_at", { ascending: false });
     if (data) setVisits(data);
+  };
+
+  const fetchAppointments = async (patientId: number) => {
+    const supabase = createClient();
+    const { data } = await supabase.from("appointments").select("*").eq("patient_id", patientId).order("date", { ascending: true });
+    if (data) setAppointments(data);
   };
 
   useEffect(() => {
@@ -169,10 +190,17 @@ export default function Patients() {
       status: "Scheduled",
       user_id: user?.id,
     }]);
-    setAppointmentForm({ date: "", time: "", treatment: "", notes: "", status: "Scheduled" });
+    setAppointmentForm({ date: "", time: "", treatment: "", notes: "" });
     setShowAppointmentForm(false);
     setLoading(false);
-    alert("Appointment booked! Check Appointments page.");
+    fetchAppointments(selectedPatient.id);
+    setActiveTab("appointments");
+  };
+
+  const updateAppointmentStatus = async (apptId: number, newStatus: string) => {
+    const supabase = createClient();
+    await supabase.from("appointments").update({ status: newStatus }).eq("id", apptId);
+    if (selectedPatient) fetchAppointments(selectedPatient.id);
   };
 
   const handlePayment = async (patient: Patient, extraPayment: number) => {
@@ -185,7 +213,9 @@ export default function Patients() {
 
   const openPatient = (patient: Patient) => {
     setSelectedPatient(patient);
+    setActiveTab("visits");
     fetchVisits(patient.id);
+    fetchAppointments(patient.id);
   };
 
   const filteredPatients = patients.filter(p =>
@@ -226,6 +256,14 @@ export default function Patients() {
     </div>
   );
 
+  const StatusBadge = ({ status }: { status: string }) => (
+    <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+      status === "Completed" ? "bg-green-100 text-green-700" :
+      status === "Scheduled" ? "bg-blue-100 text-blue-700" :
+      "bg-red-100 text-red-700"
+    }`}>{status}</span>
+  );
+
   return (
     <div className="min-h-screen flex bg-teal-50">
       <Sidebar />
@@ -236,16 +274,19 @@ export default function Patients() {
         {selectedPatient ? (
           <div>
             <button onClick={() => setSelectedPatient(null)} className="text-teal-600 text-sm mb-4 hover:underline">← Back to Patients</button>
+            
+            {/* Patient Info Card */}
             <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
                   <h2 className="text-lg md:text-xl font-semibold text-teal-800">{selectedPatient.name}</h2>
                   <p className="text-xs md:text-sm text-teal-500">{selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} years · {selectedPatient.address}</p>
+                  {selectedPatient.treatment && <p className="text-xs text-teal-400 mt-1">Treatment: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-teal-300 text-teal-700 px-3 py-2 rounded-lg text-xs md:text-sm font-medium hover:bg-teal-50">🖨️ Receipt</button>
                   <button onClick={() => { setShowAppointmentForm(!showAppointmentForm); setShowVisitForm(false); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-medium">+ Appointment</button>
-                  <button onClick={() => { setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-medium">+ Add Visit</button>
+                  <button onClick={() => { setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-medium">+ Visit</button>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 md:gap-4 mt-4">
@@ -268,7 +309,7 @@ export default function Patients() {
             {showAppointmentForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-blue-100 mb-6">
                 <h3 className="text-sm font-semibold text-blue-800 mb-4">New Appointment for {selectedPatient.name}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div>
                     <label className="block text-xs text-teal-600 mb-1">Date</label>
                     <input type="date" value={appointmentForm.date} onChange={e => setAppointmentForm({...appointmentForm, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
@@ -287,10 +328,11 @@ export default function Patients() {
               </div>
             )}
 
+            {/* Visit Form */}
             {showVisitForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
                 <h3 className="text-sm font-semibold text-teal-800 mb-4">New Visit for {selectedPatient.name}</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <select value={visitForm.doctor_name} onChange={e => setVisitForm({...visitForm, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                     <option value="">Select Doctor</option>
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -308,30 +350,72 @@ export default function Patients() {
               </div>
             )}
 
+            {/* Tabs */}
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-              <div className="px-4 md:px-5 py-4 border-b border-teal-50">
-                <h3 className="text-sm font-semibold text-teal-800">Visit History</h3>
+              <div className="flex border-b border-teal-100">
+                <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-sm font-medium ${activeTab === "visits" ? "bg-teal-50 text-teal-800 border-b-2 border-teal-600" : "text-teal-500"}`}>
+                  Visit History ({visits.length})
+                </button>
+                <button onClick={() => setActiveTab("appointments")} className={`flex-1 py-3 text-sm font-medium ${activeTab === "appointments" ? "bg-blue-50 text-blue-800 border-b-2 border-blue-600" : "text-teal-500"}`}>
+                  Appointments ({appointments.length})
+                </button>
               </div>
-              {visits.length === 0 ? (
-                <p className="text-center py-8 text-teal-400 text-sm">No visits recorded yet</p>
-              ) : (
-                visits.map((v, i) => (
-                  <div key={v.id} className="px-4 md:px-5 py-4 border-b border-teal-50 hover:bg-teal-50">
-                    <div className="flex justify-between items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-teal-800">Visit {visits.length - i} — {v.treatment}</p>
-                        <p className="text-xs text-teal-500 mt-0.5">{v.doctor_name} · Tooth: {v.tooth_number || "-"}</p>
-                        {v.notes && <p className="text-xs text-teal-400 mt-1">📝 {v.notes}</p>}
+
+              {/* Visits Tab */}
+              {activeTab === "visits" && (
+                <div>
+                  {visits.length === 0 ? (
+                    <p className="text-center py-8 text-teal-400 text-sm">No visits recorded yet</p>
+                  ) : (
+                    visits.map((v, i) => (
+                      <div key={v.id} className="px-4 md:px-5 py-4 border-b border-teal-50 hover:bg-teal-50">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-teal-800">Visit {visits.length - i} — {v.treatment}</p>
+                            <p className="text-xs text-teal-500 mt-0.5">{v.doctor_name} · Tooth: {v.tooth_number || "-"}</p>
+                            {v.notes && <p className="text-xs text-teal-400 mt-1">📝 {v.notes}</p>}
+                          </div>
+                          <div className="text-right shrink-0">
+                            <p className="text-sm font-medium text-teal-800">Rs {v.fee}</p>
+                            <p className="text-xs text-teal-400">Paid: Rs {v.fee_paid}</p>
+                            <p className="text-xs text-orange-500">Rem: Rs {v.fee - v.fee_paid}</p>
+                            <p className="text-xs text-teal-300 mt-1">{new Date(v.created_at).toLocaleDateString()}</p>
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-sm font-medium text-teal-800">Rs {v.fee}</p>
-                        <p className="text-xs text-teal-400">Paid: Rs {v.fee_paid}</p>
-                        <p className="text-xs text-orange-500">Rem: Rs {v.fee - v.fee_paid}</p>
-                        <p className="text-xs text-teal-300 mt-1">{new Date(v.created_at).toLocaleDateString()}</p>
+                    ))
+                  )}
+                </div>
+              )}
+
+              {/* Appointments Tab */}
+              {activeTab === "appointments" && (
+                <div>
+                  {appointments.length === 0 ? (
+                    <p className="text-center py-8 text-blue-400 text-sm">No appointments booked yet</p>
+                  ) : (
+                    appointments.map((a, i) => (
+                      <div key={a.id} className="px-4 md:px-5 py-4 border-b border-teal-50 hover:bg-blue-50">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-teal-800">Appointment {i + 1} — {a.treatment || "General"}</p>
+                            <p className="text-xs text-teal-500 mt-0.5">📅 {a.date} · ⏰ {a.time}</p>
+                            {a.notes && <p className="text-xs text-teal-400 mt-1">📝 {a.notes}</p>}
+                          </div>
+                          <div className="text-right shrink-0 flex flex-col items-end gap-1">
+                            <StatusBadge status={a.status} />
+                            {a.status === "Scheduled" && (
+                              <div className="flex gap-2 mt-1">
+                                <button onClick={() => updateAppointmentStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium hover:underline">✓ Done</button>
+                                <button onClick={() => updateAppointmentStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium hover:underline">✗ Cancel</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                ))
+                    ))
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -418,7 +502,6 @@ export default function Patients() {
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Name</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Tooth</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Total Fee</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Paid</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Remaining</th>
@@ -428,7 +511,7 @@ export default function Patients() {
                   </thead>
                   <tbody>
                     {filteredPatients.length === 0 ? (
-                      <tr><td colSpan={10} className="text-center py-10 text-teal-400">No patients found</td></tr>
+                      <tr><td colSpan={9} className="text-center py-10 text-teal-400">No patients found</td></tr>
                     ) : (
                       filteredPatients.map(p => (
                         <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50 cursor-pointer" onClick={() => openPatient(p)}>
@@ -439,7 +522,6 @@ export default function Patients() {
                           </td>
                           <td className="px-4 py-3 text-teal-700">{p.doctor_name || "-"}</td>
                           <td className="px-4 py-3 text-teal-700">{p.treatment}</td>
-                          <td className="px-4 py-3 text-teal-700 text-xs">{p.tooth_number || "-"}</td>
                           <td className="px-4 py-3 text-teal-700">Rs {p.fee_total}</td>
                           <td className="px-4 py-3 text-teal-700">Rs {p.fee_paid}</td>
                           <td className="px-4 py-3 text-teal-700">Rs {p.fee_total - p.fee_paid}</td>
@@ -453,7 +535,7 @@ export default function Patients() {
                                 <button onClick={() => {
                                   const amount = prompt(`Enter payment for ${p.name}:`);
                                   if (amount) handlePayment(p, parseInt(amount));
-                                }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">Add Payment</button>
+                                }} className="text-teal-600 hover:text-teal-800 text-xs font-medium">Pay</button>
                               )}
                             </div>
                           </td>
