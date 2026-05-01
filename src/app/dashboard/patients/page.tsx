@@ -55,9 +55,13 @@ export default function Patients() {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [showVisitForm, setShowVisitForm] = useState(false);
+  const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [visitTeeth, setVisitTeeth] = useState<number[]>([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptPatient, setReceiptPatient] = useState<Patient | null>(null);
+  const [appointmentForm, setAppointmentForm] = useState({
+    date: "", time: "", treatment: "", notes: "", status: "Scheduled",
+  });
   const [visitForm, setVisitForm] = useState({
     doctor_name: "", treatment: "", notes: "", fee: "", fee_paid: "",
   });
@@ -149,6 +153,28 @@ export default function Patients() {
     fetchVisits(selectedPatient.id);
   };
 
+  const handleAddAppointment = async () => {
+    if (!selectedPatient) return;
+    setLoading(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    await supabase.from("appointments").insert([{
+      patient_id: selectedPatient.id,
+      patient_name: selectedPatient.name,
+      doctor_name: selectedPatient.doctor_name || "",
+      date: appointmentForm.date,
+      time: appointmentForm.time,
+      treatment: appointmentForm.treatment,
+      notes: appointmentForm.notes,
+      status: "Scheduled",
+      user_id: user?.id,
+    }]);
+    setAppointmentForm({ date: "", time: "", treatment: "", notes: "", status: "Scheduled" });
+    setShowAppointmentForm(false);
+    setLoading(false);
+    alert("Appointment booked! Check Appointments page.");
+  };
+
   const handlePayment = async (patient: Patient, extraPayment: number) => {
     const supabase = createClient();
     const newPaid = patient.fee_paid + extraPayment;
@@ -216,9 +242,10 @@ export default function Patients() {
                   <h2 className="text-lg md:text-xl font-semibold text-teal-800">{selectedPatient.name}</h2>
                   <p className="text-xs md:text-sm text-teal-500">{selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} years · {selectedPatient.address}</p>
                 </div>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-teal-300 text-teal-700 px-3 py-2 rounded-lg text-xs md:text-sm font-medium hover:bg-teal-50">🖨️ Receipt</button>
-                  <button onClick={() => setShowVisitForm(!showVisitForm)} className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-medium">+ Add Visit</button>
+                  <button onClick={() => { setShowAppointmentForm(!showAppointmentForm); setShowVisitForm(false); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-medium">+ Appointment</button>
+                  <button onClick={() => { setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-xs md:text-sm font-medium">+ Add Visit</button>
                 </div>
               </div>
               <div className="grid grid-cols-3 gap-2 md:gap-4 mt-4">
@@ -236,6 +263,29 @@ export default function Patients() {
                 </div>
               </div>
             </div>
+
+            {/* Appointment Form */}
+            {showAppointmentForm && (
+              <div className="bg-white rounded-xl p-4 md:p-6 border border-blue-100 mb-6">
+                <h3 className="text-sm font-semibold text-blue-800 mb-4">New Appointment for {selectedPatient.name}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
+                  <div>
+                    <label className="block text-xs text-teal-600 mb-1">Date</label>
+                    <input type="date" value={appointmentForm.date} onChange={e => setAppointmentForm({...appointmentForm, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-teal-600 mb-1">Time</label>
+                    <input type="time" value={appointmentForm.time} onChange={e => setAppointmentForm({...appointmentForm, time: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  </div>
+                  <input placeholder="Treatment" value={appointmentForm.treatment} onChange={e => setAppointmentForm({...appointmentForm, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Notes (optional)" value={appointmentForm.notes} onChange={e => setAppointmentForm({...appointmentForm, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={handleAddAppointment} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Book Appointment"}</button>
+                  <button onClick={() => setShowAppointmentForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+                </div>
+              </div>
+            )}
 
             {showVisitForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
@@ -330,7 +380,6 @@ export default function Patients() {
             )}
 
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-              {/* Mobile Cards */}
               <div className="md:hidden divide-y divide-teal-50">
                 {filteredPatients.length === 0 ? (
                   <p className="text-center py-10 text-teal-400 text-sm">No patients found</p>
@@ -361,7 +410,6 @@ export default function Patients() {
                   ))
                 )}
               </div>
-              {/* Desktop Table */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-teal-50">
