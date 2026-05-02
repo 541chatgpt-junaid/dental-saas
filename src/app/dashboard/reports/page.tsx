@@ -12,6 +12,7 @@ import {
 
 export default function Reports() {
   const [filter, setFilter] = useState("month");
+  const [chartRange, setChartRange] = useState("6");
   const [income, setIncome] = useState(0);
   const [labCost, setLabCost] = useState(0);
   const [manualExpenses, setManualExpenses] = useState(0);
@@ -24,6 +25,7 @@ export default function Reports() {
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [expensePieData, setExpensePieData] = useState<any[]>([]);
   const [treatmentData, setTreatmentData] = useState<any[]>([]);
+  const [doctorData, setDoctorData] = useState<any[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
 
@@ -47,22 +49,23 @@ export default function Reports() {
       setPatientCount(filtered.length);
       setPendingFees(filtered.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0));
 
-      // Monthly data for last 6 months
-      const last6Months: any[] = [];
-      for (let i = 5; i >= 0; i--) {
+      // Monthly data
+      const months = parseInt(chartRange);
+      const monthlyArr: any[] = [];
+      for (let i = months - 1; i >= 0; i--) {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
         const monthKey = d.toISOString().slice(0, 7);
-        const monthName = d.toLocaleString("default", { month: "short" });
+        const monthName = d.toLocaleString("default", { month: "short", year: "2-digit" });
         const monthPatients = patients.filter(p => p.created_at?.startsWith(monthKey));
-        last6Months.push({
+        monthlyArr.push({
           month: monthName,
           income: monthPatients.reduce((sum, p) => sum + (p.fee_paid || 0), 0),
           patients: monthPatients.length,
           pending: monthPatients.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0),
         });
       }
-      setMonthlyData(last6Months);
+      setMonthlyData(monthlyArr);
 
       // Treatment breakdown
       const treatmentMap: Record<string, number> = {};
@@ -76,6 +79,20 @@ export default function Reports() {
         .sort((a, b) => b.count - a.count)
         .slice(0, 6);
       setTreatmentData(treatmentArr);
+
+      // Doctor breakdown
+      const doctorMap: Record<string, { patients: number; income: number; pending: number }> = {};
+      patients.forEach(p => {
+        const doc = p.doctor_name || "Unassigned";
+        if (!doctorMap[doc]) doctorMap[doc] = { patients: 0, income: 0, pending: 0 };
+        doctorMap[doc].patients += 1;
+        doctorMap[doc].income += p.fee_paid || 0;
+        doctorMap[doc].pending += (p.fee_total || 0) - (p.fee_paid || 0);
+      });
+      const doctorArr = Object.entries(doctorMap)
+        .map(([name, data]) => ({ name, ...data }))
+        .sort((a, b) => b.patients - a.patients);
+      setDoctorData(doctorArr);
     }
 
     const { data: labs } = await supabase.from("labs").select("fee_paid, created_at").eq("user_id", user.id);
@@ -96,16 +113,14 @@ export default function Reports() {
         if (filter === "month") return e.date?.startsWith(thisMonth);
         return true;
       });
-      const manual = filtered.reduce((sum, e) => sum + (e.amount || 0), 0);
-      setManualExpenses(manual);
+      setManualExpenses(filtered.reduce((sum, e) => sum + (e.amount || 0), 0));
 
-      // Expense pie data
+      // Expense pie
       const categoryMap: Record<string, number> = {};
       filtered.forEach(e => {
         categoryMap[e.category] = (categoryMap[e.category] || 0) + e.amount;
       });
-      const pieArr = Object.entries(categoryMap).map(([name, value]) => ({ name, value }));
-      setExpensePieData(pieArr);
+      setExpensePieData(Object.entries(categoryMap).map(([name, value]) => ({ name, value })));
     }
 
     const { data: materials } = await supabase.from("materials").select("price, quantity").eq("user_id", user.id);
@@ -115,7 +130,7 @@ export default function Reports() {
     if (purchases) setAllPurchases(purchases);
   };
 
-  useEffect(() => { fetchData(); }, [filter]);
+  useEffect(() => { fetchData(); }, [filter, chartRange]);
 
   const totalExpenses = labCost + manualExpenses + materialCost;
   const profit = income - totalExpenses;
@@ -136,6 +151,11 @@ export default function Reports() {
       Title: e.title, Category: e.category, Amount: e.amount, Date: e.date,
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), "Expenses");
+    const doctorReport = doctorData.map(d => ({
+      Doctor: d.name, Patients: d.patients,
+      Income: d.income, Pending: d.pending,
+    }));
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(doctorReport), "Doctors");
     const summaryData = [
       { Category: "Total Patients", Value: patientCount },
       { Category: "Total Income", Value: income },
@@ -158,9 +178,7 @@ export default function Reports() {
           <p className="text-xs font-semibold text-teal-800 mb-1">{label}</p>
           {payload.map((entry: any, i: number) => (
             <p key={i} className="text-xs" style={{ color: entry.color }}>
-              {entry.name}: {typeof entry.value === "number" && entry.name !== "Patients"
-                ? `${symbol} ${entry.value.toLocaleString()}`
-                : entry.value}
+              {entry.name}: {entry.name === "Patients" ? entry.value : `${symbol} ${entry.value?.toLocaleString()}`}
             </p>
           ))}
         </div>
@@ -183,6 +201,7 @@ export default function Reports() {
           </button>
         </div>
 
+        {/* Summary Filter */}
         <div className="flex gap-2 mb-6">
           {["today", "month", "all"].map(f => (
             <button key={f} onClick={() => setFilter(f)} className={`px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
@@ -248,15 +267,26 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Chart 1 — Monthly Income & Patients */}
+        {/* Chart Range Filter */}
+        <div className="flex items-center gap-2 mb-4">
+          <p className="text-sm font-medium text-teal-700">Chart Range:</p>
+          {[{ label: "3 Months", value: "3" }, { label: "6 Months", value: "6" }, { label: "12 Months", value: "12" }].map(r => (
+            <button key={r.value} onClick={() => setChartRange(r.value)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${chartRange === r.value ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+              {r.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Chart 1 — Monthly Income */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 mb-6">
-          <h3 className="text-sm font-semibold text-teal-800 mb-4">📈 Monthly Income — Last 6 Months</h3>
+          <h3 className="text-sm font-semibold text-teal-800 mb-4">📈 Monthly Income — Last {chartRange} Months</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
                 <Bar dataKey="income" name="Income" fill="#0d9488" radius={[4, 4, 0, 0]} />
@@ -266,15 +296,15 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Chart 2 — Monthly Patients Line */}
+        {/* Chart 2 — Monthly Patients */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 mb-6">
-          <h3 className="text-sm font-semibold text-teal-800 mb-4">👥 Monthly Patients — Last 6 Months</h3>
+          <h3 className="text-sm font-semibold text-teal-800 mb-4">👥 Monthly Patients — Last {chartRange} Months</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
-                <XAxis dataKey="month" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} />
+                <XAxis dataKey="month" tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Line type="monotone" dataKey="patients" name="Patients" stroke="#0d9488" strokeWidth={2} dot={{ fill: "#0d9488", r: 4 }} />
               </LineChart>
@@ -282,9 +312,8 @@ export default function Reports() {
           </div>
         </div>
 
-        {/* Chart 3 & 4 — Pie Charts */}
+        {/* Chart 3 & 4 — Pie + Treatments */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          {/* Expense Breakdown Pie */}
           <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">🥧 Expense Breakdown</h3>
             {expensePieData.length === 0 ? (
@@ -293,7 +322,9 @@ export default function Reports() {
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={expensePieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`} labelLine={false}>
+                    <Pie data={expensePieData} cx="50%" cy="50%" outerRadius={75} dataKey="value"
+                      label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                      labelLine={false}>
                       {expensePieData.map((_, index) => (
                         <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
@@ -305,7 +336,6 @@ export default function Reports() {
             )}
           </div>
 
-          {/* Treatment Breakdown */}
           <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">🦷 Top Treatments</h3>
             {treatmentData.length === 0 ? (
@@ -315,8 +345,8 @@ export default function Reports() {
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={treatmentData} layout="vertical" margin={{ top: 5, right: 10, left: 40, bottom: 5 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
-                    <XAxis type="number" tick={{ fontSize: 11 }} />
-                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={60} />
+                    <XAxis type="number" tick={{ fontSize: 10 }} />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={65} />
                     <Tooltip />
                     <Bar dataKey="count" name="Patients" fill="#0d9488" radius={[0, 4, 4, 0]} />
                   </BarChart>
@@ -324,6 +354,56 @@ export default function Reports() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Doctor Performance */}
+        <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 mb-6">
+          <h3 className="text-sm font-semibold text-teal-800 mb-4">👨‍⚕️ Doctor Performance</h3>
+          {doctorData.length === 0 ? (
+            <p className="text-center text-teal-400 text-sm py-8">No doctor data</p>
+          ) : (
+            <>
+              {/* Chart */}
+              <div className="h-56 mb-4">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={doctorData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend wrapperStyle={{ fontSize: 11 }} />
+                    <Bar dataKey="patients" name="Patients" fill="#0d9488" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="income" name="Income" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              {/* Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-teal-50">
+                    <tr>
+                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Doctor</th>
+                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Patients</th>
+                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Income</th>
+                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Pending</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {doctorData.map((d, i) => (
+                      <tr key={i} className="border-t border-teal-50 hover:bg-teal-50">
+                        <td className="px-4 py-2 font-medium text-teal-800 text-xs">👨‍⚕️ {d.name}</td>
+                        <td className="px-4 py-2 text-xs">
+                          <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">{d.patients}</span>
+                        </td>
+                        <td className="px-4 py-2 text-green-600 font-medium text-xs">{symbol} {d.income.toLocaleString()}</td>
+                        <td className="px-4 py-2 text-orange-500 font-medium text-xs">{symbol} {d.pending.toLocaleString()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
         </div>
 
       </div>
