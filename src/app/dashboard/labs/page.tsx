@@ -51,37 +51,81 @@ const TOOTH_COLORS: Record<string, { bg: string; border: string; text: string; l
   rct:     { bg:"#FAC775", border:"#854F0B", text:"#633806", label:"RCT" },
   inlay:   { bg:"#E6F1FB", border:"#185FA5", text:"#0C447C", label:"INL" },
   pontic:  { bg:"#D3D1C7", border:"#5F5E5A", text:"#2C2C2A", label:"PNT" },
+  guard:   { bg:"#EAF3DE", border:"#3B6D11", text:"#27500A", label:"GRD" },
+  denture: { bg:"#F4C0D1", border:"#993556", text:"#72243E", label:"DEN" },
 };
 
-function ToothChart({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+function getWorkKey(wt: string): string {
+  const w = wt.toLowerCase();
+  if (w.includes("bridge")) return "bridge";
+  if (w.includes("implant")) return "implant";
+  if (w.includes("veneer")) return "veneer";
+  if (w.includes("rct") || w.includes("post")) return "rct";
+  if (w.includes("inlay") || w.includes("onlay")) return "inlay";
+  if (w.includes("missing")) return "missing";
+  if (w.includes("pontic")) return "pontic";
+  if (w.includes("night guard") || w.includes("sport guard") || w.includes("bleaching") || w.includes("retainer") || w.includes("stent")) return "guard";
+  if (w.includes("denture") || w.includes("flipper") || w.includes("full mouth")) return "denture";
+  return "crown";
+}
+
+function getAutoTeeth(wt: string): Record<string, string> {
+  const w = wt.toLowerCase();
+  const key = getWorkKey(wt);
+  const all32: Record<string, string> = {};
+  const allUpper: Record<string, string> = {};
+  const allLower: Record<string, string> = {};
+  UPPER_TEETH.forEach(t => { all32[t] = key; allUpper[t] = key; });
+  LOWER_TEETH.forEach(t => { all32[t] = key; allLower[t] = key; });
+
+  if (w.includes("complete denture") || w.includes("full mouth") || w.includes("bleaching tray") || w.includes("night guard") || w.includes("sport guard")) return all32;
+  if (w.includes("upper") && w.includes("denture")) return allUpper;
+  if (w.includes("lower") && w.includes("denture")) return allLower;
+  if (w.includes("denture") || w.includes("flipper")) return all32;
+  if (w.includes("retainer") || w.includes("surgical stent")) return all32;
+  return {};
+}
+
+function ToothChart({ value, onChange, workType, onUnitsChange }: {
+  value: string;
+  onChange: (v: string) => void;
+  workType: string;
+  onUnitsChange: (u: string) => void;
+}) {
   const [selected, setSelected] = useState<Record<string, string>>({});
-  const [activeWork, setActiveWork] = useState("crown");
+  const [prevWorkType, setPrevWorkType] = useState(workType);
 
   useEffect(() => {
     try { if (value) setSelected(JSON.parse(value)); } catch {}
   }, []);
 
+  useEffect(() => {
+    if (workType === prevWorkType) return;
+    setPrevWorkType(workType);
+    const auto = getAutoTeeth(workType);
+    if (Object.keys(auto).length > 0) {
+      setSelected(auto);
+      onChange(JSON.stringify(auto));
+      onUnitsChange(String(Object.keys(auto).length));
+    } else {
+      setSelected({});
+      onChange("");
+      onUnitsChange("1");
+    }
+  }, [workType]);
+
   const handleTooth = (num: string) => {
     const updated = { ...selected };
-    if (activeWork === "clear") {
+    const workKey = getWorkKey(workType);
+    if (updated[num]) {
       delete updated[num];
     } else {
-      updated[num] = activeWork;
+      updated[num] = workKey;
     }
     setSelected(updated);
     onChange(JSON.stringify(updated));
+    onUnitsChange(String(Object.keys(updated).length || 1));
   };
-
-  const workButtons = [
-    { key:"crown", label:"Crown", bg:"#FAEEDA", border:"#BA7517", color:"#633806" },
-    { key:"bridge", label:"Bridge", bg:"#E1F5EE", border:"#0F6E56", color:"#085041" },
-    { key:"missing", label:"Missing", bg:"#FCEBEB", border:"#A32D2D", color:"#791F1F" },
-    { key:"implant", label:"Implant", bg:"#EEEDFE", border:"#534AB7", color:"#3C3489" },
-    { key:"veneer", label:"Veneer", bg:"#FBEAF0", border:"#993556", color:"#72243E" },
-    { key:"rct", label:"RCT", bg:"#FAC775", border:"#854F0B", color:"#633806" },
-    { key:"inlay", label:"Inlay", bg:"#E6F1FB", border:"#185FA5", color:"#0C447C" },
-    { key:"pontic", label:"Pontic", bg:"#D3D1C7", border:"#5F5E5A", color:"#2C2C2A" },
-  ];
 
   const ToothBtn = ({ num }: { num: string }) => {
     const work = selected[num];
@@ -107,35 +151,26 @@ function ToothChart({ value, onChange }: { value: string; onChange: (v: string) 
     summary[w].push(t);
   });
 
+  const currentKey = getWorkKey(workType);
+  const currentCol = TOOTH_COLORS[currentKey] || TOOTH_COLORS.crown;
+  const selectedCount = Object.keys(selected).length;
+
   return (
     <div className="border border-teal-100 rounded-xl p-3 bg-teal-50 md:col-span-2">
-      <p className="text-xs font-semibold text-teal-700 mb-2">Tooth Chart (FDI Notation) — click work type then click tooth</p>
-
-      <div className="flex flex-wrap gap-1.5 mb-3">
-        {workButtons.map(w => (
-          <button
-            key={w.key}
-            type="button"
-            onClick={() => setActiveWork(w.key)}
-            style={activeWork === w.key
-              ? { backgroundColor: w.bg, borderColor: w.border, color: w.color, borderWidth:"1.5px" }
-              : {}}
-            className={`px-2 py-1 rounded text-xs font-medium border transition-all
-              ${activeWork === w.key ? "" : "bg-white border-gray-200 text-gray-600 hover:bg-gray-50"}`}
+      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+        <p className="text-xs font-semibold text-teal-700">Tooth Chart (FDI) — click tooth to mark / unmark</p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-teal-500">Active work:</span>
+          <span
+            className="text-xs font-medium px-2 py-0.5 rounded-full border"
+            style={{ backgroundColor: currentCol.bg, borderColor: currentCol.border, color: currentCol.text }}
           >
-            {w.label}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={() => setActiveWork("clear")}
-          className={`px-2 py-1 rounded text-xs font-medium border transition-all
-            ${activeWork === "clear"
-              ? "bg-red-50 border-red-400 text-red-700 border-[1.5px]"
-              : "bg-white border-gray-200 text-red-500 hover:bg-red-50"}`}
-        >
-          Clear
-        </button>
+            {workType}
+          </span>
+          {selectedCount > 0 && (
+            <span className="text-xs text-teal-500">{selectedCount} teeth</span>
+          )}
+        </div>
       </div>
 
       <div className="overflow-x-auto">
@@ -168,15 +203,62 @@ function ToothChart({ value, onChange }: { value: string; onChange: (v: string) 
         </div>
       )}
 
-      {Object.keys(selected).length > 0 && (
+      <div className="flex gap-3 mt-2 flex-wrap">
         <button
           type="button"
-          onClick={() => { setSelected({}); onChange(""); }}
-          className="mt-2 text-xs text-red-400 hover:underline"
+          onClick={() => {
+            const auto = getAutoTeeth(workType);
+            const allKey = getWorkKey(workType);
+            const all32: Record<string, string> = {};
+            UPPER_TEETH.forEach(t => { all32[t] = allKey; });
+            LOWER_TEETH.forEach(t => { all32[t] = allKey; });
+            const target = Object.keys(auto).length > 0 ? auto : all32;
+            setSelected(target);
+            onChange(JSON.stringify(target));
+            onUnitsChange(String(Object.keys(target).length));
+          }}
+          className="text-xs text-teal-600 hover:underline"
         >
-          Reset all
+          Select all
         </button>
-      )}
+        <button
+          type="button"
+          onClick={() => {
+            const allKey = getWorkKey(workType);
+            const upper: Record<string, string> = {};
+            UPPER_TEETH.forEach(t => { upper[t] = allKey; });
+            setSelected(upper);
+            onChange(JSON.stringify(upper));
+            onUnitsChange(String(UPPER_TEETH.length));
+          }}
+          className="text-xs text-teal-600 hover:underline"
+        >
+          Upper only
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const allKey = getWorkKey(workType);
+            const lower: Record<string, string> = {};
+            LOWER_TEETH.forEach(t => { lower[t] = allKey; });
+            setSelected(lower);
+            onChange(JSON.stringify(lower));
+            onUnitsChange(String(LOWER_TEETH.length));
+          }}
+          className="text-xs text-teal-600 hover:underline"
+        >
+          Lower only
+        </button>
+        {Object.keys(selected).length > 0 && (
+          <button
+            type="button"
+            onClick={() => { setSelected({}); onChange(""); onUnitsChange("1"); }}
+            className="text-xs text-red-400 hover:underline"
+          >
+            Reset all
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -290,8 +372,9 @@ export default function Labs() {
   const getChartSummary = (chartJson: string) => {
     try {
       const data = JSON.parse(chartJson);
-      return Object.entries(data).slice(0, 3).map(([t, w]) => `${t}:${w}`).join(", ") +
-        (Object.keys(data).length > 3 ? ` +${Object.keys(data).length - 3}` : "");
+      const keys = Object.keys(data);
+      if (!keys.length) return "";
+      return keys.slice(0, 4).join(", ") + (keys.length > 4 ? ` +${keys.length - 4} more` : "");
     } catch { return ""; }
   };
 
@@ -324,7 +407,10 @@ export default function Labs() {
                 </select>
               </div>
 
-              <input placeholder="Units" type="number" value={form.units} onChange={e => setForm({...form, units: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <div>
+                <label className="block text-xs text-teal-600 mb-1">Units (auto from chart)</label>
+                <input type="number" value={form.units} onChange={e => setForm({...form, units: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              </div>
 
               <input placeholder="Shade (e.g. A1, B2, OM2)" value={form.shade} onChange={e => setForm({...form, shade: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
 
@@ -362,10 +448,12 @@ export default function Labs() {
 
               <ToothChart
                 value={form.tooth_chart}
-                onChange={v => setForm({...form, tooth_chart: v})}
+                workType={form.work_type}
+                onChange={v => setForm(prev => ({...prev, tooth_chart: v}))}
+                onUnitsChange={u => setForm(prev => ({...prev, units: u}))}
               />
-            </div>
 
+            </div>
             <div className="flex gap-3 mt-4">
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : editingId ? "Update Record" : "Save Record"}
@@ -438,7 +526,7 @@ export default function Labs() {
                         {l.work_type} x{l.units}
                         <p className="text-xs text-teal-400">{l.shade} · {l.material}</p>
                       </td>
-                      <td className="px-4 py-3 text-teal-500 text-xs">{getChartSummary(l.tooth_chart)}</td>
+                      <td className="px-4 py-3 text-teal-500 text-xs max-w-24">{getChartSummary(l.tooth_chart)}</td>
                       <td className="px-4 py-3 text-teal-700">{l.delivery_date}</td>
                       <td className="px-4 py-3 text-teal-700">{symbol} {l.fee}</td>
                       <td className="px-4 py-3 text-teal-700">{symbol} {l.fee_paid}</td>
