@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import * as XLSX from "xlsx";
+import { useCurrency } from "@/lib/useCurrency";
 
 export default function Reports() {
   const [filter, setFilter] = useState("today");
@@ -17,6 +18,7 @@ export default function Reports() {
   const [allExpenses, setAllExpenses] = useState<any[]>([]);
   const [allPurchases, setAllPurchases] = useState<any[]>([]);
   const router = useRouter();
+  const { symbol } = useCurrency();
 
   const today = new Date().toISOString().split("T")[0];
   const thisMonth = new Date().toISOString().slice(0, 7);
@@ -129,71 +131,64 @@ export default function Reports() {
           ))}
         </div>
 
-        {/* Top 3 stats */}
         <div className="grid grid-cols-3 gap-3 md:gap-5 mb-6">
           <div className="bg-white rounded-xl p-3 md:p-5 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1 md:mb-2">PATIENTS</p>
             <p className="text-2xl md:text-3xl font-semibold text-teal-800">{patientCount}</p>
-            <p className="text-xs text-teal-400 mt-1 hidden md:block">Patients treated</p>
           </div>
           <div className="bg-white rounded-xl p-3 md:p-5 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1 md:mb-2">PENDING</p>
-            <p className="text-lg md:text-3xl font-semibold text-orange-500">Rs {pendingFees.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1 hidden md:block">Still to collect</p>
+            <p className="text-lg md:text-3xl font-semibold text-orange-500">{symbol} {pendingFees.toLocaleString()}</p>
           </div>
           <div className={`rounded-xl p-3 md:p-5 border ${profit >= 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}>
             <p className={`text-xs font-medium mb-1 md:mb-2 ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>PROFIT</p>
-            <p className={`text-lg md:text-3xl font-semibold ${profit >= 0 ? "text-green-700" : "text-red-700"}`}>Rs {profit.toLocaleString()}</p>
-            <p className={`text-xs mt-1 hidden md:block ${profit >= 0 ? "text-green-400" : "text-red-400"}`}>{profit >= 0 ? "Profit" : "Loss"}</p>
+            <p className={`text-lg md:text-3xl font-semibold ${profit >= 0 ? "text-green-700" : "text-red-700"}`}>{symbol} {profit.toLocaleString()}</p>
           </div>
         </div>
 
-        {/* Income & Expenses — stack on mobile */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5 mb-6">
           <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">💰 Income</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-teal-50">
                 <span className="text-sm text-teal-700">Patient Fees Collected</span>
-                <span className="text-sm font-semibold text-green-600">Rs {income.toLocaleString()}</span>
+                <span className="text-sm font-semibold text-green-600">{symbol} {income.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm font-semibold text-teal-800">Total Income</span>
-                <span className="text-sm font-bold text-green-700">Rs {income.toLocaleString()}</span>
+                <span className="text-sm font-bold text-green-700">{symbol} {income.toLocaleString()}</span>
               </div>
             </div>
           </div>
-
           <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">💸 Expenses</h3>
             <div className="space-y-3">
               <div className="flex justify-between items-center py-2 border-b border-teal-50">
                 <span className="text-sm text-teal-700">Lab Costs</span>
-                <span className="text-sm font-semibold text-red-500">Rs {labCost.toLocaleString()}</span>
+                <span className="text-sm font-semibold text-red-500">{symbol} {labCost.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-teal-50">
                 <span className="text-sm text-teal-700">Material Costs</span>
-                <span className="text-sm font-semibold text-red-500">Rs {materialCost.toLocaleString()}</span>
+                <span className="text-sm font-semibold text-red-500">{symbol} {materialCost.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center py-2 border-b border-teal-50">
                 <span className="text-sm text-teal-700">Rent / Salary / Other</span>
-                <span className="text-sm font-semibold text-red-500">Rs {manualExpenses.toLocaleString()}</span>
+                <span className="text-sm font-semibold text-red-500">{symbol} {manualExpenses.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center py-2">
                 <span className="text-sm font-semibold text-teal-800">Total Expenses</span>
-                <span className="text-sm font-bold text-red-600">Rs {totalExpenses.toLocaleString()}</span>
+                <span className="text-sm font-bold text-red-600">{symbol} {totalExpenses.toLocaleString()}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Bar Chart */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
           <h3 className="text-sm font-semibold text-teal-800 mb-4">📊 Income vs Expenses</h3>
           <div className="space-y-3">
             <div>
               <div className="flex justify-between text-xs text-teal-600 mb-1">
-                <span>Income</span><span>Rs {income.toLocaleString()}</span>
+                <span>Income</span><span>{symbol} {income.toLocaleString()}</span>
               </div>
               <div className="w-full bg-teal-100 rounded-full h-4">
                 <div className="bg-green-500 h-4 rounded-full" style={{ width: income > 0 ? "100%" : "0%" }}></div>
@@ -201,7 +196,7 @@ export default function Reports() {
             </div>
             <div>
               <div className="flex justify-between text-xs text-teal-600 mb-1">
-                <span>Expenses</span><span>Rs {totalExpenses.toLocaleString()}</span>
+                <span>Expenses</span><span>{symbol} {totalExpenses.toLocaleString()}</span>
               </div>
               <div className="w-full bg-teal-100 rounded-full h-4">
                 <div className="bg-red-500 h-4 rounded-full" style={{ width: income > 0 ? `${Math.min((totalExpenses / income) * 100, 100)}%` : "0%" }}></div>
@@ -209,7 +204,7 @@ export default function Reports() {
             </div>
             <div>
               <div className="flex justify-between text-xs text-teal-600 mb-1">
-                <span>Net Profit</span><span>Rs {profit.toLocaleString()}</span>
+                <span>Net Profit</span><span>{symbol} {profit.toLocaleString()}</span>
               </div>
               <div className="w-full bg-teal-100 rounded-full h-4">
                 <div className={`h-4 rounded-full ${profit >= 0 ? "bg-teal-500" : "bg-red-700"}`} style={{ width: income > 0 ? `${Math.min(Math.abs(profit / income) * 100, 100)}%` : "0%" }}></div>

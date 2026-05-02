@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useCurrency } from "@/lib/useCurrency";
 
 interface Material {
   id: number;
@@ -26,6 +27,7 @@ export default function Materials() {
     unit: "Box", min_quantity: "", price: "", supplier: "",
   });
   const router = useRouter();
+  const { symbol } = useCurrency();
 
   const fetchMaterials = async () => {
     const supabase = createClient();
@@ -149,7 +151,7 @@ export default function Materials() {
                 <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
               </select>
               <input placeholder="Min Quantity (Low Stock Alert)" type="number" value={form.min_quantity} onChange={e => setForm({...form, min_quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Price per Unit (Rs)" type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder={`Price per Unit (${symbol})`} type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
             </div>
             <div className="flex gap-3 mt-4">
@@ -178,7 +180,7 @@ export default function Materials() {
                     </span>
                   </div>
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-teal-600">{m.quantity} {m.unit} · Rs {m.price}/unit</p>
+                    <p className="text-xs text-teal-600">{m.quantity} {m.unit} · {symbol} {m.price}/unit</p>
                     <div className="flex gap-2">
                       <button onClick={() => updateQuantity(m, 1)} className="bg-teal-100 text-teal-700 px-2 py-1 rounded text-xs font-medium">+1</button>
                       <button onClick={() => updateQuantity(m, -1)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">-1</button>
@@ -197,7 +199,7 @@ export default function Materials() {
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Name</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Quantity</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Price</th>
+                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Price/Unit</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Supplier</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
                   <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
@@ -212,7 +214,7 @@ export default function Materials() {
                       <td className="px-4 py-3 font-medium text-teal-800">{m.name}</td>
                       <td className="px-4 py-3 text-teal-700">{m.category}</td>
                       <td className="px-4 py-3 text-teal-700">{m.quantity} {m.unit}</td>
-                      <td className="px-4 py-3 text-teal-700">Rs {m.price}</td>
+                      <td className="px-4 py-3 text-teal-700">{symbol} {m.price}</td>
                       <td className="px-4 py-3 text-teal-700">{m.supplier}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${m.quantity <= m.min_quantity ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>

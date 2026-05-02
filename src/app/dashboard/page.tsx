@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useCurrency } from "@/lib/useCurrency";
 
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
@@ -12,6 +13,7 @@ export default function Dashboard() {
   const [pendingFees, setPendingFees] = useState(0);
   const [recentPatients, setRecentPatients] = useState<any[]>([]);
   const router = useRouter();
+  const { symbol } = useCurrency();
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -54,7 +56,7 @@ export default function Dashboard() {
           </div>
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1 md:mb-2">REVENUE TODAY</p>
-            <p className="text-lg md:text-3xl font-semibold text-teal-800">Rs {todayRevenue.toLocaleString()}</p>
+            <p className="text-lg md:text-3xl font-semibold text-teal-800">{symbol} {todayRevenue.toLocaleString()}</p>
             <p className="text-xs text-teal-400 mt-1">Collected today</p>
           </div>
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
@@ -64,7 +66,7 @@ export default function Dashboard() {
           </div>
           <div className="bg-orange-50 rounded-xl p-3 md:p-4 border border-orange-100">
             <p className="text-xs font-medium text-orange-600 mb-1 md:mb-2">PENDING FEES</p>
-            <p className="text-lg md:text-3xl font-semibold text-orange-700">Rs {pendingFees.toLocaleString()}</p>
+            <p className="text-lg md:text-3xl font-semibold text-orange-700">{symbol} {pendingFees.toLocaleString()}</p>
             <p className="text-xs text-orange-400 mt-1">Still to collect</p>
           </div>
         </div>
@@ -88,7 +90,7 @@ export default function Dashboard() {
                     <p className="text-xs text-teal-600">{p.treatment}</p>
                     <div className="flex justify-between mt-1">
                       <p className="text-xs text-teal-500">Dr. {p.doctor_name || "-"}</p>
-                      <p className="text-xs font-medium text-teal-700">Rs {p.fee_paid}</p>
+                      <p className="text-xs font-medium text-teal-700">{symbol} {p.fee_paid}</p>
                     </div>
                   </div>
                 ))}
@@ -111,7 +113,7 @@ export default function Dashboard() {
                         <td className="px-4 py-2 font-medium text-teal-800">{p.name}</td>
                         <td className="px-4 py-2 text-teal-700">{p.doctor_name || "-"}</td>
                         <td className="px-4 py-2 text-teal-700">{p.treatment}</td>
-                        <td className="px-4 py-2 text-teal-700">Rs {p.fee_paid}</td>
+                        <td className="px-4 py-2 text-teal-700">{symbol} {p.fee_paid}</td>
                         <td className="px-4 py-2">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>
                             {p.status}

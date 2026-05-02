@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useCurrency } from "@/lib/useCurrency";
 
 interface Expense {
   id: number;
@@ -26,6 +27,7 @@ export default function Expenses() {
     title: "", category: "Rent", amount: "", date: "", notes: "",
   });
   const router = useRouter();
+  const { symbol } = useCurrency();
 
   const fetchExpenses = async () => {
     const supabase = createClient();
@@ -133,22 +135,22 @@ export default function Expenses() {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">LAB COSTS</p>
-            <p className="text-lg md:text-2xl font-semibold text-teal-800">Rs {labCost.toLocaleString()}</p>
+            <p className="text-lg md:text-2xl font-semibold text-teal-800">{symbol} {labCost.toLocaleString()}</p>
             <p className="text-xs text-teal-400 mt-1">From Lab Records</p>
           </div>
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">MATERIALS</p>
-            <p className="text-lg md:text-2xl font-semibold text-teal-800">Rs {materialCost.toLocaleString()}</p>
+            <p className="text-lg md:text-2xl font-semibold text-teal-800">{symbol} {materialCost.toLocaleString()}</p>
             <p className="text-xs text-teal-400 mt-1">From Materials</p>
           </div>
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">OTHER</p>
-            <p className="text-lg md:text-2xl font-semibold text-teal-800">Rs {manualTotal.toLocaleString()}</p>
+            <p className="text-lg md:text-2xl font-semibold text-teal-800">{symbol} {manualTotal.toLocaleString()}</p>
             <p className="text-xs text-teal-400 mt-1">Rent, Salary etc</p>
           </div>
           <div className="bg-red-50 rounded-xl p-3 md:p-4 border border-red-100">
             <p className="text-xs font-medium text-red-600 mb-1">TOTAL</p>
-            <p className="text-lg md:text-2xl font-semibold text-red-700">Rs {grandTotal.toLocaleString()}</p>
+            <p className="text-lg md:text-2xl font-semibold text-red-700">{symbol} {grandTotal.toLocaleString()}</p>
             <p className="text-xs text-red-400 mt-1">All combined</p>
           </div>
         </div>
@@ -161,7 +163,7 @@ export default function Expenses() {
               <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Rent</option><option>Electricity</option><option>Salary</option><option>Internet</option><option>Maintenance</option><option>Other</option>
               </select>
-              <input placeholder="Amount (Rs)" type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder={`Amount (${symbol})`} type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <div>
                 <label className="block text-xs text-teal-600 mb-1">Date</label>
                 <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
@@ -197,7 +199,7 @@ export default function Expenses() {
                       <p className="font-medium text-teal-800 text-sm">{e.title}</p>
                       <span className="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded-full">{e.category}</span>
                     </div>
-                    <p className="text-red-600 font-medium text-sm">Rs {e.amount?.toLocaleString()}</p>
+                    <p className="text-red-600 font-medium text-sm">{symbol} {e.amount?.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between mt-2">
                     <p className="text-xs text-teal-400">{e.notes} · {e.date}</p>
@@ -230,7 +232,7 @@ export default function Expenses() {
                     <tr key={e.id} className="border-t border-teal-50 hover:bg-teal-50">
                       <td className="px-4 py-3 font-medium text-teal-800">{e.title}</td>
                       <td className="px-4 py-3"><span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{e.category}</span></td>
-                      <td className="px-4 py-3 text-red-600 font-medium">Rs {e.amount?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-red-600 font-medium">{symbol} {e.amount?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-teal-700">{e.date}</td>
                       <td className="px-4 py-3 text-teal-400">{e.notes}</td>
                       <td className="px-4 py-3">

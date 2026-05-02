@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Receipt from "@/components/Receipt";
+import { useCurrency } from "@/lib/useCurrency";
 
 interface Patient {
   id: number;
@@ -105,6 +106,7 @@ export default function Patients() {
     fee_total: "", fee_paid: "",
   });
   const router = useRouter();
+  const { symbol } = useCurrency();
 
   const fetchPatients = async () => {
     const supabase = createClient();
@@ -397,7 +399,6 @@ export default function Patients() {
         {selectedPatient ? (
           <div>
             <button onClick={() => setSelectedPatient(null)} className="text-teal-600 text-sm mb-4 hover:underline">← Back to Patients</button>
-
             <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
@@ -417,15 +418,15 @@ export default function Patients() {
               <div className="grid grid-cols-3 gap-2 md:gap-4 mt-4">
                 <div className="bg-teal-50 rounded-lg p-2 md:p-3">
                   <p className="text-xs text-teal-600">Total Fee</p>
-                  <p className="text-base md:text-lg font-semibold text-teal-800">Rs {selectedPatient.fee_total}</p>
+                  <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {selectedPatient.fee_total}</p>
                 </div>
                 <div className="bg-teal-50 rounded-lg p-2 md:p-3">
                   <p className="text-xs text-teal-600">Fee Paid</p>
-                  <p className="text-base md:text-lg font-semibold text-teal-800">Rs {selectedPatient.fee_paid}</p>
+                  <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {selectedPatient.fee_paid}</p>
                 </div>
                 <div className="bg-teal-50 rounded-lg p-2 md:p-3">
                   <p className="text-xs text-teal-600">Remaining</p>
-                  <p className="text-base md:text-lg font-semibold text-orange-600">Rs {selectedPatient.fee_total - selectedPatient.fee_paid}</p>
+                  <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {selectedPatient.fee_total - selectedPatient.fee_paid}</p>
                 </div>
               </div>
             </div>
@@ -461,8 +462,8 @@ export default function Patients() {
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
                   <input placeholder="Treatment" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Fee (Rs)" type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Fee Paid (Rs)" type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Fee" type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Fee Paid" type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
                 </div>
                 <ToothChart selected={visitTeeth} onToggle={toggleVisitTooth} />
@@ -473,7 +474,6 @@ export default function Patients() {
               </div>
             )}
 
-            {/* Tabs */}
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
               <div className="flex border-b border-teal-100 overflow-x-auto">
                 <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "visits" ? "bg-teal-50 text-teal-800 border-b-2 border-teal-600" : "text-teal-500"}`}>
@@ -487,7 +487,6 @@ export default function Patients() {
                 </button>
               </div>
 
-              {/* Visits Tab */}
               {activeTab === "visits" && (
                 <div>
                   {visits.length === 0 ? (
@@ -502,9 +501,9 @@ export default function Patients() {
                             {v.notes && <p className="text-xs text-teal-400 mt-1">📝 {v.notes}</p>}
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-medium text-teal-800">Rs {v.fee}</p>
-                            <p className="text-xs text-teal-400">Paid: Rs {v.fee_paid}</p>
-                            <p className="text-xs text-orange-500">Rem: Rs {v.fee - v.fee_paid}</p>
+                            <p className="text-sm font-medium text-teal-800">{symbol} {v.fee}</p>
+                            <p className="text-xs text-teal-400">Paid: {symbol} {v.fee_paid}</p>
+                            <p className="text-xs text-orange-500">Rem: {symbol} {v.fee - v.fee_paid}</p>
                             <p className="text-xs text-teal-300 mt-1">{new Date(v.created_at).toLocaleDateString()}</p>
                           </div>
                         </div>
@@ -514,7 +513,6 @@ export default function Patients() {
                 </div>
               )}
 
-              {/* Appointments Tab */}
               {activeTab === "appointments" && (
                 <div>
                   {appointments.length === 0 ? (
@@ -544,7 +542,6 @@ export default function Patients() {
                 </div>
               )}
 
-              {/* Medical History Tab */}
               {activeTab === "medical" && (
                 <div className="p-4 md:p-6">
                   <div className="flex justify-between items-center mb-4">
@@ -553,7 +550,6 @@ export default function Patients() {
                       {medicalHistory ? "✏️ Edit" : "+ Add"}
                     </button>
                   </div>
-
                   {showMedicalForm && (
                     <div className="bg-red-50 rounded-xl p-4 mb-4 border border-red-100">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -561,10 +557,8 @@ export default function Patients() {
                           <label className="block text-xs font-medium text-red-700 mb-1">Blood Group</label>
                           <select value={medicalForm.blood_group} onChange={e => setMedicalForm({...medicalForm, blood_group: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
                             <option value="">Select Blood Group</option>
-                            <option>A+</option><option>A-</option>
-                            <option>B+</option><option>B-</option>
-                            <option>O+</option><option>O-</option>
-                            <option>AB+</option><option>AB-</option>
+                            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+                            <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
                           </select>
                         </div>
                         <div>
@@ -573,7 +567,7 @@ export default function Patients() {
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-red-700 mb-1">Medical Conditions</label>
-                          <input placeholder="e.g. Diabetes, Hypertension, Heart Disease" value={medicalForm.medical_conditions} onChange={e => setMedicalForm({...medicalForm, medical_conditions: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                          <input placeholder="e.g. Diabetes, Hypertension" value={medicalForm.medical_conditions} onChange={e => setMedicalForm({...medicalForm, medical_conditions: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-red-700 mb-1">Current Medications</label>
@@ -594,7 +588,6 @@ export default function Patients() {
                       </div>
                     </div>
                   )}
-
                   {medicalHistory ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-red-50 rounded-lg p-3 border border-red-100">
@@ -643,11 +636,9 @@ export default function Patients() {
               </div>
               <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add Patient</button>
             </div>
-
             <div className="mb-5">
               <input placeholder="Search by name or patient number..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-teal-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
             </div>
-
             {showAnyForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
                 <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingPatientId ? "Edit Patient" : "New Patient"}</h3>
@@ -668,8 +659,8 @@ export default function Patients() {
                 </div>
                 <ToothChart selected={selectedTeeth} onToggle={toggleTooth} />
                 <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4">
-                  <input placeholder="Total Fee (Rs)" type="number" value={form.fee_total} onChange={e => setForm({...form, fee_total: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Fee Paid (Rs)" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Total Fee" type="number" value={form.fee_total} onChange={e => setForm({...form, fee_total: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Fee Paid" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                 </div>
                 <div className="flex gap-3 mt-4">
                   <button onClick={editingPatientId ? handleEditPatient : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingPatientId ? "Update Patient" : "Save Patient"}</button>
@@ -677,7 +668,6 @@ export default function Patients() {
                 </div>
               </div>
             )}
-
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
               <div className="md:hidden divide-y divide-teal-50">
                 {filteredPatients.length === 0 ? (
@@ -697,7 +687,7 @@ export default function Patients() {
                       </div>
                       <p className="text-xs text-teal-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· Dr. ${p.doctor_name}` : ""}</p>
                       <div className="flex justify-between items-center">
-                        <p className="text-xs text-teal-500">Paid: Rs {p.fee_paid} / Rs {p.fee_total}</p>
+                        <p className="text-xs text-teal-500">Paid: {symbol} {p.fee_paid} / {symbol} {p.fee_total}</p>
                         <div className="flex gap-2">
                           <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs">🖨️</button>
                           <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
@@ -739,9 +729,9 @@ export default function Patients() {
                           </td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.doctor_name || "-"}</td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.treatment}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>Rs {p.fee_total}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>Rs {p.fee_paid}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>Rs {p.fee_total - p.fee_paid}</td>
+                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_total}</td>
+                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_paid}</td>
+                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_total - p.fee_paid}</td>
                           <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}>
                             <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{p.status}</span>
                           </td>

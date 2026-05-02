@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useCurrency } from "@/lib/useCurrency";
 
 interface Purchase {
   id: number;
@@ -31,6 +32,7 @@ export default function Purchases() {
     unit: "Box", price_per_unit: "", supplier: "", date: "", notes: "",
   });
   const router = useRouter();
+  const { symbol } = useCurrency();
 
   const fetchPurchases = async () => {
     const supabase = createClient();
@@ -145,7 +147,7 @@ export default function Purchases() {
           </div>
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1">SPENT</p>
-            <p className="text-lg md:text-2xl font-semibold text-red-600">Rs {totalSpent.toLocaleString()}</p>
+            <p className="text-lg md:text-2xl font-semibold text-red-600">{symbol} {totalSpent.toLocaleString()}</p>
             <p className="text-xs text-teal-400 mt-1">Combined</p>
           </div>
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
@@ -167,7 +169,7 @@ export default function Purchases() {
               <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
               </select>
-              <input placeholder="Price Per Unit (Rs)" type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder={`Price Per Unit (${symbol})`} type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <div>
                 <label className="block text-xs text-teal-600 mb-1">Purchase Date</label>
@@ -178,7 +180,7 @@ export default function Purchases() {
             {form.quantity && form.price_per_unit && (
               <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between">
                 <span className="text-sm text-teal-600">Total:</span>
-                <span className="text-sm font-bold text-teal-800">Rs {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}</span>
+                <span className="text-sm font-bold text-teal-800">{symbol} {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}</span>
               </div>
             )}
             <div className="flex gap-3 mt-4">
@@ -213,7 +215,7 @@ export default function Purchases() {
                       <p className="font-medium text-teal-800 text-sm">{p.item_name}</p>
                       <p className="text-xs text-teal-500">{p.category} · {p.supplier}</p>
                     </div>
-                    <p className="font-semibold text-red-600 text-sm">Rs {p.total_price?.toLocaleString()}</p>
+                    <p className="font-semibold text-red-600 text-sm">{symbol} {p.total_price?.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between mt-1">
                     <p className="text-xs text-teal-400">{p.quantity} {p.unit} · {p.date}</p>
@@ -252,8 +254,8 @@ export default function Purchases() {
                       </td>
                       <td className="px-4 py-3"><span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{p.category}</span></td>
                       <td className="px-4 py-3 text-teal-700">{p.quantity} {p.unit}</td>
-                      <td className="px-4 py-3 text-teal-700">Rs {p.price_per_unit?.toLocaleString()}</td>
-                      <td className="px-4 py-3 font-semibold text-red-600">Rs {p.total_price?.toLocaleString()}</td>
+                      <td className="px-4 py-3 text-teal-700">{symbol} {p.price_per_unit?.toLocaleString()}</td>
+                      <td className="px-4 py-3 font-semibold text-red-600">{symbol} {p.total_price?.toLocaleString()}</td>
                       <td className="px-4 py-3 text-teal-700">{p.supplier}</td>
                       <td className="px-4 py-3 text-teal-700">{p.date}</td>
                       <td className="px-4 py-3">

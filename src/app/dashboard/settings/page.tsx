@@ -15,9 +15,25 @@ const currencies = [
   { code: "AUD", symbol: "A$", name: "Australian Dollar" },
 ];
 
+const getAutoCurrency = (): string => {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (tz.includes("Karachi") || tz.includes("Pakistan")) return "PKR";
+    if (tz.includes("London") || tz.includes("Europe/London")) return "GBP";
+    if (tz.includes("Dubai") || tz.includes("Abu_Dhabi")) return "AED";
+    if (tz.includes("Riyadh") || tz.includes("Saudi")) return "SAR";
+    if (tz.includes("America")) return "USD";
+    if (tz.includes("Sydney") || tz.includes("Melbourne")) return "AUD";
+    if (tz.includes("Toronto") || tz.includes("Vancouver")) return "CAD";
+    if (tz.includes("Europe")) return "EUR";
+  } catch {}
+  return "PKR";
+};
+
 export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [autoDetected, setAutoDetected] = useState("");
   const [form, setForm] = useState({
     clinic_name: "",
     clinic_address: "",
@@ -28,18 +44,26 @@ export default function Settings() {
   const router = useRouter();
 
   useEffect(() => {
+    const auto = getAutoCurrency();
+    setAutoDetected(auto);
+
     const fetchSettings = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/"); return; }
       const { data } = await supabase.from("settings").select("*").eq("user_id", user.id).single();
-      if (data) setForm({
-        clinic_name: data.clinic_name || "",
-        clinic_address: data.clinic_address || "",
-        clinic_phone: data.clinic_phone || "",
-        clinic_email: data.clinic_email || "",
-        currency: data.currency || "PKR",
-      });
+      if (data) {
+        setForm({
+          clinic_name: data.clinic_name || "",
+          clinic_address: data.clinic_address || "",
+          clinic_phone: data.clinic_phone || "",
+          clinic_email: data.clinic_email || "",
+          currency: data.currency || auto,
+        });
+      } else {
+        // No settings yet — auto detect use karo
+        setForm(f => ({ ...f, currency: auto }));
+      }
     };
     fetchSettings();
   }, [router]);
@@ -73,6 +97,7 @@ export default function Settings() {
   };
 
   const selectedCurrency = currencies.find(c => c.code === form.currency);
+  const autoCurrencyName = currencies.find(c => c.code === autoDetected)?.name;
 
   return (
     <div className="min-h-screen flex bg-teal-50">
@@ -104,6 +129,12 @@ export default function Settings() {
             </div>
             <div>
               <label className="block text-xs font-medium text-teal-700 mb-1">Currency</label>
+              {autoDetected && (
+                <div className="mb-2 bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 flex items-center justify-between">
+                  <p className="text-xs text-blue-600">🌍 Auto-detected: <span className="font-medium">{autoCurrencyName} ({autoDetected})</span></p>
+                  <button onClick={() => setForm({...form, currency: autoDetected})} className="text-xs text-blue-600 font-medium hover:underline">Use This</button>
+                </div>
+              )}
               <select value={form.currency} onChange={e => setForm({...form, currency: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 {currencies.map(c => (
                   <option key={c.code} value={c.code}>{c.symbol} — {c.name} ({c.code})</option>

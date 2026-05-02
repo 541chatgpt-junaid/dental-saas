@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useCurrency } from "@/lib/useCurrency";
 
 interface Lab {
   id: number;
@@ -33,6 +34,7 @@ export default function Labs() {
     status: "Pending", notes: "",
   });
   const router = useRouter();
+  const { symbol } = useCurrency();
 
   const fetchLabs = async () => {
     const supabase = createClient();
@@ -161,8 +163,8 @@ export default function Labs() {
                 <label className="block text-xs text-teal-600 mb-1">Delivery Date</label>
                 <input type="date" value={form.delivery_date} onChange={e => setForm({...form, delivery_date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               </div>
-              <input placeholder="Total Fee (Rs)" type="number" value={form.fee} onChange={e => setForm({...form, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Fee Paid (Rs)" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder={`Total Fee (${symbol})`} type="number" value={form.fee} onChange={e => setForm({...form, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder={`Fee Paid (${symbol})`} type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
               <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                 <option>Pending</option><option>Delivered</option>
               </select>
@@ -194,7 +196,7 @@ export default function Labs() {
                   <p className="text-xs text-teal-600">{l.work_type} x{l.units} · {l.shade} · {l.material}</p>
                   <p className="text-xs text-teal-400 mt-1">Delivery: {l.delivery_date}</p>
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-teal-600">Paid: Rs {l.fee_paid} / Rs {l.fee}</p>
+                    <p className="text-xs text-teal-600">Paid: {symbol} {l.fee_paid} / {symbol} {l.fee}</p>
                     <div className="flex gap-2">
                       <button onClick={() => openEdit(l)} className="text-teal-600 text-xs font-medium">✏️</button>
                       {l.fee_paid < l.fee && <button onClick={() => { const a = prompt(`Payment:`); if (a) handlePayment(l, parseInt(a)); }} className="text-teal-600 text-xs font-medium">Pay</button>}
@@ -230,9 +232,11 @@ export default function Labs() {
                       <td className="px-4 py-3 text-teal-700">{l.lab_name}</td>
                       <td className="px-4 py-3 text-teal-700">{l.work_type} x{l.units}<p className="text-xs text-teal-400">{l.shade} · {l.material}</p></td>
                       <td className="px-4 py-3 text-teal-700">{l.delivery_date}</td>
-                      <td className="px-4 py-3 text-teal-700">Rs {l.fee}</td>
-                      <td className="px-4 py-3 text-teal-700">Rs {l.fee_paid}</td>
-                      <td className="px-4 py-3"><span className={`px-2 py-1 rounded-full text-xs font-medium ${l.status === "Delivered" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{l.status}</span></td>
+                      <td className="px-4 py-3 text-teal-700">{symbol} {l.fee}</td>
+                      <td className="px-4 py-3 text-teal-700">{symbol} {l.fee_paid}</td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${l.status === "Delivered" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{l.status}</span>
+                      </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2 flex-wrap">
                           <button onClick={() => openEdit(l)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
