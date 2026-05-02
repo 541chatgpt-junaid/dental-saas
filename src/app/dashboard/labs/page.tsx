@@ -136,7 +136,7 @@ export default function Labs() {
             <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Lab Records</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {labs.length} records</p>
           </div>
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); resetForm(); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
         {showAnyForm && (
