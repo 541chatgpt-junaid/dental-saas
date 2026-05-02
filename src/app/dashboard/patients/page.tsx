@@ -72,6 +72,13 @@ const upperLeft = [21,22,23,24,25,26,27,28];
 const lowerRight = [48,47,46,45,44,43,42,41];
 const lowerLeft = [31,32,33,34,35,36,37,38];
 
+const formatDate = (dateStr: string) => {
+  if (!dateStr) return "—";
+  try {
+    return new Date(dateStr).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  } catch { return dateStr; }
+};
+
 export default function Patients() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
@@ -247,14 +254,6 @@ export default function Patients() {
     setShowForm(false);
   };
 
-  const handleDeletePatient = async (id: number) => {
-    if (!confirm("Delete this patient?")) return;
-    const supabase = createClient();
-    await supabase.from("patients").delete().eq("id", id);
-    fetchPatients();
-  };
-
-  // Visit add — patient fee bhi auto update hoti hai
   const handleAddVisit = async () => {
     if (!selectedPatient) return;
     setLoading(true);
@@ -276,29 +275,22 @@ export default function Patients() {
       status: visitStatus,
     }]);
 
-    // Patient ki total fee update karo
     const newTotal = selectedPatient.fee_total + visitFee;
     const newPaid = selectedPatient.fee_paid + visitFeePaid;
     const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
-    await supabase.from("patients").update({
-      fee_total: newTotal,
-      fee_paid: newPaid,
-      status: newStatus,
-    }).eq("id", selectedPatient.id);
-
+    await supabase.from("patients").update({ fee_total: newTotal, fee_paid: newPaid, status: newStatus }).eq("id", selectedPatient.id);
     setSelectedPatient({ ...selectedPatient, fee_total: newTotal, fee_paid: newPaid, status: newStatus });
+
     resetVisitForm();
     setLoading(false);
     fetchVisits(selectedPatient.id);
     fetchPatients();
   };
 
-  // Visit edit
   const handleEditVisit = async () => {
     if (!selectedPatient || !editingVisitId) return;
     setLoading(true);
     const supabase = createClient();
-
     const oldVisit = visits.find(v => v.id === editingVisitId);
     const visitFee = parseInt(visitForm.fee) || 0;
     const visitFeePaid = parseInt(visitForm.fee_paid) || 0;
@@ -315,7 +307,6 @@ export default function Patients() {
       status: visitStatus,
     }).eq("id", editingVisitId);
 
-    // Patient fee recalculate
     if (oldVisit) {
       const newTotal = selectedPatient.fee_total - oldVisit.fee + visitFee;
       const newPaid = selectedPatient.fee_paid - oldVisit.fee_paid + visitFeePaid;
@@ -349,7 +340,6 @@ export default function Patients() {
     if (!selectedPatient || !confirm("Delete this visit?")) return;
     const supabase = createClient();
     await supabase.from("visits").delete().eq("id", v.id);
-    // Patient fee update
     const newTotal = selectedPatient.fee_total - v.fee;
     const newPaid = selectedPatient.fee_paid - v.fee_paid;
     const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
@@ -361,14 +351,13 @@ export default function Patients() {
 
   const handleVisitPayment = async (v: Visit) => {
     if (!selectedPatient) return;
-    const amount = prompt(`Additional payment for visit — ${v.treatment}:`);
+    const amount = prompt(`Additional payment for — ${v.treatment}:`);
     if (!amount) return;
     const extra = parseInt(amount);
     const supabase = createClient();
     const newPaid = v.fee_paid + extra;
     const newStatus = newPaid >= v.fee ? "Paid" : "Partial";
     await supabase.from("visits").update({ fee_paid: newPaid, status: newStatus }).eq("id", v.id);
-    // Patient fee update
     const patNewPaid = selectedPatient.fee_paid + extra;
     const patStatus = patNewPaid >= selectedPatient.fee_total && selectedPatient.fee_total > 0 ? "Paid" : "Partial";
     await supabase.from("patients").update({ fee_paid: patNewPaid, status: patStatus }).eq("id", selectedPatient.id);
@@ -447,7 +436,6 @@ export default function Patients() {
     getClinicPatientNumber(p.id).toString().includes(search)
   );
 
-  // Visit totals
   const visitTotalFee = visits.reduce((s, v) => s + (v.fee || 0), 0);
   const visitTotalPaid = visits.reduce((s, v) => s + (v.fee_paid || 0), 0);
   const visitTotalPending = visitTotalFee - visitTotalPaid;
@@ -510,7 +498,6 @@ export default function Patients() {
           <div>
             <button onClick={() => setSelectedPatient(null)} className="text-teal-600 text-sm mb-4 hover:underline">← Back to Patients</button>
 
-            {/* Patient Header */}
             <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
@@ -519,8 +506,17 @@ export default function Patients() {
                     <span className="text-xs text-teal-400 bg-teal-50 px-2 py-0.5 rounded-full">#{getClinicPatientNumber(selectedPatient.id)}</span>
                     <StatusBadge status={selectedPatient.status} />
                   </div>
-                  <p className="text-xs md:text-sm text-teal-500 mt-1">{selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} years · {selectedPatient.address}</p>
-                  {selectedPatient.treatment && <p className="text-xs text-teal-400 mt-1">Initial: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}</p>}
+                  <p className="text-xs md:text-sm text-teal-500 mt-1">
+                    {selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} yrs · {selectedPatient.address}
+                  </p>
+                  <p className="text-xs text-teal-400 mt-0.5">
+                    Registered: {formatDate(selectedPatient.created_at)}
+                  </p>
+                  {selectedPatient.treatment && (
+                    <p className="text-xs text-teal-400 mt-0.5">
+                      Initial: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}
+                    </p>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-teal-300 text-teal-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-teal-50">🖨️ Receipt</button>
@@ -529,7 +525,6 @@ export default function Patients() {
                 </div>
               </div>
 
-              {/* Fee Summary — all visits combined */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4">
                 <div className="bg-teal-50 rounded-lg p-2 md:p-3">
                   <p className="text-xs text-teal-600">Total Billed</p>
@@ -542,16 +537,15 @@ export default function Patients() {
                 </div>
                 <div className="bg-orange-50 rounded-lg p-2 md:p-3">
                   <p className="text-xs text-orange-600">Still Pending</p>
-                  <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {visitTotalPending > 0 ? visitTotalPending : selectedPatient.fee_total - selectedPatient.fee_paid}</p>
+                  <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {visitTotalPending > 0 ? visitTotalPending : (selectedPatient.fee_total - selectedPatient.fee_paid)}</p>
                 </div>
                 <div className="bg-teal-50 rounded-lg p-2 md:p-3">
                   <p className="text-xs text-teal-600">Last Visit</p>
-                  <p className="text-sm font-semibold text-teal-800">{visits[0]?.visit_date || "—"}</p>
+                  <p className="text-sm font-semibold text-teal-800">{visits[0]?.visit_date ? formatDate(visits[0].visit_date) : "—"}</p>
                 </div>
               </div>
             </div>
 
-            {/* Appointment Form */}
             {showAppointmentForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-blue-100 mb-6">
                 <h3 className="text-sm font-semibold text-blue-800 mb-4">New Appointment — {selectedPatient.name}</h3>
@@ -574,7 +568,6 @@ export default function Patients() {
               </div>
             )}
 
-            {/* Visit Form */}
             {showVisitForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
                 <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingVisitId ? "Edit Visit" : "New Visit"} — {selectedPatient.name}</h3>
@@ -611,7 +604,6 @@ export default function Patients() {
               </div>
             )}
 
-            {/* Tabs */}
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
               <div className="flex border-b border-teal-100 overflow-x-auto">
                 <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "visits" ? "bg-teal-50 text-teal-800 border-b-2 border-teal-600" : "text-teal-500"}`}>
@@ -625,12 +617,11 @@ export default function Patients() {
                 </button>
               </div>
 
-              {/* Visits Tab */}
               {activeTab === "visits" && (
                 <div>
                   {visits.length === 0 ? (
                     <div className="text-center py-10">
-                      <p className="text-teal-400 text-sm mb-2">No visits recorded yet</p>
+                      <p className="text-teal-400 text-sm mb-1">No visits recorded yet</p>
                       <p className="text-teal-300 text-xs">Click "+ Visit" to add first visit</p>
                     </div>
                   ) : (
@@ -638,13 +629,17 @@ export default function Patients() {
                       <div key={v.id} className="px-4 md:px-5 py-4 border-b border-teal-50 hover:bg-teal-50">
                         <div className="flex justify-between items-start gap-2">
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
                               <p className="text-sm font-semibold text-teal-800">Visit {visits.length - i}</p>
                               <StatusBadge status={v.status || "Pending"} />
-                              <span className="text-xs text-teal-400">{v.visit_date}</span>
+                              <span className="text-xs text-teal-400 bg-teal-50 px-2 py-0.5 rounded-full">
+                                📅 {formatDate(v.visit_date)}
+                              </span>
                             </div>
-                            <p className="text-sm text-teal-700 mt-0.5">{v.treatment}</p>
-                            <p className="text-xs text-teal-500 mt-0.5">Dr. {v.doctor_name || "—"} {v.tooth_number ? `· Tooth: ${v.tooth_number}` : ""}</p>
+                            <p className="text-sm text-teal-700">{v.treatment}</p>
+                            <p className="text-xs text-teal-500 mt-0.5">
+                              Dr. {v.doctor_name || "—"} {v.tooth_number ? `· Tooth: ${v.tooth_number}` : ""}
+                            </p>
                             {v.notes && <p className="text-xs text-teal-400 mt-1 italic">{v.notes}</p>}
                           </div>
                           <div className="text-right shrink-0">
@@ -664,9 +659,9 @@ export default function Patients() {
                     ))
                   )}
                   {visits.length > 0 && (
-                    <div className="px-4 py-3 bg-teal-50 flex justify-between items-center">
+                    <div className="px-4 py-3 bg-teal-50 flex flex-wrap justify-between items-center gap-2">
                       <span className="text-xs font-semibold text-teal-700">All visits total</span>
-                      <div className="flex gap-4">
+                      <div className="flex gap-4 flex-wrap">
                         <span className="text-xs text-teal-700">Billed: <strong>{symbol} {visitTotalFee}</strong></span>
                         <span className="text-xs text-green-700">Paid: <strong>{symbol} {visitTotalPaid}</strong></span>
                         <span className="text-xs text-orange-600">Pending: <strong>{symbol} {visitTotalPending}</strong></span>
@@ -676,7 +671,6 @@ export default function Patients() {
                 </div>
               )}
 
-              {/* Appointments Tab */}
               {activeTab === "appointments" && (
                 <div>
                   {appointments.length === 0 ? (
@@ -687,7 +681,7 @@ export default function Patients() {
                         <div className="flex justify-between items-start gap-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-teal-800">Appointment {i + 1} — {a.treatment || "General"}</p>
-                            <p className="text-xs text-teal-500 mt-0.5">📅 {a.date} · ⏰ {a.time}</p>
+                            <p className="text-xs text-teal-500 mt-0.5">📅 {formatDate(a.date)} · ⏰ {a.time}</p>
                             {a.notes && <p className="text-xs text-teal-400 mt-1">{a.notes}</p>}
                           </div>
                           <div className="text-right shrink-0 flex flex-col items-end gap-1">
@@ -706,7 +700,6 @@ export default function Patients() {
                 </div>
               )}
 
-              {/* Medical Tab */}
               {activeTab === "medical" && (
                 <div className="p-4 md:p-6">
                   <div className="flex justify-between items-center mb-4">
@@ -736,7 +729,7 @@ export default function Patients() {
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-red-700 mb-1">Current Medications</label>
-                          <input placeholder="e.g. Metformin, Aspirin" value={medicalForm.current_medications} onChange={e => setMedicalForm({...medicalForm, medical_conditions: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                          <input placeholder="e.g. Metformin, Aspirin" value={medicalForm.current_medications} onChange={e => setMedicalForm({...medicalForm, current_medications: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-red-700 mb-1">Previous Surgeries</label>
@@ -802,6 +795,7 @@ export default function Patients() {
               </div>
               <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add Patient</button>
             </div>
+
             <div className="mb-5">
               <input placeholder="Search by name or patient number..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-teal-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
             </div>
@@ -836,6 +830,7 @@ export default function Patients() {
             )}
 
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
+              {/* Mobile */}
               <div className="md:hidden divide-y divide-teal-50">
                 {filteredPatients.length === 0 ? (
                   <p className="text-center py-10 text-teal-400 text-sm">No patients found</p>
@@ -849,6 +844,7 @@ export default function Patients() {
                             <span className="text-xs text-teal-300">#{getClinicPatientNumber(p.id)}</span>
                           </div>
                           <p className="text-xs text-teal-400">{p.phone} · {p.gender} · {p.age}y</p>
+                          <p className="text-xs text-teal-300">{formatDate(p.created_at)}</p>
                         </div>
                         <StatusBadge status={p.status} />
                       </div>
@@ -861,19 +857,21 @@ export default function Patients() {
                           {p.status !== "Paid" && (
                             <button onClick={() => { const amount = prompt(`Payment for ${p.name}:`); if (amount) handlePayment(p, parseInt(amount)); }} className="text-teal-600 text-xs font-medium">Pay</button>
                           )}
-                          <button onClick={() => handleDeletePatient(p.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                         </div>
                       </div>
                     </div>
                   ))
                 )}
               </div>
+
+              {/* Desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-teal-50">
                     <tr>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">#</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Name</th>
+                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Registered</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
                       <th className="text-left px-4 py-3 text-teal-700 font-medium">Total Fee</th>
@@ -885,7 +883,7 @@ export default function Patients() {
                   </thead>
                   <tbody>
                     {filteredPatients.length === 0 ? (
-                      <tr><td colSpan={9} className="text-center py-10 text-teal-400">No patients found</td></tr>
+                      <tr><td colSpan={10} className="text-center py-10 text-teal-400">No patients found</td></tr>
                     ) : (
                       filteredPatients.map(p => (
                         <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
@@ -893,6 +891,9 @@ export default function Patients() {
                           <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}>
                             <p className="font-medium text-teal-800">{p.name}</p>
                             <p className="text-xs text-teal-400">{p.phone} · {p.gender} · {p.age}y</p>
+                          </td>
+                          <td className="px-4 py-3 text-teal-500 text-xs cursor-pointer" onClick={() => openPatient(p)}>
+                            {formatDate(p.created_at)}
                           </td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.doctor_name || "-"}</td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.treatment}</td>
@@ -907,7 +908,6 @@ export default function Patients() {
                               {p.status !== "Paid" && (
                                 <button onClick={() => { const amount = prompt(`Payment for ${p.name}:`); if (amount) handlePayment(p, parseInt(amount)); }} className="text-teal-600 text-xs font-medium">Pay</button>
                               )}
-                              <button onClick={() => handleDeletePatient(p.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                             </div>
                           </td>
                         </tr>
