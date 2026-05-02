@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
+import { useCurrency } from "@/lib/useCurrency";
 
 interface ReceiptProps {
   patient: {
@@ -35,6 +36,7 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
     clinic_phone: "",
     clinic_email: "",
   });
+  const { symbol } = useCurrency();
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -121,7 +123,7 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
                 <p className="text-xs font-medium text-gray-700">{patient.treatment || "General Checkup"}</p>
                 {patient.tooth_number && <p className="text-xs text-gray-400">Tooth: {patient.tooth_number}</p>}
               </div>
-              <p className="text-xs font-semibold text-gray-700">Rs {patient.fee_total?.toLocaleString()}</p>
+              <p className="text-xs font-semibold text-gray-700">{symbol} {patient.fee_total?.toLocaleString()}</p>
             </div>
           </div>
 
@@ -129,16 +131,16 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
           <div className="space-y-1.5 mb-3">
             <div className="flex justify-between text-xs">
               <span className="text-gray-500">Total Fee</span>
-              <span className="font-medium text-gray-700">Rs {patient.fee_total?.toLocaleString()}</span>
+              <span className="font-medium text-gray-700">{symbol} {patient.fee_total?.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-gray-500">Amount Paid</span>
-              <span className="font-semibold text-green-600">Rs {patient.fee_paid?.toLocaleString()}</span>
+              <span className="font-semibold text-green-600">{symbol} {patient.fee_paid?.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-gray-500">Remaining</span>
               <span className={`font-semibold ${remaining > 0 ? "text-orange-500" : "text-green-600"}`}>
-                Rs {remaining?.toLocaleString()}
+                {symbol} {remaining?.toLocaleString()}
               </span>
             </div>
           </div>
