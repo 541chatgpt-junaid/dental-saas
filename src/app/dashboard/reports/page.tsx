@@ -293,7 +293,7 @@ export default function Reports() {
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={expensePieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={false}>
+                    <Pie data={expensePieData} cx="50%" cy="50%" outerRadius={80} dataKey="value" label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`} labelLine={false}>
                       {expensePieData.map((_, index) => (
                         <Cell key={index} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                       ))}
