@@ -26,6 +26,7 @@ interface Patient {
 interface Visit {
   id: number;
   created_at: string;
+  visit_date: string;
   patient_id: number;
   patient_name: string;
   doctor_name: string;
@@ -34,6 +35,7 @@ interface Visit {
   notes: string;
   fee: number;
   fee_paid: number;
+  status: string;
 }
 
 interface Appointment {
@@ -90,6 +92,7 @@ export default function Patients() {
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptPatient, setReceiptPatient] = useState<Patient | null>(null);
   const [activeTab, setActiveTab] = useState<"visits"|"appointments"|"medical">("visits");
+  const [editingVisitId, setEditingVisitId] = useState<number | null>(null);
   const [medicalForm, setMedicalForm] = useState({
     allergies: "", blood_group: "", medical_conditions: "",
     current_medications: "", previous_surgeries: "", notes: "",
@@ -99,6 +102,7 @@ export default function Patients() {
   });
   const [visitForm, setVisitForm] = useState({
     doctor_name: "", treatment: "", notes: "", fee: "", fee_paid: "",
+    visit_date: new Date().toISOString().split("T")[0], status: "Pending",
   });
   const [form, setForm] = useState({
     name: "", phone: "", address: "", age: "",
@@ -127,7 +131,7 @@ export default function Patients() {
 
   const fetchVisits = async (patientId: number) => {
     const supabase = createClient();
-    const { data } = await supabase.from("visits").select("*").eq("patient_id", patientId).order("created_at", { ascending: false });
+    const { data } = await supabase.from("visits").select("*").eq("patient_id", patientId).order("visit_date", { ascending: false });
     if (data) setVisits(data);
   };
 
@@ -179,6 +183,13 @@ export default function Patients() {
     setEditingPatientId(null);
   };
 
+  const resetVisitForm = () => {
+    setVisitForm({ doctor_name: "", treatment: "", notes: "", fee: "", fee_paid: "", visit_date: new Date().toISOString().split("T")[0], status: "Pending" });
+    setVisitTeeth([]);
+    setShowVisitForm(false);
+    setEditingVisitId(null);
+  };
+
   const toggleTooth = (num: number) => {
     setSelectedTeeth(prev => prev.includes(num) ? prev.filter(t => t !== num) : [...prev, num]);
   };
@@ -193,7 +204,7 @@ export default function Patients() {
     const { data: { user } } = await supabase.auth.getUser();
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
-    const status = fee_paid >= fee_total ? "Paid" : "Pending";
+    const status = fee_paid >= fee_total && fee_total > 0 ? "Paid" : fee_paid > 0 ? "Partial" : "Pending";
     await supabase.from("patients").insert([{
       name: form.name, phone: form.phone, address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
@@ -212,7 +223,7 @@ export default function Patients() {
     const supabase = createClient();
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
-    const status = fee_paid >= fee_total ? "Paid" : "Pending";
+    const status = fee_paid >= fee_total && fee_total > 0 ? "Paid" : fee_paid > 0 ? "Partial" : "Pending";
     await supabase.from("patients").update({
       name: form.name, phone: form.phone, address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
@@ -243,42 +254,15 @@ export default function Patients() {
     fetchPatients();
   };
 
-  const handleSaveMedical = async () => {
-    if (!selectedPatient) return;
-    setLoading(true);
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (medicalHistory) {
-      await supabase.from("medical_history").update({
-        allergies: medicalForm.allergies,
-        blood_group: medicalForm.blood_group,
-        medical_conditions: medicalForm.medical_conditions,
-        current_medications: medicalForm.current_medications,
-        previous_surgeries: medicalForm.previous_surgeries,
-        notes: medicalForm.notes,
-      }).eq("id", medicalHistory.id);
-    } else {
-      await supabase.from("medical_history").insert([{
-        patient_id: selectedPatient.id,
-        patient_name: selectedPatient.name,
-        user_id: user?.id,
-        allergies: medicalForm.allergies,
-        blood_group: medicalForm.blood_group,
-        medical_conditions: medicalForm.medical_conditions,
-        current_medications: medicalForm.current_medications,
-        previous_surgeries: medicalForm.previous_surgeries,
-        notes: medicalForm.notes,
-      }]);
-    }
-    setShowMedicalForm(false);
-    setLoading(false);
-    fetchMedicalHistory(selectedPatient.id);
-  };
-
+  // Visit add — patient fee bhi auto update hoti hai
   const handleAddVisit = async () => {
     if (!selectedPatient) return;
     setLoading(true);
     const supabase = createClient();
+    const visitFee = parseInt(visitForm.fee) || 0;
+    const visitFeePaid = parseInt(visitForm.fee_paid) || 0;
+    const visitStatus = visitFeePaid >= visitFee && visitFee > 0 ? "Paid" : visitFeePaid > 0 ? "Partial" : "Pending";
+
     await supabase.from("visits").insert([{
       patient_id: selectedPatient.id,
       patient_name: selectedPatient.name,
@@ -286,14 +270,135 @@ export default function Patients() {
       treatment: visitForm.treatment,
       tooth_number: visitTeeth.join(", "),
       notes: visitForm.notes,
-      fee: parseInt(visitForm.fee) || 0,
-      fee_paid: parseInt(visitForm.fee_paid) || 0,
+      fee: visitFee,
+      fee_paid: visitFeePaid,
+      visit_date: visitForm.visit_date,
+      status: visitStatus,
     }]);
-    setVisitForm({ doctor_name: "", treatment: "", notes: "", fee: "", fee_paid: "" });
-    setVisitTeeth([]);
-    setShowVisitForm(false);
+
+    // Patient ki total fee update karo
+    const newTotal = selectedPatient.fee_total + visitFee;
+    const newPaid = selectedPatient.fee_paid + visitFeePaid;
+    const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
+    await supabase.from("patients").update({
+      fee_total: newTotal,
+      fee_paid: newPaid,
+      status: newStatus,
+    }).eq("id", selectedPatient.id);
+
+    setSelectedPatient({ ...selectedPatient, fee_total: newTotal, fee_paid: newPaid, status: newStatus });
+    resetVisitForm();
     setLoading(false);
     fetchVisits(selectedPatient.id);
+    fetchPatients();
+  };
+
+  // Visit edit
+  const handleEditVisit = async () => {
+    if (!selectedPatient || !editingVisitId) return;
+    setLoading(true);
+    const supabase = createClient();
+
+    const oldVisit = visits.find(v => v.id === editingVisitId);
+    const visitFee = parseInt(visitForm.fee) || 0;
+    const visitFeePaid = parseInt(visitForm.fee_paid) || 0;
+    const visitStatus = visitFeePaid >= visitFee && visitFee > 0 ? "Paid" : visitFeePaid > 0 ? "Partial" : "Pending";
+
+    await supabase.from("visits").update({
+      doctor_name: visitForm.doctor_name,
+      treatment: visitForm.treatment,
+      tooth_number: visitTeeth.join(", "),
+      notes: visitForm.notes,
+      fee: visitFee,
+      fee_paid: visitFeePaid,
+      visit_date: visitForm.visit_date,
+      status: visitStatus,
+    }).eq("id", editingVisitId);
+
+    // Patient fee recalculate
+    if (oldVisit) {
+      const newTotal = selectedPatient.fee_total - oldVisit.fee + visitFee;
+      const newPaid = selectedPatient.fee_paid - oldVisit.fee_paid + visitFeePaid;
+      const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
+      await supabase.from("patients").update({ fee_total: newTotal, fee_paid: newPaid, status: newStatus }).eq("id", selectedPatient.id);
+      setSelectedPatient({ ...selectedPatient, fee_total: newTotal, fee_paid: newPaid, status: newStatus });
+    }
+
+    resetVisitForm();
+    setLoading(false);
+    fetchVisits(selectedPatient.id);
+    fetchPatients();
+  };
+
+  const openEditVisit = (v: Visit) => {
+    setEditingVisitId(v.id);
+    setVisitForm({
+      doctor_name: v.doctor_name || "",
+      treatment: v.treatment || "",
+      notes: v.notes || "",
+      fee: v.fee.toString(),
+      fee_paid: v.fee_paid.toString(),
+      visit_date: v.visit_date || new Date().toISOString().split("T")[0],
+      status: v.status || "Pending",
+    });
+    setVisitTeeth(v.tooth_number ? v.tooth_number.split(", ").map(Number).filter(Boolean) : []);
+    setShowVisitForm(true);
+  };
+
+  const handleDeleteVisit = async (v: Visit) => {
+    if (!selectedPatient || !confirm("Delete this visit?")) return;
+    const supabase = createClient();
+    await supabase.from("visits").delete().eq("id", v.id);
+    // Patient fee update
+    const newTotal = selectedPatient.fee_total - v.fee;
+    const newPaid = selectedPatient.fee_paid - v.fee_paid;
+    const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
+    await supabase.from("patients").update({ fee_total: newTotal, fee_paid: newPaid, status: newStatus }).eq("id", selectedPatient.id);
+    setSelectedPatient({ ...selectedPatient, fee_total: newTotal, fee_paid: newPaid, status: newStatus });
+    fetchVisits(selectedPatient.id);
+    fetchPatients();
+  };
+
+  const handleVisitPayment = async (v: Visit) => {
+    if (!selectedPatient) return;
+    const amount = prompt(`Additional payment for visit — ${v.treatment}:`);
+    if (!amount) return;
+    const extra = parseInt(amount);
+    const supabase = createClient();
+    const newPaid = v.fee_paid + extra;
+    const newStatus = newPaid >= v.fee ? "Paid" : "Partial";
+    await supabase.from("visits").update({ fee_paid: newPaid, status: newStatus }).eq("id", v.id);
+    // Patient fee update
+    const patNewPaid = selectedPatient.fee_paid + extra;
+    const patStatus = patNewPaid >= selectedPatient.fee_total && selectedPatient.fee_total > 0 ? "Paid" : "Partial";
+    await supabase.from("patients").update({ fee_paid: patNewPaid, status: patStatus }).eq("id", selectedPatient.id);
+    setSelectedPatient({ ...selectedPatient, fee_paid: patNewPaid, status: patStatus });
+    fetchVisits(selectedPatient.id);
+    fetchPatients();
+  };
+
+  const handleSaveMedical = async () => {
+    if (!selectedPatient) return;
+    setLoading(true);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (medicalHistory) {
+      await supabase.from("medical_history").update({
+        allergies: medicalForm.allergies, blood_group: medicalForm.blood_group,
+        medical_conditions: medicalForm.medical_conditions, current_medications: medicalForm.current_medications,
+        previous_surgeries: medicalForm.previous_surgeries, notes: medicalForm.notes,
+      }).eq("id", medicalHistory.id);
+    } else {
+      await supabase.from("medical_history").insert([{
+        patient_id: selectedPatient.id, patient_name: selectedPatient.name, user_id: user?.id,
+        allergies: medicalForm.allergies, blood_group: medicalForm.blood_group,
+        medical_conditions: medicalForm.medical_conditions, current_medications: medicalForm.current_medications,
+        previous_surgeries: medicalForm.previous_surgeries, notes: medicalForm.notes,
+      }]);
+    }
+    setShowMedicalForm(false);
+    setLoading(false);
+    fetchMedicalHistory(selectedPatient.id);
   };
 
   const handleAddAppointment = async () => {
@@ -302,15 +407,11 @@ export default function Patients() {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("appointments").insert([{
-      patient_id: selectedPatient.id,
-      patient_name: selectedPatient.name,
+      patient_id: selectedPatient.id, patient_name: selectedPatient.name,
       doctor_name: selectedPatient.doctor_name || "",
-      date: appointmentForm.date,
-      time: appointmentForm.time,
-      treatment: appointmentForm.treatment,
-      notes: appointmentForm.notes,
-      status: "Scheduled",
-      user_id: user?.id,
+      date: appointmentForm.date, time: appointmentForm.time,
+      treatment: appointmentForm.treatment, notes: appointmentForm.notes,
+      status: "Scheduled", user_id: user?.id,
     }]);
     setAppointmentForm({ date: "", time: "", treatment: "", notes: "" });
     setShowAppointmentForm(false);
@@ -328,7 +429,7 @@ export default function Patients() {
   const handlePayment = async (patient: Patient, extraPayment: number) => {
     const supabase = createClient();
     const newPaid = patient.fee_paid + extraPayment;
-    const newStatus = newPaid >= patient.fee_total ? "Paid" : "Pending";
+    const newStatus = newPaid >= patient.fee_total && patient.fee_total > 0 ? "Paid" : "Partial";
     await supabase.from("patients").update({ fee_paid: newPaid, status: newStatus }).eq("id", patient.id);
     fetchPatients();
   };
@@ -346,6 +447,11 @@ export default function Patients() {
     getClinicPatientNumber(p.id).toString().includes(search)
   );
 
+  // Visit totals
+  const visitTotalFee = visits.reduce((s, v) => s + (v.fee || 0), 0);
+  const visitTotalPaid = visits.reduce((s, v) => s + (v.fee_paid || 0), 0);
+  const visitTotalPending = visitTotalFee - visitTotalPaid;
+
   const ToothBtn = ({ num, selected, onToggle }: { num: number; selected: number[]; onToggle: (n: number) => void }) => (
     <button type="button" onClick={() => onToggle(num)}
       className={`w-6 h-6 md:w-8 md:h-8 text-xs rounded border font-medium transition-colors ${
@@ -356,7 +462,7 @@ export default function Patients() {
   );
 
   const ToothChart = ({ selected, onToggle }: { selected: number[]; onToggle: (n: number) => void }) => (
-    <div className="p-3 md:p-4 border border-teal-100 rounded-xl bg-teal-50 overflow-x-auto">
+    <div className="p-3 md:p-4 border border-teal-100 rounded-xl bg-teal-50 overflow-x-auto md:col-span-2">
       <p className="text-xs font-semibold text-teal-700 mb-3">Select Tooth (FDI Numbering)</p>
       <div className="flex flex-col items-center gap-1 min-w-max mx-auto">
         <div className="flex gap-0.5 md:gap-1 items-center">
@@ -381,9 +487,12 @@ export default function Patients() {
 
   const StatusBadge = ({ status }: { status: string }) => (
     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+      status === "Paid" ? "bg-green-100 text-green-700" :
+      status === "Partial" ? "bg-yellow-100 text-yellow-700" :
       status === "Completed" ? "bg-green-100 text-green-700" :
       status === "Scheduled" ? "bg-blue-100 text-blue-700" :
-      "bg-red-100 text-red-700"
+      status === "Cancelled" ? "bg-red-100 text-red-700" :
+      "bg-orange-100 text-orange-700"
     }`}>{status}</span>
   );
 
@@ -396,44 +505,56 @@ export default function Patients() {
         {showReceipt && receiptPatient && (
           <Receipt patient={receiptPatient} onClose={() => setShowReceipt(false)} />
         )}
+
         {selectedPatient ? (
           <div>
             <button onClick={() => setSelectedPatient(null)} className="text-teal-600 text-sm mb-4 hover:underline">← Back to Patients</button>
+
+            {/* Patient Header */}
             <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-lg md:text-xl font-semibold text-teal-800">{selectedPatient.name}</h2>
                     <span className="text-xs text-teal-400 bg-teal-50 px-2 py-0.5 rounded-full">#{getClinicPatientNumber(selectedPatient.id)}</span>
+                    <StatusBadge status={selectedPatient.status} />
                   </div>
-                  <p className="text-xs md:text-sm text-teal-500">{selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} years · {selectedPatient.address}</p>
-                  {selectedPatient.treatment && <p className="text-xs text-teal-400 mt-1">Treatment: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}</p>}
+                  <p className="text-xs md:text-sm text-teal-500 mt-1">{selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} years · {selectedPatient.address}</p>
+                  {selectedPatient.treatment && <p className="text-xs text-teal-400 mt-1">Initial: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}</p>}
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-teal-300 text-teal-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-teal-50">🖨️ Receipt</button>
                   <button onClick={() => { setShowAppointmentForm(!showAppointmentForm); setShowVisitForm(false); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Appointment</button>
-                  <button onClick={() => { setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Visit</button>
+                  <button onClick={() => { resetVisitForm(); setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Visit</button>
                 </div>
               </div>
-              <div className="grid grid-cols-3 gap-2 md:gap-4 mt-4">
+
+              {/* Fee Summary — all visits combined */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4">
                 <div className="bg-teal-50 rounded-lg p-2 md:p-3">
-                  <p className="text-xs text-teal-600">Total Fee</p>
-                  <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {selectedPatient.fee_total}</p>
+                  <p className="text-xs text-teal-600">Total Billed</p>
+                  <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {visitTotalFee || selectedPatient.fee_total}</p>
+                  <p className="text-xs text-teal-400">{visits.length} visits</p>
+                </div>
+                <div className="bg-green-50 rounded-lg p-2 md:p-3">
+                  <p className="text-xs text-green-600">Total Collected</p>
+                  <p className="text-base md:text-lg font-semibold text-green-700">{symbol} {visitTotalPaid || selectedPatient.fee_paid}</p>
+                </div>
+                <div className="bg-orange-50 rounded-lg p-2 md:p-3">
+                  <p className="text-xs text-orange-600">Still Pending</p>
+                  <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {visitTotalPending > 0 ? visitTotalPending : selectedPatient.fee_total - selectedPatient.fee_paid}</p>
                 </div>
                 <div className="bg-teal-50 rounded-lg p-2 md:p-3">
-                  <p className="text-xs text-teal-600">Fee Paid</p>
-                  <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {selectedPatient.fee_paid}</p>
-                </div>
-                <div className="bg-teal-50 rounded-lg p-2 md:p-3">
-                  <p className="text-xs text-teal-600">Remaining</p>
-                  <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {selectedPatient.fee_total - selectedPatient.fee_paid}</p>
+                  <p className="text-xs text-teal-600">Last Visit</p>
+                  <p className="text-sm font-semibold text-teal-800">{visits[0]?.visit_date || "—"}</p>
                 </div>
               </div>
             </div>
 
+            {/* Appointment Form */}
             {showAppointmentForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-blue-100 mb-6">
-                <h3 className="text-sm font-semibold text-blue-800 mb-4">New Appointment for {selectedPatient.name}</h3>
+                <h3 className="text-sm font-semibold text-blue-800 mb-4">New Appointment — {selectedPatient.name}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div>
                     <label className="block text-xs text-teal-600 mb-1">Date</label>
@@ -453,27 +574,44 @@ export default function Patients() {
               </div>
             )}
 
+            {/* Visit Form */}
             {showVisitForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-                <h3 className="text-sm font-semibold text-teal-800 mb-4">New Visit for {selectedPatient.name}</h3>
+                <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingVisitId ? "Edit Visit" : "New Visit"} — {selectedPatient.name}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+                  <div>
+                    <label className="block text-xs text-teal-600 mb-1">Visit Date</label>
+                    <input type="date" value={visitForm.visit_date} onChange={e => setVisitForm({...visitForm, visit_date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  </div>
                   <select value={visitForm.doctor_name} onChange={e => setVisitForm({...visitForm, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                     <option value="">Select Doctor</option>
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
-                  <input placeholder="Treatment" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Fee" type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Fee Paid" type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Treatment done" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <select value={visitForm.status} onChange={e => setVisitForm({...visitForm, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                    <option>Pending</option>
+                    <option>Partial</option>
+                    <option>Paid</option>
+                  </select>
+                  <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
                 </div>
                 <ToothChart selected={visitTeeth} onToggle={toggleVisitTooth} />
+                {visitForm.fee && visitForm.fee_paid && (
+                  <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between items-center">
+                    <span className="text-xs text-teal-600">This visit remaining:</span>
+                    <span className="text-sm font-semibold text-orange-600">{symbol} {(parseInt(visitForm.fee) || 0) - (parseInt(visitForm.fee_paid) || 0)}</span>
+                  </div>
+                )}
                 <div className="flex gap-3 mt-4">
-                  <button onClick={handleAddVisit} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Save Visit"}</button>
-                  <button onClick={() => setShowVisitForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+                  <button onClick={editingVisitId ? handleEditVisit : handleAddVisit} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingVisitId ? "Update Visit" : "Save Visit"}</button>
+                  <button onClick={resetVisitForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
             )}
 
+            {/* Tabs */}
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
               <div className="flex border-b border-teal-100 overflow-x-auto">
                 <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "visits" ? "bg-teal-50 text-teal-800 border-b-2 border-teal-600" : "text-teal-500"}`}>
@@ -483,36 +621,62 @@ export default function Patients() {
                   Appointments ({appointments.length})
                 </button>
                 <button onClick={() => setActiveTab("medical")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "medical" ? "bg-red-50 text-red-800 border-b-2 border-red-400" : "text-teal-500"}`}>
-                  🩺 Medical
+                  Medical
                 </button>
               </div>
 
+              {/* Visits Tab */}
               {activeTab === "visits" && (
                 <div>
                   {visits.length === 0 ? (
-                    <p className="text-center py-8 text-teal-400 text-sm">No visits recorded yet</p>
+                    <div className="text-center py-10">
+                      <p className="text-teal-400 text-sm mb-2">No visits recorded yet</p>
+                      <p className="text-teal-300 text-xs">Click "+ Visit" to add first visit</p>
+                    </div>
                   ) : (
                     visits.map((v, i) => (
                       <div key={v.id} className="px-4 md:px-5 py-4 border-b border-teal-50 hover:bg-teal-50">
                         <div className="flex justify-between items-start gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-teal-800">Visit {visits.length - i} — {v.treatment}</p>
-                            <p className="text-xs text-teal-500 mt-0.5">{v.doctor_name} · Tooth: {v.tooth_number || "-"}</p>
-                            {v.notes && <p className="text-xs text-teal-400 mt-1">📝 {v.notes}</p>}
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-semibold text-teal-800">Visit {visits.length - i}</p>
+                              <StatusBadge status={v.status || "Pending"} />
+                              <span className="text-xs text-teal-400">{v.visit_date}</span>
+                            </div>
+                            <p className="text-sm text-teal-700 mt-0.5">{v.treatment}</p>
+                            <p className="text-xs text-teal-500 mt-0.5">Dr. {v.doctor_name || "—"} {v.tooth_number ? `· Tooth: ${v.tooth_number}` : ""}</p>
+                            {v.notes && <p className="text-xs text-teal-400 mt-1 italic">{v.notes}</p>}
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-medium text-teal-800">{symbol} {v.fee}</p>
-                            <p className="text-xs text-teal-400">Paid: {symbol} {v.fee_paid}</p>
-                            <p className="text-xs text-orange-500">Rem: {symbol} {v.fee - v.fee_paid}</p>
-                            <p className="text-xs text-teal-300 mt-1">{new Date(v.created_at).toLocaleDateString()}</p>
+                            <p className="text-sm font-semibold text-teal-800">{symbol} {v.fee}</p>
+                            <p className="text-xs text-green-600">Paid: {symbol} {v.fee_paid}</p>
+                            <p className="text-xs text-orange-500">Due: {symbol} {v.fee - v.fee_paid}</p>
+                            <div className="flex gap-2 mt-1 justify-end">
+                              {v.fee_paid < v.fee && (
+                                <button onClick={() => handleVisitPayment(v)} className="text-teal-600 text-xs font-medium hover:underline">Pay</button>
+                              )}
+                              <button onClick={() => openEditVisit(v)} className="text-teal-600 text-xs font-medium">✏️</button>
+                              <button onClick={() => handleDeleteVisit(v)} className="text-red-400 text-xs font-medium">🗑️</button>
+                            </div>
                           </div>
                         </div>
                       </div>
                     ))
                   )}
+                  {visits.length > 0 && (
+                    <div className="px-4 py-3 bg-teal-50 flex justify-between items-center">
+                      <span className="text-xs font-semibold text-teal-700">All visits total</span>
+                      <div className="flex gap-4">
+                        <span className="text-xs text-teal-700">Billed: <strong>{symbol} {visitTotalFee}</strong></span>
+                        <span className="text-xs text-green-700">Paid: <strong>{symbol} {visitTotalPaid}</strong></span>
+                        <span className="text-xs text-orange-600">Pending: <strong>{symbol} {visitTotalPending}</strong></span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
+              {/* Appointments Tab */}
               {activeTab === "appointments" && (
                 <div>
                   {appointments.length === 0 ? (
@@ -524,7 +688,7 @@ export default function Patients() {
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-teal-800">Appointment {i + 1} — {a.treatment || "General"}</p>
                             <p className="text-xs text-teal-500 mt-0.5">📅 {a.date} · ⏰ {a.time}</p>
-                            {a.notes && <p className="text-xs text-teal-400 mt-1">📝 {a.notes}</p>}
+                            {a.notes && <p className="text-xs text-teal-400 mt-1">{a.notes}</p>}
                           </div>
                           <div className="text-right shrink-0 flex flex-col items-end gap-1">
                             <StatusBadge status={a.status} />
@@ -542,10 +706,11 @@ export default function Patients() {
                 </div>
               )}
 
+              {/* Medical Tab */}
               {activeTab === "medical" && (
                 <div className="p-4 md:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-semibold text-teal-800">🩺 Medical History</h3>
+                    <h3 className="text-sm font-semibold text-teal-800">Medical History</h3>
                     <button onClick={() => setShowMedicalForm(!showMedicalForm)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
                       {medicalHistory ? "✏️ Edit" : "+ Add"}
                     </button>
@@ -556,7 +721,7 @@ export default function Patients() {
                         <div>
                           <label className="block text-xs font-medium text-red-700 mb-1">Blood Group</label>
                           <select value={medicalForm.blood_group} onChange={e => setMedicalForm({...medicalForm, blood_group: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400">
-                            <option value="">Select Blood Group</option>
+                            <option value="">Select</option>
                             <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
                             <option>O+</option><option>O-</option><option>AB+</option><option>AB-</option>
                           </select>
@@ -571,7 +736,7 @@ export default function Patients() {
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-red-700 mb-1">Current Medications</label>
-                          <input placeholder="e.g. Metformin, Aspirin" value={medicalForm.current_medications} onChange={e => setMedicalForm({...medicalForm, current_medications: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                          <input placeholder="e.g. Metformin, Aspirin" value={medicalForm.current_medications} onChange={e => setMedicalForm({...medicalForm, medical_conditions: e.target.value})} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-red-700 mb-1">Previous Surgeries</label>
@@ -583,7 +748,7 @@ export default function Patients() {
                         </div>
                       </div>
                       <div className="flex gap-3 mt-4">
-                        <button onClick={handleSaveMedical} disabled={loading} className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Save Medical History"}</button>
+                        <button onClick={handleSaveMedical} disabled={loading} className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Save"}</button>
                         <button onClick={() => setShowMedicalForm(false)} className="border border-red-200 text-red-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                       </div>
                     </div>
@@ -591,28 +756,28 @@ export default function Patients() {
                   {medicalHistory ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="bg-red-50 rounded-lg p-3 border border-red-100">
-                        <p className="text-xs font-semibold text-red-700 mb-1">🩸 Blood Group</p>
+                        <p className="text-xs font-semibold text-red-700 mb-1">Blood Group</p>
                         <p className="text-lg font-bold text-red-800">{medicalHistory.blood_group || "—"}</p>
                       </div>
                       <div className="bg-orange-50 rounded-lg p-3 border border-orange-100">
-                        <p className="text-xs font-semibold text-orange-700 mb-1">⚠️ Allergies</p>
+                        <p className="text-xs font-semibold text-orange-700 mb-1">Allergies</p>
                         <p className="text-sm text-orange-800">{medicalHistory.allergies || "None recorded"}</p>
                       </div>
                       <div className="bg-teal-50 rounded-lg p-3 border border-teal-100">
-                        <p className="text-xs font-semibold text-teal-700 mb-1">🏥 Medical Conditions</p>
+                        <p className="text-xs font-semibold text-teal-700 mb-1">Medical Conditions</p>
                         <p className="text-sm text-teal-800">{medicalHistory.medical_conditions || "None recorded"}</p>
                       </div>
                       <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
-                        <p className="text-xs font-semibold text-blue-700 mb-1">💊 Current Medications</p>
+                        <p className="text-xs font-semibold text-blue-700 mb-1">Current Medications</p>
                         <p className="text-sm text-blue-800">{medicalHistory.current_medications || "None recorded"}</p>
                       </div>
                       <div className="bg-purple-50 rounded-lg p-3 border border-purple-100">
-                        <p className="text-xs font-semibold text-purple-700 mb-1">🔪 Previous Surgeries</p>
+                        <p className="text-xs font-semibold text-purple-700 mb-1">Previous Surgeries</p>
                         <p className="text-sm text-purple-800">{medicalHistory.previous_surgeries || "None recorded"}</p>
                       </div>
                       {medicalHistory.notes && (
                         <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
-                          <p className="text-xs font-semibold text-gray-700 mb-1">📝 Additional Notes</p>
+                          <p className="text-xs font-semibold text-gray-700 mb-1">Additional Notes</p>
                           <p className="text-sm text-gray-800">{medicalHistory.notes}</p>
                         </div>
                       )}
@@ -627,6 +792,7 @@ export default function Patients() {
               )}
             </div>
           </div>
+
         ) : (
           <div>
             <div className="flex justify-between items-center mb-6">
@@ -639,6 +805,7 @@ export default function Patients() {
             <div className="mb-5">
               <input placeholder="Search by name or patient number..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-teal-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
             </div>
+
             {showAnyForm && (
               <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
                 <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingPatientId ? "Edit Patient" : "New Patient"}</h3>
@@ -648,18 +815,17 @@ export default function Patients() {
                   <input placeholder="Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <input placeholder="Age" type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-                    <option>Male</option>
-                    <option>Female</option>
+                    <option>Male</option><option>Female</option>
                   </select>
                   <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                     <option value="">Select Doctor</option>
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
-                  <input placeholder="Treatment (e.g. Filling, RCT)" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+                  <input placeholder="Initial Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
                 </div>
                 <ToothChart selected={selectedTeeth} onToggle={toggleTooth} />
                 <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4">
-                  <input placeholder="Total Fee" type="number" value={form.fee_total} onChange={e => setForm({...form, fee_total: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Initial Fee" type="number" value={form.fee_total} onChange={e => setForm({...form, fee_total: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <input placeholder="Fee Paid" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                 </div>
                 <div className="flex gap-3 mt-4">
@@ -668,6 +834,7 @@ export default function Patients() {
                 </div>
               </div>
             )}
+
             <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
               <div className="md:hidden divide-y divide-teal-50">
                 {filteredPatients.length === 0 ? (
@@ -683,7 +850,7 @@ export default function Patients() {
                           </div>
                           <p className="text-xs text-teal-400">{p.phone} · {p.gender} · {p.age}y</p>
                         </div>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{p.status}</span>
+                        <StatusBadge status={p.status} />
                       </div>
                       <p className="text-xs text-teal-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· Dr. ${p.doctor_name}` : ""}</p>
                       <div className="flex justify-between items-center">
@@ -732,9 +899,7 @@ export default function Patients() {
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_total}</td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_paid}</td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_total - p.fee_paid}</td>
-                          <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{p.status}</span>
-                          </td>
+                          <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}><StatusBadge status={p.status} /></td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs font-medium">🖨️</button>
