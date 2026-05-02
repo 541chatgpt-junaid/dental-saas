@@ -5,10 +5,10 @@ export default function Unauthorized() {
         <div className="text-6xl mb-4">🚫</div>
         <h1 className="text-xl font-semibold text-teal-800 mb-2">Access Denied</h1>
         <p className="text-sm text-teal-500 mb-6">
-          Aap ko is page ka access nahi hai. Admin se contact karein.
+          You do not have permission to access this page. Please contact your admin.
         </p>
         <a href="/dashboard" className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium">
-          Dashboard Par Jao
+          Go to Dashboard
         </a>
       </div>
     </div>
