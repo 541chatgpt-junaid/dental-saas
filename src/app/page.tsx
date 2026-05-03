@@ -3,42 +3,12 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 const FEATURES = [
-  {
-    title: "Patient Records",
-    desc: "Complete patient history, visit records, medical notes and FDI tooth chart — all searchable instantly.",
-    img: "https://images.unsplash.com/photo-1629909615957-be38d48fbbe4?w=600&q=80",
-    tag: "Complete history",
-  },
-  {
-    title: "Smart Appointments",
-    desc: "Book, reschedule and track appointments easily. See today's full schedule at a glance.",
-    img: "https://images.unsplash.com/photo-1588776814546-ec7e7355ce14?w=600&q=80",
-    tag: "Auto scheduling",
-  },
-  {
-    title: "Lab Records & FDI Chart",
-    desc: "Track lab work with interactive FDI tooth chart, delivery dates and material types.",
-    img: "https://images.unsplash.com/photo-1609840114035-3c981b782dfe?w=600&q=80",
-    tag: "FDI standard",
-  },
-  {
-    title: "Revenue & Reports",
-    desc: "Monthly income charts, doctor performance tracking and expense management.",
-    img: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80",
-    tag: "Visual analytics",
-  },
-  {
-    title: "Staff Management",
-    desc: "Add doctors, set role-based permissions and manage login access for your whole team.",
-    img: "https://images.unsplash.com/photo-1576091160550-2173dba999ef?w=600&q=80",
-    tag: "Role permissions",
-  },
-  {
-    title: "WhatsApp Reminders",
-    desc: "Send appointment confirmations and payment reminders directly via WhatsApp.",
-    img: "https://images.unsplash.com/photo-1611746872915-64382b5c76da?w=600&q=80",
-    tag: "Coming soon",
-  },
+  { title: "Patient Records", desc: "Complete patient history, visit records, medical notes and FDI tooth chart — all searchable instantly.", bg: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)", emoji: "🦷", tag: "Complete history" },
+  { title: "Smart Appointments", desc: "Book, reschedule and track appointments easily. See today's full schedule at a glance.", bg: "linear-gradient(135deg, #11998e 0%, #38ef7d 100%)", emoji: "📅", tag: "Auto scheduling" },
+  { title: "Lab Records & FDI Chart", desc: "Track lab work with interactive FDI tooth chart, delivery dates and material types.", bg: "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)", emoji: "🔬", tag: "FDI standard" },
+  { title: "Revenue & Reports", desc: "Monthly income charts, doctor performance tracking and expense management.", bg: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)", emoji: "📊", tag: "Visual analytics" },
+  { title: "Staff Management", desc: "Add doctors, set role-based permissions and manage login access for your whole team.", bg: "linear-gradient(135deg, #fa709a 0%, #fee140 100%)", emoji: "👨‍⚕️", tag: "Role permissions" },
+  { title: "WhatsApp Reminders", desc: "Send appointment confirmations and payment reminders directly via WhatsApp.", bg: "linear-gradient(135deg, #43e97b 0%, #38f9d7 100%)", emoji: "💬", tag: "Coming soon" },
 ];
 
 function FeatureSlider() {
@@ -51,58 +21,39 @@ function FeatureSlider() {
   return (
     <div style={{ position: "relative" }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "420px" }}>
-
-        {/* Left card */}
         <div onClick={prev} style={{ width: "200px", height: "300px", borderRadius: "20px", overflow: "hidden", cursor: "pointer", opacity: 0.5, transform: "scale(0.9)", transition: "all 0.4s ease", flexShrink: 0, position: "relative" }}>
-          <img src={FEATURES[getIndex(-1)].img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "rgba(10,22,40,0.3)" }} />
+          <div style={{ width: "100%", height: "100%", background: FEATURES[getIndex(-1)].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "48px" }}>{FEATURES[getIndex(-1)].emoji}</div>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(10,22,40,0.2)" }} />
         </div>
-
-        {/* Center card */}
         <div style={{ width: "380px", borderRadius: "24px", overflow: "hidden", boxShadow: "0 24px 60px rgba(10,22,40,0.15)", transition: "all 0.4s ease", flexShrink: 0, background: "#fff" }}>
           <div style={{ height: "240px", overflow: "hidden", position: "relative" }}>
-            <img src={FEATURES[active].img} alt={FEATURES[active].title} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "all 0.4s ease" }} />
-            <div style={{ position: "absolute", top: "16px", left: "16px", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)", borderRadius: "999px", padding: "6px 14px", fontSize: "12px", fontWeight: 600, color: "#0A1628" }}>
-              {FEATURES[active].tag}
-            </div>
+            <div style={{ width: "100%", height: "100%", background: FEATURES[active].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "80px" }}>{FEATURES[active].emoji}</div>
+            <div style={{ position: "absolute", top: "16px", left: "16px", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)", borderRadius: "999px", padding: "6px 14px", fontSize: "12px", fontWeight: 600, color: "#0A1628" }}>{FEATURES[active].tag}</div>
           </div>
           <div style={{ padding: "24px" }}>
             <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#0A1628", marginBottom: "10px", letterSpacing: "-0.5px" }}>{FEATURES[active].title}</h3>
             <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.7 }}>{FEATURES[active].desc}</p>
           </div>
         </div>
-
-        {/* Right card */}
         <div onClick={next} style={{ width: "200px", height: "300px", borderRadius: "20px", overflow: "hidden", cursor: "pointer", opacity: 0.5, transform: "scale(0.9)", transition: "all 0.4s ease", flexShrink: 0, position: "relative" }}>
-          <img src={FEATURES[getIndex(1)].img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          <div style={{ position: "absolute", inset: 0, background: "rgba(10,22,40,0.3)" }} />
+          <div style={{ width: "100%", height: "100%", background: FEATURES[getIndex(1)].bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "48px" }}>{FEATURES[getIndex(1)].emoji}</div>
+          <div style={{ position: "absolute", inset: 0, background: "rgba(10,22,40,0.2)" }} />
         </div>
       </div>
-
-      {/* Navigation */}
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "32px" }}>
-        <button onClick={prev} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-          onMouseOver={e => { e.currentTarget.style.background = "#0A1628"; }}
-          onMouseOut={e => { e.currentTarget.style.background = "#fff"; }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
+        <button onClick={prev} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
         </button>
-
         <div style={{ display: "flex", gap: "6px" }}>
           {FEATURES.map((_, i) => (
             <button key={i} onClick={() => setActive(i)} style={{ width: i === active ? "24px" : "8px", height: "8px", borderRadius: "999px", border: "none", background: i === active ? "#0A1628" : "rgba(10,22,40,0.2)", cursor: "pointer", transition: "all 0.3s", padding: 0 }} />
           ))}
         </div>
-
-        <button onClick={next} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}
-          onMouseOver={e => { e.currentTarget.style.background = "#0A1628"; }}
-          onMouseOut={e => { e.currentTarget.style.background = "#fff"; }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+        <button onClick={next} style={{ width: "44px", height: "44px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
         </button>
       </div>
-
-      <p style={{ textAlign: "center", marginTop: "20px", fontSize: "14px", color: "#6B7280", fontWeight: 500 }}>
-        {active + 1} / {total} — {FEATURES[active].title}
-      </p>
+      <p style={{ textAlign: "center", marginTop: "20px", fontSize: "14px", color: "#6B7280", fontWeight: 500 }}>{active + 1} / {total} — {FEATURES[active].title}</p>
     </div>
   );
 }
@@ -110,20 +61,13 @@ function FeatureSlider() {
 function AnimatedWord({ words }: { words: string[] }) {
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
-
   useEffect(() => {
-    const timer = setInterval(() => {
-      setIndex(prev => (prev + 1) % words.length);
-    }, 2000);
+    const timer = setInterval(() => setIndex(prev => (prev + 1) % words.length), 2000);
     return () => clearInterval(timer);
   }, [words]);
-
   return (
-    <span
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      style={{ color: hovered ? "#3B82F6" : "#6366F1", transition: "color 0.3s ease", display: "inline-block", fontStyle: "italic" }}
-    >
+    <span onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      style={{ color: hovered ? "#3B82F6" : "#6366F1", transition: "color 0.3s ease", fontStyle: "italic" }}>
       {words[index]}
     </span>
   );
@@ -131,7 +75,6 @@ function AnimatedWord({ words }: { words: string[] }) {
 
 function WaveBackground() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -163,7 +106,6 @@ function WaveBackground() {
     draw();
     return () => { cancelAnimationFrame(animationId); window.removeEventListener("resize", resize); };
   }, []);
-
   return <canvas ref={canvasRef} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }} />;
 }
 
@@ -197,14 +139,12 @@ export default function LandingPage() {
             </div>
             <span style={{ fontWeight: 700, fontSize: "16px", color: "#0A1628", letterSpacing: "-0.3px" }}>DentEase</span>
           </div>
-
           <div style={{ display: "flex", alignItems: "center", gap: "36px" }} className="hidden md:flex">
             <a href="#features" className="nav-link">Features</a>
             <a href="#how-it-works" className="nav-link">How it works</a>
             <a href="#reviews" className="nav-link">Reviews</a>
             <a href="#faq" className="nav-link">FAQ</a>
           </div>
-
           <div style={{ display: "flex", alignItems: "center", gap: "16px" }} className="hidden md:flex">
             <a href="tel:+923105913101" className="nav-link" style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.61 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3 3.18 2 2 0 0 1 4.11 1h3a2 2 0 0 1 2 1.72 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
@@ -219,14 +159,12 @@ export default function LandingPage() {
               </button>
             </Link>
           </div>
-
           <button className="md:hidden" onClick={() => setMobileMenu(!mobileMenu)} style={{ background: "none", border: "none", cursor: "pointer" }}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2" strokeLinecap="round">
               {mobileMenu ? <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></> : <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>}
             </svg>
           </button>
         </div>
-
         {mobileMenu && (
           <div className="md:hidden" style={{ padding: "0 24px 20px", borderTop: "1px solid rgba(10,22,40,0.06)", background: "#fff", display: "flex", flexDirection: "column", gap: "16px" }}>
             {[["features","Features"],["how-it-works","How it works"],["reviews","Reviews"],["faq","FAQ"]].map(([id, label]) => (
@@ -243,22 +181,18 @@ export default function LandingPage() {
       <section style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", paddingTop: "80px", background: "linear-gradient(160deg, #dde8ff 0%, #e8eeff 40%, #d8e4ff 100%)", position: "relative", overflow: "hidden" }}>
         <WaveBackground />
         <div style={{ position: "absolute", top: "20%", left: "50%", transform: "translateX(-50%)", width: "700px", height: "500px", borderRadius: "50%", background: "radial-gradient(ellipse, rgba(147,197,253,0.4) 0%, transparent 65%)", pointerEvents: "none" }} />
-
         <div style={{ position: "relative", zIndex: 1, maxWidth: "860px", margin: "0 auto", padding: "0 24px", textAlign: "center" }}>
           <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", borderRadius: "999px", padding: "8px 18px", marginBottom: "36px", background: "rgba(255,255,255,0.75)", border: "1px solid rgba(10,22,40,0.1)", backdropFilter: "blur(10px)" }}>
             <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#22C55E", display: "inline-block" }} />
             <span style={{ fontSize: "13px", fontWeight: 500, color: "#0A1628" }}>Now accepting new clinics worldwide</span>
           </div>
-
           <h1 style={{ fontSize: "clamp(44px, 7.5vw, 84px)", fontWeight: 800, lineHeight: 1.05, color: "#0A1628", letterSpacing: "-3px", marginBottom: "28px" }}>
             Smarter way to <AnimatedWord words={["manage", "grow", "run", "track"]} />
             <br />your dental clinic
           </h1>
-
           <p style={{ fontSize: "18px", color: "#4B5563", lineHeight: 1.7, maxWidth: "500px", margin: "0 auto 44px", fontWeight: 400 }}>
             Patients, appointments, lab records and revenue — all in one beautifully simple platform. Free to use. No paperwork.
           </p>
-
           <Link href="/login">
             <button style={{ background: "#0A1628", color: "#fff", borderRadius: "999px", padding: "18px 40px", fontSize: "16px", fontWeight: 600, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "10px", transition: "all 0.25s", boxShadow: "0 4px 24px rgba(10,22,40,0.15)" }}
               onMouseOver={e => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(10,22,40,0.25)"; }}
@@ -267,7 +201,6 @@ export default function LandingPage() {
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M17 7H7M17 7v10" /></svg>
             </button>
           </Link>
-
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "28px", marginTop: "40px", flexWrap: "wrap" }}>
             {["500+ clinics", "No credit card", "Free forever"].map(t => (
               <div key={t} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
@@ -285,8 +218,9 @@ export default function LandingPage() {
           <div style={{ textAlign: "center", marginBottom: "16px" }}>
             <span style={{ fontSize: "13px", fontWeight: 600, color: "#6366F1", letterSpacing: "1px", textTransform: "uppercase" }}>+ OUR FEATURES</span>
           </div>
-          <h2 style={{ textAlign: "center", fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 800, color: "#0A1628", letterSpacing: "-1.5px", lineHeight: 1.1, marginBottom: "56px" }}>
-            Everything your clinic needs,<br />under one roof
+          <h2 style={{ textAlign: "center", fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 800, letterSpacing: "-1.5px", lineHeight: 1.1, marginBottom: "56px" }}>
+            <span style={{ color: "#6366F1", fontStyle: "italic" }}>Everything your clinic needs,</span>
+            <br /><span style={{ color: "#0A1628" }}>under one roof</span>
           </h2>
           <FeatureSlider />
         </div>
