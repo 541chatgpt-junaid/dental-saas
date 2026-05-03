@@ -405,7 +405,7 @@ export default function LandingPage() {
       <nav role="navigation" aria-label="Main navigation" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "rgba(255,255,255,0.96)", backdropFilter: "blur(20px)", borderBottom: navScrolled ? "1px solid rgba(10,22,40,0.07)" : "none", boxShadow: navScrolled ? "0 2px 24px rgba(10,22,40,0.07)" : "none", transition: "all 0.3s ease" }}>
         <div style={{ width: "100%", maxWidth: "1200px", margin: "0 auto", padding: "10px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <Link href="/" aria-label="DentEase Home">
-            <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "46px", objectFit: "contain", display: "block", transition: "transform 0.2s" }}
+            <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "56px", objectFit: "contain", display: "block", background: "none", transition: "transform 0.2s" }}
               onMouseOver={e => e.currentTarget.style.transform = "scale(1.03)"} onMouseOut={e => e.currentTarget.style.transform = "scale(1)"} />
           </Link>
           <div className="hide-mobile" style={{ display: "flex", alignItems: "center", gap: "36px" }}>
@@ -672,7 +672,7 @@ export default function LandingPage() {
         <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: "36px", marginBottom: "44px" }} className="mobile-grid-1">
             <div>
-              <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "40px", objectFit: "contain", filter: "brightness(0) invert(1)", opacity: 0.85, marginBottom: "14px", display: "block" }} />
+              <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "52px", objectFit: "contain", marginBottom: "14px", display: "block" }} />
               <p style={{ fontSize: "13px", lineHeight: 1.8, maxWidth: "210px", marginBottom: "16px" }}>The smarter way to manage your dental clinic. Free forever, no credit card required.</p>
               <a href="tel:+923105913101" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", fontSize: "13px", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>📞 +92 310 5913101</a>
               <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#4ADE80", textDecoration: "none" }}>💬 WhatsApp Us</a>
