@@ -57,7 +57,7 @@ export default function LandingPage() {
         className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${navScrolled ? "nav-scrolled" : ""}`}
         style={{ background: "rgba(255,255,255,0.95)", backdropFilter: "blur(12px)", borderBottom: navScrolled ? "1px solid rgba(10,22,40,0.06)" : "none" }}
       >
-        <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
+        <div className="w-full px-8 py-4 flex justify-between items-center">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: "#0A1628" }}>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -130,7 +130,7 @@ export default function LandingPage() {
           
           <div className="inline-flex items-center gap-2 rounded-full px-4 py-1.5 mb-8" style={{ background: "rgba(255,255,255,0.8)", border: "1px solid rgba(10,22,40,0.1)", backdropFilter: "blur(8px)" }}>
             <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "#22C55E", display: "inline-block" }} />
-            <span style={{ fontSize: "13px", fontWeight: 500, color: "#0A1628" }}>Now accepting new clinics · Pakistan</span>
+            <span style={{ fontSize: "13px", fontWeight: 500, color: "#0A1628" }}>Now accepting new clinics · worldwide</span>
           </div>
 
           <h1 style={{ fontSize: "clamp(42px, 7vw, 80px)", fontWeight: 800, lineHeight: 1.1, color: "#0A1628", letterSpacing: "-2px", marginBottom: "24px" }}>
