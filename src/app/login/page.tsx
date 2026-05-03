@@ -141,7 +141,7 @@ export default function Home() {
 
           <div className="flex justify-center">
             <HCaptcha
-              sitekey="50b2fe65-b00b-4b9e-ad62-3ba471098be2"
+              sitekey="6fec9dbc-a6d4-4e7a-b9ca-79f08b62d37e"
               onVerify={token => setCaptchaToken(token)}
               onExpire={() => setCaptchaToken("")}
               ref={captchaRef}
