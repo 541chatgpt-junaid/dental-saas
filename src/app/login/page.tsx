@@ -26,6 +26,12 @@ export default function Home() {
     setError("");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
+  email,
+  password,
+  options: {
+    captchaToken,
+  },
+});
       email,
       password,
     });
