@@ -264,7 +264,6 @@ function StatCard({ num, suffix, label, active }: { num: number; suffix: string;
 export default function LandingPage() {
   const [navScrolled, setNavScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [showWelcome, setShowWelcome] = useState(false);
   const [showThankyou, setShowThankyou] = useState(false);
   const [heroReady, setHeroReady] = useState(false);
   const [reviewName, setReviewName] = useState("");
@@ -278,8 +277,6 @@ export default function LandingPage() {
   useEffect(() => {
     // Hero entrance
     const t1 = setTimeout(() => setHeroReady(true), 80);
-    // Popup every load
-    const t2 = setTimeout(() => setShowWelcome(true), 900);
     const onScroll = () => setNavScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     // Stats observer
@@ -287,9 +284,9 @@ export default function LandingPage() {
     if (statsEl) {
       const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setStatsActive(true); obs.disconnect(); } }, { threshold: 0.3 });
       obs.observe(statsEl);
-      return () => { clearTimeout(t1); clearTimeout(t2); window.removeEventListener("scroll", onScroll); obs.disconnect(); };
+      return () => { clearTimeout(t1); window.removeEventListener("scroll", onScroll); obs.disconnect(); };
     }
-    return () => { clearTimeout(t1); clearTimeout(t2); window.removeEventListener("scroll", onScroll); };
+    return () => { clearTimeout(t1); window.removeEventListener("scroll", onScroll); };
   }, []);
 
   const submitReview = () => {
@@ -332,48 +329,6 @@ export default function LandingPage() {
         .nav-btn{background:#0A1628;color:#fff;border-radius:999px;padding:10px 22px;font-size:14px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.25s;}
         .nav-btn:hover{opacity:0.82;transform:translateY(-1px);}
       `}</style>
-
-      {/* WELCOME POPUP */}
-      {showWelcome && (
-        <div role="dialog" aria-modal="true" aria-label="Welcome to DentEase" style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(10,22,40,0.65)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-          <div className="scale-in" style={{ background: "#fff", borderRadius: "24px", overflow: "hidden", maxWidth: "480px", width: "100%", boxShadow: "0 40px 100px rgba(10,22,40,0.35)" }}>
-            <div style={{ background: "linear-gradient(135deg,#0A1628 0%,#1a3a6b 100%)", padding: "28px 28px 24px", color: "#fff", position: "relative", overflow: "hidden" }}>
-              <div style={{ position: "absolute", top: "-40px", right: "-40px", width: "160px", height: "160px", borderRadius: "50%", background: "rgba(99,102,241,0.15)" }} aria-hidden="true" />
-              <div style={{ position: "absolute", bottom: "-20px", left: "30%", width: "100px", height: "100px", borderRadius: "50%", background: "rgba(99,102,241,0.1)" }} aria-hidden="true" />
-              <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "48px", objectFit: "contain", filter: "brightness(0) invert(1)", marginBottom: "18px", display: "block", position: "relative", zIndex: 1 }} />
-              <h2 style={{ fontSize: "22px", fontWeight: 800, marginBottom: "6px", position: "relative", zIndex: 1 }}>Welcome to DentEase! 👋</h2>
-              <p style={{ fontSize: "14px", opacity: 0.75, lineHeight: 1.6, position: "relative", zIndex: 1, marginBottom: "20px" }}>The smarter way to manage your dental clinic. Completely free.</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px", position: "relative", zIndex: 1 }}>
-                <a href="tel:+923105913101" style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "rgba(255,255,255,0.9)", textDecoration: "none" }}>
-                  <span style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(255,255,255,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0 }}>📞</span>
-                  +92 310 5913101
-                </a>
-                <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "10px", fontSize: "13px", color: "rgba(255,255,255,0.9)", textDecoration: "none" }}>
-                  <span style={{ width: "30px", height: "30px", borderRadius: "8px", background: "rgba(37,211,102,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "14px", flexShrink: 0 }}>💬</span>
-                  WhatsApp Us
-                </a>
-              </div>
-            </div>
-            <div style={{ padding: "24px 28px" }}>
-              <div style={{ display: "flex", gap: "10px", marginBottom: "12px" }}>
-                <Link href="/login" style={{ flex: 1, textDecoration: "none" }}>
-                  <button style={{ width: "100%", padding: "13px", borderRadius: "12px", background: "#0A1628", color: "#fff", border: "none", fontWeight: 700, fontSize: "14px", cursor: "pointer", transition: "opacity 0.2s" }}
-                    onMouseOver={e => e.currentTarget.style.opacity = "0.85"} onMouseOut={e => e.currentTarget.style.opacity = "1"}>
-                    Get Started Free →
-                  </button>
-                </Link>
-                <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" style={{ flex: 1, textDecoration: "none" }}>
-                  <button style={{ width: "100%", padding: "13px", borderRadius: "12px", background: "#25D366", color: "#fff", border: "none", fontWeight: 700, fontSize: "14px", cursor: "pointer" }}>WhatsApp Demo</button>
-                </a>
-              </div>
-              <button onClick={() => setShowWelcome(false)} style={{ width: "100%", padding: "11px", borderRadius: "12px", background: "transparent", color: "#9CA3AF", border: "1.5px solid #E5E7EB", fontWeight: 500, fontSize: "13px", cursor: "pointer", transition: "all 0.2s" }}
-                onMouseOver={e => { e.currentTarget.style.borderColor = "#9CA3AF"; e.currentTarget.style.color = "#6B7280"; }} onMouseOut={e => { e.currentTarget.style.borderColor = "#E5E7EB"; e.currentTarget.style.color = "#9CA3AF"; }}>
-                Continue exploring
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* THANK YOU POPUP */}
       {showThankyou && (
