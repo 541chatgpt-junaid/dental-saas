@@ -9,6 +9,7 @@ const navItems = [
   { label: "Appointments", href: "/dashboard/appointments" },
   { label: "Doctors", href: "/dashboard/doctors" },
   { label: "Lab Records", href: "/dashboard/labs" },
+  { label: "Billing", href: "/dashboard/billing" },
   { label: "Materials", href: "/dashboard/materials" },
   { label: "Purchases", href: "/dashboard/purchases" },
   { label: "Expenses", href: "/dashboard/expenses" },

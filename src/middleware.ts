@@ -7,6 +7,7 @@ const pagePermissionMap: Record<string, string> = {
   "/dashboard/appointments": "Appointments",
   "/dashboard/doctors": "Doctors",
   "/dashboard/labs": "Lab Records",
+  "/dashboard/billing": "Billing",
   "/dashboard/materials": "Materials",
   "/dashboard/purchases": "Purchases",
   "/dashboard/expenses": "Expenses",
@@ -42,7 +43,9 @@ export async function middleware(request: NextRequest) {
 
   if (user && request.nextUrl.pathname.startsWith("/dashboard")) {
     const pathname = request.nextUrl.pathname;
-    const requiredPermission = pagePermissionMap[pathname];
+    const requiredPermission = Object.entries(pagePermissionMap).find(
+      ([key]) => pathname === key || pathname.startsWith(key + "/")
+    )?.[1];
 
     if (requiredPermission) {
       // Staff table mein check karo

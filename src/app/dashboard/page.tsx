@@ -11,6 +11,8 @@ export default function Dashboard() {
   const [todayRevenue, setTodayRevenue] = useState(0);
   const [pendingLabs, setPendingLabs] = useState(0);
   const [pendingFees, setPendingFees] = useState(0);
+  const [pendingPayments, setPendingPayments] = useState(0);
+  const [revenueThisMonth, setRevenueThisMonth] = useState(0);
   const [recentPatients, setRecentPatients] = useState<any[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
@@ -35,6 +37,21 @@ export default function Dashboard() {
 
       const { data: labs } = await supabase.from("labs").select("status");
       if (labs) setPendingLabs(labs.filter(l => l.status === "Pending").length);
+
+      const { data: invoices } = await supabase.from("invoices").select("balance, status");
+      if (invoices) {
+        const outstanding = invoices.filter(i => i.status === "Unpaid" || i.status === "Partial");
+        setPendingPayments(outstanding.reduce((sum, i) => sum + (i.balance || 0), 0));
+      }
+
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
+      const { data: monthPayments } = await supabase
+        .from("payments")
+        .select("amount")
+        .gte("payment_date", monthStart.toISOString());
+      if (monthPayments) setRevenueThisMonth(monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0));
     };
     fetchData();
   }, [router, today]);
@@ -48,7 +65,7 @@ export default function Dashboard() {
           <p className="text-sm text-teal-600 mt-1">Welcome back, {userEmail}</p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5 mb-3 md:mb-4">
           <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
             <p className="text-xs font-medium text-teal-600 mb-1 md:mb-2">PATIENTS TODAY</p>
             <p className="text-xl md:text-3xl font-semibold text-teal-800">{todayPatients}</p>
@@ -64,10 +81,22 @@ export default function Dashboard() {
             <p className="text-xl md:text-3xl font-semibold text-teal-800">{pendingLabs}</p>
             <p className="text-xs text-teal-400 mt-1">Awaiting delivery</p>
           </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-5 mb-6">
           <div className="bg-orange-50 rounded-xl p-3 md:p-4 border border-orange-100">
             <p className="text-xs font-medium text-orange-600 mb-1 md:mb-2">PENDING FEES</p>
             <p className="text-lg md:text-3xl font-semibold text-orange-700">{symbol} {pendingFees.toLocaleString()}</p>
             <p className="text-xs text-orange-400 mt-1">Still to collect</p>
+          </div>
+          <div className="bg-red-50 rounded-xl p-3 md:p-4 border border-red-100">
+            <p className="text-xs font-medium text-red-600 mb-1 md:mb-2">PENDING PAYMENTS</p>
+            <p className="text-lg md:text-3xl font-semibold text-red-700">{symbol} {pendingPayments.toLocaleString()}</p>
+            <p className="text-xs text-red-400 mt-1">Invoice balance due</p>
+          </div>
+          <div className="bg-green-50 rounded-xl p-3 md:p-4 border border-green-100">
+            <p className="text-xs font-medium text-green-600 mb-1 md:mb-2">REVENUE THIS MONTH</p>
+            <p className="text-lg md:text-3xl font-semibold text-green-700">{symbol} {revenueThisMonth.toLocaleString()}</p>
+            <p className="text-xs text-green-400 mt-1">Payments received</p>
           </div>
         </div>
 
