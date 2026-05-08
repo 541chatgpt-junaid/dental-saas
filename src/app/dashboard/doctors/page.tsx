@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Doctor {
   id: number;
@@ -31,11 +32,11 @@ export default function Doctors() {
     timing_start: "09:00", timing_end: "17:00", off_days: "",
   });
   const router = useRouter();
+  const { clinicId } = useClinic();
 
   const fetchDoctors = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("doctors").select("*").eq("user_id", user?.id).order("id", { ascending: false });
+    const { data } = await supabase.from("doctors").select("*").order("id", { ascending: false });
     if (data) setDoctors(data);
   };
 
@@ -65,11 +66,10 @@ export default function Doctors() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("doctors").insert([{
       name: form.name, specialization: form.specialization,
       phone: form.phone, email: form.email,
-      status: form.status, user_id: user?.id,
+      status: form.status, clinic_id: clinicId,
       timing_start: form.timing_start,
       timing_end: form.timing_end,
       working_days: selectedWorkingDays.join(", "),

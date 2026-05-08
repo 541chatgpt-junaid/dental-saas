@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Appointment {
   id: number;
@@ -32,18 +33,17 @@ export default function Appointments() {
     time: "", treatment: "", status: "Scheduled", notes: "",
   });
   const router = useRouter();
+  const { clinicId } = useClinic();
 
   const fetchAppointments = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("appointments").select("*").eq("user_id", user?.id).order("date", { ascending: true });
+    const { data } = await supabase.from("appointments").select("*").order("date", { ascending: true });
     if (data) setAppointments(data);
   };
 
   const fetchDoctors = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active").eq("user_id", user?.id);
+    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active");
     if (data) setDoctors(data);
   };
 
@@ -61,7 +61,6 @@ export default function Appointments() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("appointments").insert([{
       patient_name: form.patient_name,
       doctor_name: form.doctor_name,
@@ -69,7 +68,7 @@ export default function Appointments() {
       treatment: form.treatment,
       status: form.status,
       notes: form.notes,
-      user_id: user?.id,
+      clinic_id: clinicId,
     }]);
     setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" });
     setShowForm(false);

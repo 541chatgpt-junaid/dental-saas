@@ -49,7 +49,7 @@ export async function middleware(request: NextRequest) {
       const { data: staffRecord } = await supabase
         .from("staff")
         .select("permissions, status")
-        .eq("email", user.email)
+        .eq("user_id", user.id)
         .single();
 
       // Agar staff record hai (matlab yeh owner nahi, staff member hai)
@@ -75,5 +75,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
 };

@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Lab {
   id: number;
@@ -276,11 +277,11 @@ export default function Labs() {
   });
   const router = useRouter();
   const { symbol } = useCurrency();
+  const { clinicId } = useClinic();
 
   const fetchLabs = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("labs").select("*").eq("user_id", user?.id).order("id", { ascending: false });
+    const { data } = await supabase.from("labs").select("*").order("id", { ascending: false });
     if (data) setLabs(data);
   };
 
@@ -303,7 +304,6 @@ export default function Labs() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("labs").insert([{
       patient_name: form.patient_name, lab_name: form.lab_name,
       work_type: form.work_type, units: parseInt(form.units) || 1,
@@ -311,7 +311,7 @@ export default function Labs() {
       given_date: form.given_date, delivery_date: form.delivery_date,
       fee: parseInt(form.fee) || 0, fee_paid: parseInt(form.fee_paid) || 0,
       status: form.status, notes: form.notes,
-      tooth_chart: form.tooth_chart, user_id: user?.id,
+      tooth_chart: form.tooth_chart, clinic_id: clinicId,
     }]);
     resetForm();
     setLoading(false);

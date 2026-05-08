@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Material {
   id: number;
@@ -28,11 +29,11 @@ export default function Materials() {
   });
   const router = useRouter();
   const { symbol } = useCurrency();
+  const { clinicId } = useClinic();
 
   const fetchMaterials = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("materials").select("*").eq("user_id", user?.id).order("name", { ascending: true });
+    const { data } = await supabase.from("materials").select("*").order("name", { ascending: true });
     if (data) setMaterials(data);
   };
 
@@ -55,13 +56,12 @@ export default function Materials() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("materials").insert([{
       name: form.name, category: form.category,
       quantity: parseInt(form.quantity) || 0, unit: form.unit,
       min_quantity: parseInt(form.min_quantity) || 0,
       price: parseInt(form.price) || 0,
-      supplier: form.supplier, user_id: user?.id,
+      supplier: form.supplier, clinic_id: clinicId,
     }]);
     resetForm();
     setLoading(false);

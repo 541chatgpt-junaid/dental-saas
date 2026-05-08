@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Receipt from "@/components/Receipt";
 import { useCurrency } from "@/lib/useCurrency";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Patient {
   id: number;
@@ -118,11 +119,11 @@ export default function Patients() {
   });
   const router = useRouter();
   const { symbol } = useCurrency();
+  const { clinicId } = useClinic();
 
   const fetchPatients = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("patients").select("*").eq("user_id", user?.id).order("created_at", { ascending: true });
+    const { data } = await supabase.from("patients").select("*").order("created_at", { ascending: true });
     if (data) {
       setAllPatients(data);
       setPatients([...data].reverse());
@@ -131,8 +132,7 @@ export default function Patients() {
 
   const fetchDoctors = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active").eq("user_id", user?.id);
+    const { data } = await supabase.from("doctors").select("id, name").eq("status", "Active");
     if (data) setDoctors(data);
   };
 
@@ -208,7 +208,6 @@ export default function Patients() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
     const status = fee_paid >= fee_total && fee_total > 0 ? "Paid" : fee_paid > 0 ? "Partial" : "Pending";
@@ -217,7 +216,7 @@ export default function Patients() {
       age: parseInt(form.age) || 0, gender: form.gender,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
       doctor_name: form.doctor_name, fee_total, fee_paid, status,
-      user_id: user?.id,
+      clinic_id: clinicId,
     }]);
     resetForm();
     setLoading(false);
@@ -273,6 +272,7 @@ export default function Patients() {
       fee_paid: visitFeePaid,
       visit_date: visitForm.visit_date,
       status: visitStatus,
+      clinic_id: clinicId,
     }]);
 
     const newTotal = selectedPatient.fee_total + visitFee;
@@ -370,7 +370,6 @@ export default function Patients() {
     if (!selectedPatient) return;
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     if (medicalHistory) {
       await supabase.from("medical_history").update({
         allergies: medicalForm.allergies, blood_group: medicalForm.blood_group,
@@ -379,7 +378,7 @@ export default function Patients() {
       }).eq("id", medicalHistory.id);
     } else {
       await supabase.from("medical_history").insert([{
-        patient_id: selectedPatient.id, patient_name: selectedPatient.name, user_id: user?.id,
+        patient_id: selectedPatient.id, patient_name: selectedPatient.name, clinic_id: clinicId,
         allergies: medicalForm.allergies, blood_group: medicalForm.blood_group,
         medical_conditions: medicalForm.medical_conditions, current_medications: medicalForm.current_medications,
         previous_surgeries: medicalForm.previous_surgeries, notes: medicalForm.notes,
@@ -394,13 +393,12 @@ export default function Patients() {
     if (!selectedPatient) return;
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("appointments").insert([{
       patient_id: selectedPatient.id, patient_name: selectedPatient.name,
       doctor_name: selectedPatient.doctor_name || "",
       date: appointmentForm.date, time: appointmentForm.time,
       treatment: appointmentForm.treatment, notes: appointmentForm.notes,
-      status: "Scheduled", user_id: user?.id,
+      status: "Scheduled", clinic_id: clinicId,
     }]);
     setAppointmentForm({ date: "", time: "", treatment: "", notes: "" });
     setShowAppointmentForm(false);

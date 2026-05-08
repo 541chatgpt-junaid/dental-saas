@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Expense {
   id: number;
@@ -28,20 +29,19 @@ export default function Expenses() {
   });
   const router = useRouter();
   const { symbol } = useCurrency();
+  const { clinicId } = useClinic();
 
   const fetchExpenses = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("expenses").select("*").eq("user_id", user?.id).order("date", { ascending: false });
+    const { data } = await supabase.from("expenses").select("*").order("date", { ascending: false });
     if (data) setExpenses(data);
   };
 
   const fetchAutoCosts = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: labs } = await supabase.from("labs").select("fee_paid").eq("user_id", user?.id);
+    const { data: labs } = await supabase.from("labs").select("fee_paid");
     if (labs) setLabCost(labs.reduce((sum, l) => sum + (l.fee_paid || 0), 0));
-    const { data: materials } = await supabase.from("materials").select("price, quantity").eq("user_id", user?.id);
+    const { data: materials } = await supabase.from("materials").select("price, quantity");
     if (materials) setMaterialCost(materials.reduce((sum, m) => sum + ((m.price || 0) * (m.quantity || 0)), 0));
   };
 
@@ -65,11 +65,10 @@ export default function Expenses() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("expenses").insert([{
       title: form.title, category: form.category,
       amount: parseInt(form.amount) || 0,
-      date: form.date, notes: form.notes, user_id: user?.id,
+      date: form.date, notes: form.notes, clinic_id: clinicId,
     }]);
     resetForm();
     setLoading(false);

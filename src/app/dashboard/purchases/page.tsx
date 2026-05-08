@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Purchase {
   id: number;
@@ -33,11 +34,11 @@ export default function Purchases() {
   });
   const router = useRouter();
   const { symbol } = useCurrency();
+  const { clinicId } = useClinic();
 
   const fetchPurchases = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("purchases").select("*").eq("user_id", user?.id).order("date", { ascending: false });
+    const { data } = await supabase.from("purchases").select("*").order("date", { ascending: false });
     if (data) setPurchases(data);
   };
 
@@ -60,7 +61,6 @@ export default function Purchases() {
   const handleAdd = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     const qty = parseInt(form.quantity) || 0;
     const price = parseInt(form.price_per_unit) || 0;
     await supabase.from("purchases").insert([{
@@ -68,7 +68,7 @@ export default function Purchases() {
       quantity: qty, unit: form.unit,
       price_per_unit: price, total_price: qty * price,
       supplier: form.supplier, date: form.date,
-      notes: form.notes, user_id: user?.id,
+      notes: form.notes, clinic_id: clinicId,
     }]);
     resetForm();
     setLoading(false);

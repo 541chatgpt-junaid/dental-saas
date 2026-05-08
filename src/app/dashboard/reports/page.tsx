@@ -37,7 +37,7 @@ export default function Reports() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/"); return; }
 
-    const { data: patients } = await supabase.from("patients").select("*").eq("user_id", user.id);
+    const { data: patients } = await supabase.from("patients").select("*");
     if (patients) {
       setAllPatients(patients);
       const filtered = patients.filter(p => {
@@ -95,7 +95,7 @@ export default function Reports() {
       setDoctorData(doctorArr);
     }
 
-    const { data: labs } = await supabase.from("labs").select("fee_paid, created_at").eq("user_id", user.id);
+    const { data: labs } = await supabase.from("labs").select("fee_paid, created_at");
     if (labs) {
       const filtered = labs.filter(l => {
         if (filter === "today") return l.created_at?.startsWith(today);
@@ -105,7 +105,7 @@ export default function Reports() {
       setLabCost(filtered.reduce((sum, l) => sum + (l.fee_paid || 0), 0));
     }
 
-    const { data: expenses } = await supabase.from("expenses").select("*").eq("user_id", user.id);
+    const { data: expenses } = await supabase.from("expenses").select("*");
     if (expenses) {
       setAllExpenses(expenses);
       const filtered = expenses.filter(e => {
@@ -123,10 +123,10 @@ export default function Reports() {
       setExpensePieData(Object.entries(categoryMap).map(([name, value]) => ({ name, value })));
     }
 
-    const { data: materials } = await supabase.from("materials").select("price, quantity").eq("user_id", user.id);
+    const { data: materials } = await supabase.from("materials").select("price, quantity");
     if (materials) setMaterialCost(materials.reduce((sum, m) => sum + ((m.price || 0) * (m.quantity || 0)), 0));
 
-    const { data: purchases } = await supabase.from("purchases").select("*").eq("user_id", user.id);
+    const { data: purchases } = await supabase.from("purchases").select("*");
     if (purchases) setAllPurchases(purchases);
   };
 

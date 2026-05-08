@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useClinic } from "@/lib/ClinicContext";
 
 interface Staff {
   id: number;
@@ -32,11 +33,11 @@ export default function StaffPage() {
     password: "DentEase@123",
   });
   const router = useRouter();
+  const { clinicId } = useClinic();
 
   const fetchStaff = async () => {
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data } = await supabase.from("staff").select("*").eq("user_id", user?.id).order("id", { ascending: false });
+    const { data } = await supabase.from("staff").select("*").order("id", { ascending: false });
     if (data) setStaff(data);
   };
 
@@ -86,14 +87,14 @@ export default function StaffPage() {
 
     // Step 2: Staff table mein save karo
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
     await supabase.from("staff").insert([{
       name: form.name,
       email: form.email,
       role: form.role,
       status: form.status,
       permissions: selectedPermissions.join(","),
-      user_id: user?.id,
+      user_id: result.userId,
+      clinic_id: clinicId,
     }]);
 
     setAddResult({ success: true });

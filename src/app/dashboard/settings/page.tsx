@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
+import { useClinic } from "@/lib/ClinicContext";
 
 const currencies = [
   { code: "PKR", symbol: "Rs", name: "Pakistani Rupee" },
@@ -42,6 +43,7 @@ export default function Settings() {
     currency: "PKR",
   });
   const router = useRouter();
+  const { clinicId } = useClinic();
 
   useEffect(() => {
     const auto = getAutoCurrency();
@@ -51,7 +53,7 @@ export default function Settings() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/"); return; }
-      const { data } = await supabase.from("settings").select("*").eq("user_id", user.id).single();
+      const { data } = await supabase.from("settings").select("*").single();
       if (data) {
         setForm({
           clinic_name: data.clinic_name || "",
@@ -71,8 +73,7 @@ export default function Settings() {
   const handleSave = async () => {
     setLoading(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    const { data: existing } = await supabase.from("settings").select("id").eq("user_id", user?.id).single();
+    const { data: existing } = await supabase.from("settings").select("id").single();
     if (existing) {
       await supabase.from("settings").update({
         clinic_name: form.clinic_name,
@@ -88,7 +89,7 @@ export default function Settings() {
         clinic_phone: form.clinic_phone,
         clinic_email: form.clinic_email,
         currency: form.currency,
-        user_id: user?.id,
+        clinic_id: clinicId,
       }]);
     }
     setLoading(false);
