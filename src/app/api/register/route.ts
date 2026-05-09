@@ -48,7 +48,9 @@ export async function POST(request: Request) {
     clinic_id: clinic.id,
   }]);
   if (staffErr) {
+    // Rollback both auth user and orphaned clinic record
     await admin.auth.admin.deleteUser(userId);
+    await admin.from("clinics").delete().eq("id", clinic.id);
     return NextResponse.json({ error: staffErr.message }, { status: 400 });
   }
 

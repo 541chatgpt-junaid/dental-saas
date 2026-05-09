@@ -6,13 +6,10 @@ import Image from "next/image";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function Home() {
-  const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [clinicName, setClinicName] = useState("");
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const captchaRef = useRef<HCaptcha>(null);
@@ -43,31 +40,6 @@ export default function Home() {
     setLoading(false);
   };
 
-  const handleSignup = async () => {
-    if (!captchaToken) {
-      setError("Please complete the captcha.");
-      return;
-    }
-    setLoading(true);
-    setError("");
-    const supabase = createClient();
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { clinic_name: clinicName },
-        captchaToken,
-      },
-    });
-    if (error) {
-      setError(error.message);
-      captchaRef.current?.resetCaptcha();
-      setCaptchaToken("");
-    } else {
-      setSuccess("Account created! Please check your email to verify.");
-    }
-    setLoading(false);
-  };
 
   return (
     <main className="min-h-screen flex items-center justify-center bg-teal-50 p-4">
@@ -88,29 +60,18 @@ export default function Home() {
         </div>
 
         <div className="flex bg-teal-50 rounded-xl p-1 mb-6">
-          <button
-            onClick={() => { setIsLogin(true); setError(""); setSuccess(""); }}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${isLogin ? "bg-white text-teal-800 shadow-sm" : "text-teal-500"}`}
-          >
+          <span className="flex-1 py-2 text-sm font-medium rounded-lg bg-white text-teal-800 shadow-sm text-center">
             Login
-          </button>
-          <button
-            onClick={() => { setIsLogin(false); setError(""); setSuccess(""); }}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${!isLogin ? "bg-white text-teal-800 shadow-sm" : "text-teal-500"}`}
+          </span>
+          <a
+            href="/register"
+            className="flex-1 py-2 text-sm font-medium rounded-lg text-teal-500 hover:text-teal-700 text-center transition-colors"
           >
-            Sign Up
-          </button>
+            Register
+          </a>
         </div>
 
         <div className="space-y-4">
-          {!isLogin && (
-            <input
-              placeholder="Clinic Name"
-              value={clinicName}
-              onChange={e => setClinicName(e.target.value)}
-              className="w-full border border-teal-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-            />
-          )}
           <input
             placeholder="Email"
             type="email"
@@ -155,23 +116,20 @@ export default function Home() {
           </div>
 
           {error && <p className="text-red-500 text-xs text-center">{error}</p>}
-          {success && <p className="text-green-600 text-xs text-center">{success}</p>}
 
           <button
-            onClick={isLogin ? handleLogin : handleSignup}
+            onClick={handleLogin}
             disabled={loading}
             className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
           >
-            {loading ? "Please wait..." : isLogin ? "Login" : "Create Account"}
+            {loading ? "Please wait..." : "Login"}
           </button>
 
-          {isLogin && (
-            <div className="text-center">
-              <a href="/forgot-password" className="text-xs text-teal-500 hover:underline">
-                Forgot password?
-              </a>
-            </div>
-          )}
+          <div className="text-center">
+            <a href="/forgot-password" className="text-xs text-teal-500 hover:underline">
+              Forgot password?
+            </a>
+          </div>
         </div>
 
         <div className="mt-6 pt-4 border-t border-teal-100">
