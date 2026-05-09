@@ -108,16 +108,34 @@ export default function InvoiceDetailPage() {
 
   const buildWhatsAppLink = () => {
     if (!invoice) return "#";
-    const phone = (invoice.patients?.phone || "").replace(/\D/g, "");
+    let phone = (invoice.patients?.phone || "").replace(/\D/g, "");
     if (!phone) return "#";
+    // Normalize to international format (wa.me needs no + or 00)
+    if (phone.startsWith("0092")) phone = phone.slice(2);       // 0092 → 92...
+    else if (phone.startsWith("92") && phone.length >= 12) {}   // already 92XXXXXXXXXX
+    else if (phone.startsWith("0")) phone = "92" + phone.slice(1); // 03XX → 923XX
+    else if (!phone.startsWith("92")) phone = "92" + phone;     // bare 3XXXXXXXXX → 923...
+
+    const treatmentLines = items.length > 0
+      ? items.map((it, i) => `  ${i + 1}. ${it.description} x${it.quantity} = ${symbol} ${it.total.toLocaleString()}`).join("\n")
+      : "";
+
     const lines = [
       `*Invoice: ${invoice.invoice_number}*`,
       `Patient: ${invoice.patients?.name || ""}`,
-      `Total: ${symbol} ${invoice.total.toLocaleString()}`,
+      `Date: ${formatDate(invoice.created_at)}`,
+      treatmentLines ? `\n*Treatments:*\n${treatmentLines}` : null,
+      ``,
+      `Subtotal: ${symbol} ${invoice.subtotal.toLocaleString()}`,
+      invoice.discount > 0 ? `Discount: - ${symbol} ${invoice.discount.toLocaleString()}` : null,
+      `*Total: ${symbol} ${invoice.total.toLocaleString()}*`,
       invoice.amount_paid > 0 ? `Paid: ${symbol} ${invoice.amount_paid.toLocaleString()}` : null,
-      invoice.balance > 0 ? `*Balance Due: ${symbol} ${invoice.balance.toLocaleString()}*` : "✅ Fully Paid",
+      invoice.balance > 0
+        ? `*Balance Due: ${symbol} ${Math.max(0, invoice.balance).toLocaleString()}*`
+        : `✅ Fully Paid`,
       invoice.due_date ? `Due Date: ${formatDate(invoice.due_date)}` : null,
-    ].filter(Boolean).join("\n");
+    ].filter(v => v !== null).join("\n");
+
     return `https://wa.me/${phone}?text=${encodeURIComponent(lines)}`;
   };
 
