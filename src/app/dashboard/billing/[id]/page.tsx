@@ -37,10 +37,18 @@ interface Payment {
   notes: string | null;
 }
 
+const isOverdue = (inv: Invoice) =>
+  !!inv.due_date && new Date(inv.due_date) < new Date() && inv.balance > 0 && inv.status !== "paid" && inv.status !== "cancelled";
+
+const effectiveStatus = (inv: Invoice) => isOverdue(inv) ? "overdue" : inv.status;
+
 const statusColor = (s: string) => {
   if (s === "paid") return "bg-green-100 text-green-700";
   if (s === "partial") return "bg-blue-100 text-blue-700";
   if (s === "cancelled") return "bg-gray-100 text-gray-500";
+  if (s === "draft") return "bg-purple-100 text-purple-700";
+  if (s === "sent") return "bg-sky-100 text-sky-700";
+  if (s === "overdue") return "bg-red-100 text-red-700";
   return "bg-orange-100 text-orange-700";
 };
 
@@ -63,6 +71,7 @@ export default function InvoiceDetailPage() {
   const [payNotes, setPayNotes] = useState("");
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
+  const [markingStatus, setMarkingStatus] = useState(false);
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
@@ -82,6 +91,35 @@ export default function InvoiceDetailPage() {
   };
 
   useEffect(() => { fetchData(); }, [id]);
+
+  const handleMarkStatus = async (newStatus: "sent" | "cancelled" | "unpaid") => {
+    setMarkingStatus(true);
+    await createClient().from("invoices").update({ status: newStatus }).eq("id", id);
+    setMarkingStatus(false);
+    fetchData();
+  };
+
+  const handleFinalizeDraft = async () => {
+    setMarkingStatus(true);
+    await createClient().from("invoices").update({ status: "unpaid" }).eq("id", id);
+    setMarkingStatus(false);
+    fetchData();
+  };
+
+  const buildWhatsAppLink = () => {
+    if (!invoice) return "#";
+    const phone = (invoice.patients?.phone || "").replace(/\D/g, "");
+    if (!phone) return "#";
+    const lines = [
+      `*Invoice: ${invoice.invoice_number}*`,
+      `Patient: ${invoice.patients?.name || ""}`,
+      `Total: ${symbol} ${invoice.total.toLocaleString()}`,
+      invoice.amount_paid > 0 ? `Paid: ${symbol} ${invoice.amount_paid.toLocaleString()}` : null,
+      invoice.balance > 0 ? `*Balance Due: ${symbol} ${invoice.balance.toLocaleString()}*` : "✅ Fully Paid",
+      invoice.due_date ? `Due Date: ${formatDate(invoice.due_date)}` : null,
+    ].filter(Boolean).join("\n");
+    return `https://wa.me/${phone}?text=${encodeURIComponent(lines)}`;
+  };
 
   const handleRecordPayment = async () => {
     const amt = Number(payAmount);
@@ -139,9 +177,40 @@ export default function InvoiceDetailPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <button onClick={() => router.push("/dashboard/billing")} className="text-teal-500 hover:text-teal-700 text-sm">← Back</button>
             <h2 className="text-xl font-semibold text-teal-800">{invoice.invoice_number}</h2>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(invoice.status)}`}>{statusLabel(invoice.status)}</span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(effectiveStatus(invoice))}`}>{statusLabel(effectiveStatus(invoice))}</span>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            {invoice.status === "draft" && (
+              <button
+                onClick={handleFinalizeDraft}
+                disabled={markingStatus}
+                className="border border-purple-200 text-purple-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-purple-50"
+              >
+                Finalize Invoice
+              </button>
+            )}
+            {invoice.status !== "draft" && invoice.status !== "paid" && invoice.status !== "cancelled" && invoice.status !== "sent" && (
+              <button
+                onClick={() => handleMarkStatus("sent")}
+                disabled={markingStatus}
+                className="border border-sky-200 text-sky-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-sky-50"
+              >
+                Mark as Sent
+              </button>
+            )}
+            {invoice.patients?.phone && (
+              <a
+                href={buildWhatsAppLink()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border border-green-200 text-green-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-green-50 flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                WhatsApp
+              </a>
+            )}
             <button
               onClick={() => window.print()}
               className="border border-teal-200 text-teal-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-teal-50"

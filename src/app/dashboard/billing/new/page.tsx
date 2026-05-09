@@ -10,6 +10,7 @@ interface Patient { id: number; name: string; phone: string; age: number | null;
 interface Visit { id: number; visit_date: string; treatment: string; }
 interface LineItem { description: string; quantity: number; unit_price: number; }
 interface PatientBilling { totalBilled: number; totalPaid: number; outstanding: number; }
+interface Installment { label: string; amount: number; due_date: string; }
 
 const QUICK_TREATMENTS = [
   "Dental Consultation", "Teeth Cleaning", "Tooth Extraction", "Root Canal Treatment",
@@ -45,6 +46,11 @@ export default function NewInvoicePage() {
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [useInstallments, setUseInstallments] = useState(false);
+  const [installments, setInstallments] = useState<Installment[]>([
+    { label: "Installment 1", amount: 0, due_date: "" },
+    { label: "Installment 2", amount: 0, due_date: "" },
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
@@ -113,7 +119,7 @@ export default function NewInvoicePage() {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (asDraft = false) => {
     if (!patientId) { setError("Please select a patient."); return; }
     const validItems = items.filter(i => i.description.trim());
     if (!validItems.length) { setError("Add at least one item with a description."); return; }
@@ -124,6 +130,13 @@ export default function NewInvoicePage() {
 
     const { data: invNum } = await supabase.rpc("generate_invoice_number", { p_clinic_id: clinicId });
 
+    const installmentNote = useInstallments && installments.some(inst => inst.amount > 0)
+      ? "\n\n[INSTALLMENT PLAN]\n" + installments
+          .filter(inst => inst.amount > 0)
+          .map(inst => `${inst.label}: ${symbol} ${inst.amount.toLocaleString()}${inst.due_date ? ` (due ${inst.due_date})` : ""}`)
+          .join("\n")
+      : "";
+
     const { data: invoice, error: invErr } = await supabase
       .from("invoices")
       .insert([{
@@ -131,12 +144,12 @@ export default function NewInvoicePage() {
         patient_id: Number(patientId),
         visit_id: visitId ? Number(visitId) : null,
         invoice_number: invNum,
-        status: "unpaid",
+        status: asDraft ? "draft" : "unpaid",
         subtotal,
         discount,
         total,
         amount_paid: 0,
-        notes: notes || null,
+        notes: (notes + installmentNote) || null,
         due_date: dueDate || null,
       }])
       .select()
@@ -346,6 +359,64 @@ export default function NewInvoicePage() {
             </div>
           </div>
 
+          {/* Installment Plan */}
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-800">Installment Plan</h3>
+                <p className="text-xs text-gray-400 mt-0.5">Split payment into scheduled installments</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setUseInstallments(!useInstallments)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useInstallments ? "bg-teal-600" : "bg-gray-200"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${useInstallments ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+            {useInstallments && (
+              <div className="space-y-3 mt-3">
+                {installments.map((inst, idx) => (
+                  <div key={idx} className="grid grid-cols-12 gap-2 items-center">
+                    <input
+                      placeholder={`Installment ${idx + 1}`}
+                      value={inst.label}
+                      onChange={e => setInstallments(installments.map((it, i) => i === idx ? { ...it, label: e.target.value } : it))}
+                      className="col-span-4 border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    />
+                    <input
+                      type="number" placeholder="Amount" min="0"
+                      value={inst.amount || ""}
+                      onChange={e => setInstallments(installments.map((it, i) => i === idx ? { ...it, amount: Number(e.target.value) } : it))}
+                      className="col-span-4 border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    />
+                    <input
+                      type="date"
+                      value={inst.due_date}
+                      onChange={e => setInstallments(installments.map((it, i) => i === idx ? { ...it, due_date: e.target.value } : it))}
+                      className="col-span-3 border border-teal-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    />
+                    <button
+                      onClick={() => setInstallments(installments.filter((_, i) => i !== idx))}
+                      className="col-span-1 text-red-400 hover:text-red-600 text-xl font-bold flex items-center justify-center h-9"
+                    >×</button>
+                  </div>
+                ))}
+                <div className="flex items-center justify-between pt-1">
+                  <button
+                    onClick={() => setInstallments([...installments, { label: `Installment ${installments.length + 1}`, amount: 0, due_date: "" }])}
+                    className="text-teal-600 text-sm hover:underline"
+                  >+ Add Installment</button>
+                  {installments.some(i => i.amount > 0) && (
+                    <span className={`text-xs font-medium ${installments.reduce((s, i) => s + i.amount, 0) === total ? "text-green-600" : "text-orange-500"}`}>
+                      Scheduled: {symbol} {installments.reduce((s, i) => s + i.amount, 0).toLocaleString()} / {symbol} {total.toLocaleString()}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Notes */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <label className="text-xs text-teal-600 mb-1 block">Notes (optional)</label>
@@ -360,13 +431,20 @@ export default function NewInvoicePage() {
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          <div className="flex gap-3 pb-8">
+          <div className="flex gap-3 pb-8 flex-wrap">
             <button
-              onClick={handleSave}
+              onClick={() => handleSave(false)}
               disabled={loading}
               className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create Invoice"}
+            </button>
+            <button
+              onClick={() => handleSave(true)}
+              disabled={loading}
+              className="border border-purple-200 text-purple-700 px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-purple-50 disabled:opacity-60"
+            >
+              Save as Draft
             </button>
             <button
               onClick={() => router.push("/dashboard/billing")}

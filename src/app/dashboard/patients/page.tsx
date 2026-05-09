@@ -997,6 +997,7 @@ export default function Patients() {
                         <div className="flex gap-2">
                           <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs">🖨️</button>
                           <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
+                          <button onClick={() => router.push(`/dashboard/patients/${p.id}`)} className="text-purple-600 text-xs font-medium">History</button>
                           {invSummary(p.id).outstanding > 0 && (
                             <button onClick={() => openPayModal(p)} className="text-white bg-teal-600 hover:bg-teal-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
                           )}
@@ -1048,6 +1049,7 @@ export default function Patients() {
                             <div className="flex gap-2">
                               <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs font-medium">🖨️</button>
                               <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
+                              <button onClick={() => router.push(`/dashboard/patients/${p.id}`)} className="text-purple-600 text-xs font-semibold hover:underline">History</button>
                               {invSummary(p.id).outstanding > 0 && (
                                 <button onClick={() => openPayModal(p)} className="text-white bg-teal-600 hover:bg-teal-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
                               )}

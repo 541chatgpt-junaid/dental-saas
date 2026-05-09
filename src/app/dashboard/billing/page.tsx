@@ -21,14 +21,22 @@ interface Invoice {
   patients: { name: string } | null;
 }
 
-const STATUS_TABS = ["All", "unpaid", "partial", "paid", "cancelled"];
+const STATUS_TABS = ["All", "draft", "unpaid", "overdue", "partial", "sent", "paid", "cancelled"];
 
 const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+
+const isOverdue = (inv: Invoice) =>
+  !!inv.due_date && new Date(inv.due_date) < new Date() && inv.balance > 0 && inv.status !== "paid" && inv.status !== "cancelled" && inv.status !== "draft";
+
+const effectiveStatus = (inv: Invoice) => isOverdue(inv) ? "overdue" : inv.status;
 
 const statusColor = (s: string) => {
   if (s === "paid") return "bg-green-100 text-green-700";
   if (s === "partial") return "bg-blue-100 text-blue-700";
   if (s === "cancelled") return "bg-gray-100 text-gray-500";
+  if (s === "draft") return "bg-purple-100 text-purple-700";
+  if (s === "sent") return "bg-sky-100 text-sky-700";
+  if (s === "overdue") return "bg-red-100 text-red-700";
   return "bg-orange-100 text-orange-700";
 };
 
@@ -57,7 +65,8 @@ export default function BillingPage() {
   }, [clinicId]);
 
   const filtered = invoices.filter(inv => {
-    const matchTab = tab === "All" || inv.status === tab;
+    const effStatus = effectiveStatus(inv);
+    const matchTab = tab === "All" || effStatus === tab;
     const q = search.toLowerCase();
     const matchSearch = !q ||
       inv.invoice_number.toLowerCase().includes(q) ||
@@ -156,7 +165,7 @@ export default function BillingPage() {
                       <p className="font-semibold text-teal-800 text-sm">{inv.invoice_number}</p>
                       <p className="text-xs text-teal-500">{inv.patients?.name || "—"}</p>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{statusLabel(inv.status)}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(effectiveStatus(inv))}`}>{statusLabel(effectiveStatus(inv))}</span>
                   </div>
                   <div className="flex justify-between text-xs text-teal-600 mb-3">
                     <span>Total: {symbol} {inv.total.toLocaleString()}</span>
@@ -208,7 +217,7 @@ export default function BillingPage() {
                       <td className="px-5 py-3 text-right text-emerald-600 font-medium">{symbol} {inv.amount_paid.toLocaleString()}</td>
                       <td className="px-5 py-3 text-right font-bold text-orange-600">{symbol} {inv.balance.toLocaleString()}</td>
                       <td className="px-5 py-3">
-                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(inv.status)}`}>{statusLabel(inv.status)}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(effectiveStatus(inv))}`}>{statusLabel(effectiveStatus(inv))}</span>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex gap-3">
