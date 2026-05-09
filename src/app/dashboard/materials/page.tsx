@@ -119,7 +119,7 @@ export default function Materials() {
       <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Materials</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Inventory</h2>
             <p className="text-sm text-teal-600 mt-1">Total: {materials.length} items</p>
           </div>
           <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>

@@ -10,7 +10,7 @@ const navItems = [
   { label: "Doctors", href: "/dashboard/doctors" },
   { label: "Lab Records", href: "/dashboard/labs" },
   { label: "Advanced Billing", href: "/dashboard/billing" },
-  { label: "Materials", href: "/dashboard/materials" },
+  { label: "Inventory", href: "/dashboard/materials" },
   { label: "Purchases", href: "/dashboard/purchases" },
   { label: "Expenses", href: "/dashboard/expenses" },
   { label: "Reports", href: "/dashboard/reports" },
