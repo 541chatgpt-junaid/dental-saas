@@ -38,11 +38,13 @@ interface Payment {
 }
 
 const statusColor = (s: string) => {
-  if (s === "Paid") return "bg-green-100 text-green-700";
-  if (s === "Partial") return "bg-blue-100 text-blue-700";
-  if (s === "Cancelled") return "bg-gray-100 text-gray-500";
+  if (s === "paid") return "bg-green-100 text-green-700";
+  if (s === "partial") return "bg-blue-100 text-blue-700";
+  if (s === "cancelled") return "bg-gray-100 text-gray-500";
   return "bg-orange-100 text-orange-700";
 };
+
+const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -102,7 +104,7 @@ export default function InvoiceDetailPage() {
     if (pErr) { setPayError(pErr.message); setPayLoading(false); return; }
 
     const newAmountPaid = invoice.amount_paid + amt;
-    const newStatus = newAmountPaid >= invoice.total ? "Paid" : "Partial";
+    const newStatus = newAmountPaid >= invoice.total ? "paid" : "partial";
 
     await supabase.from("invoices").update({ amount_paid: newAmountPaid, status: newStatus }).eq("id", id);
 
@@ -137,7 +139,7 @@ export default function InvoiceDetailPage() {
           <div className="flex items-center gap-3 flex-wrap">
             <button onClick={() => router.push("/dashboard/billing")} className="text-teal-500 hover:text-teal-700 text-sm">← Back</button>
             <h2 className="text-xl font-semibold text-teal-800">{invoice.invoice_number}</h2>
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(invoice.status)}`}>{invoice.status}</span>
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(invoice.status)}`}>{statusLabel(invoice.status)}</span>
           </div>
           <div className="flex gap-2">
             <button
@@ -146,7 +148,7 @@ export default function InvoiceDetailPage() {
             >
               Print
             </button>
-            {invoice.status !== "Paid" && invoice.status !== "Cancelled" && (
+            {invoice.status !== "paid" && invoice.status !== "cancelled" && (
               <button
                 onClick={() => { setShowPayModal(true); setPayError(""); }}
                 className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-sm font-medium"

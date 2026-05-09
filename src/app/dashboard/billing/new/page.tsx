@@ -6,9 +6,10 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 
-interface Patient { id: number; name: string; }
+interface Patient { id: number; name: string; phone: string; age: number | null; gender: string; }
 interface Visit { id: number; visit_date: string; treatment: string; }
 interface LineItem { description: string; quantity: number; unit_price: number; }
+interface PatientBilling { totalBilled: number; totalPaid: number; outstanding: number; }
 
 const QUICK_TREATMENTS = [
   "Dental Consultation", "Teeth Cleaning", "Tooth Extraction", "Root Canal Treatment",
@@ -18,6 +19,8 @@ const QUICK_TREATMENTS = [
 
 export default function NewInvoicePage() {
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [patientBilling, setPatientBilling] = useState<PatientBilling | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [patientId, setPatientId] = useState("");
   const [visitId, setVisitId] = useState("");
@@ -33,12 +36,14 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     if (!clinicId) return;
-    createClient().from("patients").select("id, name").order("name")
+    createClient().from("patients").select("id, name, phone, age, gender").order("name")
       .then(({ data }) => setPatients(data || []));
   }, [clinicId]);
 
   const handlePatientChange = (val: string) => {
     setPatientId(val);
+    setSelectedPatient(patients.find(p => p.id === Number(val)) || null);
+    setPatientBilling(null);
     setVisitId("");
     setVisits([]);
   };
@@ -51,6 +56,23 @@ export default function NewInvoicePage() {
       .eq("patient_id", Number(patientId))
       .order("visit_date", { ascending: false })
       .then(({ data }) => setVisits(data || []));
+  }, [patientId]);
+
+  useEffect(() => {
+    if (!patientId) return;
+    createClient()
+      .from("invoices")
+      .select("total, amount_paid, balance")
+      .eq("patient_id", Number(patientId))
+      .neq("status", "cancelled")
+      .then(({ data }) => {
+        const rows = data || [];
+        setPatientBilling({
+          totalBilled: rows.reduce((s, r) => s + (r.total || 0), 0),
+          totalPaid: rows.reduce((s, r) => s + (r.amount_paid || 0), 0),
+          outstanding: rows.reduce((s, r) => s + (r.balance || 0), 0),
+        });
+      });
   }, [patientId]);
 
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
@@ -91,7 +113,7 @@ export default function NewInvoicePage() {
         patient_id: Number(patientId),
         visit_id: visitId ? Number(visitId) : null,
         invoice_number: invNum,
-        status: "Unpaid",
+        status: "unpaid",
         subtotal,
         discount,
         total,
@@ -148,6 +170,51 @@ export default function NewInvoicePage() {
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
+
+              {/* Patient info + billing summary — full width */}
+              {selectedPatient && patientBilling && (
+                <div className="md:col-span-2 rounded-xl border border-teal-200 bg-teal-50 overflow-hidden">
+                  <div className="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-teal-200">
+                    <span className="font-semibold text-teal-800 text-sm">{selectedPatient.name}</span>
+                    {selectedPatient.phone && (
+                      <span className="text-teal-600 text-sm">{selectedPatient.phone}</span>
+                    )}
+                    {(selectedPatient.age || selectedPatient.gender) && (
+                      <span className="text-teal-500 text-xs">
+                        {[selectedPatient.age ? `${selectedPatient.age} yrs` : null, selectedPatient.gender || null]
+                          .filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </div>
+                  <div className="px-4 py-3 grid grid-cols-3 gap-3 text-center">
+                    <div>
+                      <p className="text-xs text-teal-500 mb-0.5">Total Billed</p>
+                      <p className="text-sm font-semibold text-teal-800">{symbol} {patientBilling.totalBilled.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-teal-500 mb-0.5">Total Paid</p>
+                      <p className="text-sm font-semibold text-green-700">{symbol} {patientBilling.totalPaid.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-teal-500 mb-0.5">Outstanding</p>
+                      <p className={`text-sm font-semibold ${patientBilling.outstanding > 0 ? "text-orange-600" : "text-teal-700"}`}>
+                        {symbol} {patientBilling.outstanding.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                  {patientBilling.totalBilled > 0 && (
+                    <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 text-xs text-blue-700">
+                      ℹ This patient already has a registration receipt. Only create a new invoice here for additional treatments, lab charges, or installment plans.
+                    </div>
+                  )}
+                  {patientBilling.outstanding > 0 && (
+                    <div className="px-4 py-2 bg-orange-50 border-t border-orange-100 text-xs text-orange-700">
+                      ⚠ Patient has an existing outstanding balance of {symbol} {patientBilling.outstanding.toLocaleString()}. This new invoice will be created separately.
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div>
                 <label className="text-xs text-teal-600 mb-1 block">Link to Visit (optional)</label>
                 <select

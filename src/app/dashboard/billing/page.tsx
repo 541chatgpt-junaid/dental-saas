@@ -21,12 +21,14 @@ interface Invoice {
   patients: { name: string } | null;
 }
 
-const STATUS_TABS = ["All", "Unpaid", "Partial", "Paid", "Cancelled"];
+const STATUS_TABS = ["All", "unpaid", "partial", "paid", "cancelled"];
+
+const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 const statusColor = (s: string) => {
-  if (s === "Paid") return "bg-green-100 text-green-700";
-  if (s === "Partial") return "bg-blue-100 text-blue-700";
-  if (s === "Cancelled") return "bg-gray-100 text-gray-500";
+  if (s === "paid") return "bg-green-100 text-green-700";
+  if (s === "partial") return "bg-blue-100 text-blue-700";
+  if (s === "cancelled") return "bg-gray-100 text-gray-500";
   return "bg-orange-100 text-orange-700";
 };
 
@@ -78,6 +80,11 @@ export default function BillingPage() {
           </Link>
         </div>
 
+        <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5 text-sm text-blue-800">
+          <span className="font-semibold">Advanced Billing</span> is for complex invoicing — multiple treatments, installment plans, or lab charges.
+          For regular patient receipts and fee collection, use the <span className="font-semibold">Patients</span> page.
+        </div>
+
         <div className="flex flex-col md:flex-row gap-3 mb-5">
           <div className="flex gap-1 bg-white border border-teal-100 rounded-xl p-1 overflow-x-auto">
             {STATUS_TABS.map(t => (
@@ -86,7 +93,7 @@ export default function BillingPage() {
                 onClick={() => setTab(t)}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t ? "bg-teal-600 text-white" : "text-teal-600 hover:bg-teal-50"}`}
               >
-                {t}
+                {t === "All" ? "All" : statusLabel(t)}
               </button>
             ))}
           </div>
@@ -113,7 +120,7 @@ export default function BillingPage() {
                       <p className="font-semibold text-teal-800 text-sm">{inv.invoice_number}</p>
                       <p className="text-xs text-teal-500">{inv.patients?.name || "—"}</p>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{inv.status}</span>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{statusLabel(inv.status)}</span>
                   </div>
                   <div className="flex justify-between text-xs text-teal-600 mb-3">
                     <span>Total: {symbol} {inv.total.toLocaleString()}</span>
@@ -127,7 +134,7 @@ export default function BillingPage() {
                     >
                       View
                     </button>
-                    {inv.status !== "Paid" && inv.status !== "Cancelled" && (
+                    {inv.status !== "paid" && inv.status !== "cancelled" && (
                       <button
                         onClick={() => router.push(`/dashboard/billing/${inv.id}?pay=1`)}
                         className="text-xs px-3 py-1.5 rounded-lg bg-teal-600 text-white font-medium"
@@ -165,7 +172,7 @@ export default function BillingPage() {
                       <td className="px-5 py-3 text-right text-green-700">{symbol} {inv.amount_paid.toLocaleString()}</td>
                       <td className="px-5 py-3 text-right font-medium text-orange-700">{symbol} {inv.balance.toLocaleString()}</td>
                       <td className="px-5 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{inv.status}</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{statusLabel(inv.status)}</span>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex gap-3">
@@ -175,7 +182,7 @@ export default function BillingPage() {
                           >
                             View
                           </button>
-                          {inv.status !== "Paid" && inv.status !== "Cancelled" && (
+                          {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <button
                               onClick={() => router.push(`/dashboard/billing/${inv.id}?pay=1`)}
                               className="text-orange-600 text-xs font-medium hover:underline"

@@ -2,6 +2,7 @@
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function Home() {
@@ -72,12 +73,17 @@ export default function Home() {
     <main className="min-h-screen flex items-center justify-center bg-teal-50 p-4">
       <div className="bg-white rounded-2xl shadow-sm border border-teal-100 w-full max-w-md p-8">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 bg-teal-600 rounded-xl flex items-center justify-center mx-auto mb-3">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2C8 2 4 5.5 4 10c0 6 8 12 8 12s8-6 8-12c0-4.5-4-8-8-8z" />
-            </svg>
+          <div className="flex justify-center mb-3">
+            <Image
+              src="/images/dentease-logo.webp"
+              alt="DentEase"
+              width={80}
+              height={80}
+              className="object-contain"
+              priority
+            />
           </div>
-          <h1 className="text-2xl font-semibold text-teal-800">DentEase</h1>
+          <h1 className="text-2xl font-semibold text-teal-700">DentEase</h1>
           <p className="text-sm text-teal-500 mt-1">Dental Clinic Management</p>
         </div>
 
@@ -169,7 +175,18 @@ export default function Home() {
         </div>
 
         <div className="mt-6 pt-4 border-t border-teal-100">
-          <button className="w-full flex items-center justify-center gap-3 border border-teal-200 rounded-xl py-2.5 text-sm text-teal-700 hover:bg-teal-50 transition-colors">
+          <button
+            onClick={async () => {
+              const supabase = createClient();
+              await supabase.auth.signInWithOAuth({
+                provider: "google",
+                options: {
+                  redirectTo: `${window.location.origin}/auth/callback`,
+                },
+              });
+            }}
+            className="w-full flex items-center justify-center gap-3 border border-teal-200 rounded-xl py-2.5 text-sm text-teal-700 hover:bg-teal-50 transition-colors"
+          >
             <svg width="18" height="18" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
               <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>

@@ -68,6 +68,8 @@ interface Doctor {
   name: string;
 }
 
+type InvoiceSummary = { totalBilled: number; totalPaid: number; outstanding: number };
+
 const upperRight = [18,17,16,15,14,13,12,11];
 const upperLeft = [21,22,23,24,25,26,27,28];
 const lowerRight = [48,47,46,45,44,43,42,41];
@@ -83,6 +85,7 @@ const formatDate = (dateStr: string) => {
 export default function Patients() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
+  const [invoiceSummaryMap, setInvoiceSummaryMap] = useState<Record<number, InvoiceSummary>>({});
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
@@ -99,6 +102,10 @@ export default function Patients() {
   const [visitTeeth, setVisitTeeth] = useState<number[]>([]);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptPatient, setReceiptPatient] = useState<Patient | null>(null);
+  const [payingPatient, setPayingPatient] = useState<Patient | null>(null);
+  const [payForm, setPayForm] = useState({ amount: "", method: "Cash", notes: "" });
+  const [payLoading, setPayLoading] = useState(false);
+  const [payError, setPayError] = useState("");
   const [activeTab, setActiveTab] = useState<"visits"|"appointments"|"medical">("visits");
   const [editingVisitId, setEditingVisitId] = useState<number | null>(null);
   const [medicalForm, setMedicalForm] = useState({
@@ -167,6 +174,27 @@ export default function Patients() {
     }
   };
 
+  const fetchInvoiceSummaries = async () => {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("invoices")
+      .select("patient_id, total, amount_paid, balance")
+      .neq("status", "cancelled");
+    if (!data) return;
+    const map: Record<number, InvoiceSummary> = {};
+    data.forEach(r => {
+      const pid = r.patient_id as number;
+      if (!map[pid]) map[pid] = { totalBilled: 0, totalPaid: 0, outstanding: 0 };
+      map[pid].totalBilled += r.total || 0;
+      map[pid].totalPaid += r.amount_paid || 0;
+      map[pid].outstanding += r.balance || 0;
+    });
+    setInvoiceSummaryMap(map);
+  };
+
+  const invSummary = (patientId: number): InvoiceSummary =>
+    invoiceSummaryMap[patientId] ?? { totalBilled: 0, totalPaid: 0, outstanding: 0 };
+
   useEffect(() => {
     const checkUser = async () => {
       const supabase = createClient();
@@ -176,6 +204,7 @@ export default function Patients() {
     checkUser();
     fetchPatients();
     fetchDoctors();
+    fetchInvoiceSummaries();
   }, [router]);
 
   const getClinicPatientNumber = (patientId: number) => {
@@ -211,16 +240,35 @@ export default function Patients() {
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
     const status = fee_paid >= fee_total && fee_total > 0 ? "Paid" : fee_paid > 0 ? "Partial" : "Pending";
-    await supabase.from("patients").insert([{
+
+    const { data: patient } = await supabase.from("patients").insert([{
       name: form.name, phone: form.phone, address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
       doctor_name: form.doctor_name, fee_total, fee_paid, status,
       clinic_id: clinicId,
-    }]);
+    }]).select().single();
+
+    if (patient && fee_total > 0) {
+      const { data: invNum } = await supabase.rpc("generate_invoice_number", { p_clinic_id: clinicId });
+      const invStatus = fee_paid >= fee_total ? "paid" : fee_paid > 0 ? "partial" : "unpaid";
+      await supabase.from("invoices").insert([{
+        clinic_id: clinicId,
+        patient_id: patient.id,
+        invoice_number: invNum,
+        status: invStatus,
+        subtotal: fee_total,
+        discount: 0,
+        total: fee_total,
+        amount_paid: fee_paid,
+        notes: "[Registration]",
+      }]);
+    }
+
     resetForm();
     setLoading(false);
     fetchPatients();
+    fetchInvoiceSummaries();
   };
 
   const handleEditPatient = async () => {
@@ -230,15 +278,50 @@ export default function Patients() {
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
     const status = fee_paid >= fee_total && fee_total > 0 ? "Paid" : fee_paid > 0 ? "Partial" : "Pending";
+
     await supabase.from("patients").update({
       name: form.name, phone: form.phone, address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
       doctor_name: form.doctor_name, fee_total, fee_paid, status,
     }).eq("id", editingPatientId);
+
+    if (fee_total > 0) {
+      const invStatus = fee_paid >= fee_total ? "paid" : fee_paid > 0 ? "partial" : "unpaid";
+      const { data: existingInv } = await supabase
+        .from("invoices")
+        .select("id")
+        .eq("patient_id", editingPatientId)
+        .eq("notes", "[Registration]")
+        .maybeSingle();
+
+      if (existingInv) {
+        await supabase.from("invoices").update({
+          subtotal: fee_total,
+          total: fee_total,
+          amount_paid: fee_paid,
+          status: invStatus,
+        }).eq("id", existingInv.id);
+      } else {
+        const { data: invNum } = await supabase.rpc("generate_invoice_number", { p_clinic_id: clinicId });
+        await supabase.from("invoices").insert([{
+          clinic_id: clinicId,
+          patient_id: editingPatientId,
+          invoice_number: invNum,
+          status: invStatus,
+          subtotal: fee_total,
+          discount: 0,
+          total: fee_total,
+          amount_paid: fee_paid,
+          notes: "[Registration]",
+        }]);
+      }
+    }
+
     resetForm();
     setLoading(false);
     fetchPatients();
+    fetchInvoiceSummaries();
   };
 
   const openEditPatient = (p: Patient) => {
@@ -421,6 +504,60 @@ export default function Patients() {
     fetchPatients();
   };
 
+  const openPayModal = (p: Patient) => {
+    const outstanding = invSummary(p.id).outstanding;
+    setPayingPatient(p);
+    setPayForm({ amount: outstanding > 0 ? outstanding.toString() : "", method: "Cash", notes: "" });
+    setPayError("");
+  };
+
+  const handleQuickPayment = async () => {
+    if (!payingPatient) return;
+    const amount = parseFloat(payForm.amount);
+    if (!amount || amount <= 0) { setPayError("Enter a valid amount."); return; }
+
+    setPayLoading(true);
+    setPayError("");
+    const supabase = createClient();
+
+    // Update patients table
+    const newPaid = payingPatient.fee_paid + amount;
+    const newPatientStatus = newPaid >= payingPatient.fee_total && payingPatient.fee_total > 0 ? "Paid" : "Partial";
+    await supabase.from("patients")
+      .update({ fee_paid: newPaid, status: newPatientStatus })
+      .eq("id", payingPatient.id);
+
+    // Find and update the registration invoice
+    const { data: inv } = await supabase
+      .from("invoices")
+      .select("id, total, amount_paid")
+      .eq("patient_id", payingPatient.id)
+      .eq("notes", "[Registration]")
+      .maybeSingle();
+
+    if (inv) {
+      const newAmountPaid = Math.min(inv.total, inv.amount_paid + amount);
+      const invStatus = newAmountPaid >= inv.total ? "paid" : newAmountPaid > 0 ? "partial" : "unpaid";
+      await supabase.from("invoices")
+        .update({ amount_paid: newAmountPaid, status: invStatus })
+        .eq("id", inv.id);
+
+      await supabase.from("payments").insert([{
+        invoice_id: inv.id,
+        clinic_id: clinicId,
+        amount,
+        payment_method: payForm.method,
+        payment_date: new Date().toISOString(),
+        notes: payForm.notes || null,
+      }]);
+    }
+
+    setPayingPatient(null);
+    setPayLoading(false);
+    fetchPatients();
+    fetchInvoiceSummaries();
+  };
+
   const openPatient = (patient: Patient) => {
     setSelectedPatient(patient);
     setActiveTab("visits");
@@ -523,25 +660,30 @@ export default function Patients() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4">
-                <div className="bg-teal-50 rounded-lg p-2 md:p-3">
-                  <p className="text-xs text-teal-600">Total Billed</p>
-                  <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {visitTotalFee || selectedPatient.fee_total}</p>
-                  <p className="text-xs text-teal-400">{visits.length} visits</p>
-                </div>
-                <div className="bg-green-50 rounded-lg p-2 md:p-3">
-                  <p className="text-xs text-green-600">Total Collected</p>
-                  <p className="text-base md:text-lg font-semibold text-green-700">{symbol} {visitTotalPaid || selectedPatient.fee_paid}</p>
-                </div>
-                <div className="bg-orange-50 rounded-lg p-2 md:p-3">
-                  <p className="text-xs text-orange-600">Still Pending</p>
-                  <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {visitTotalPending > 0 ? visitTotalPending : (selectedPatient.fee_total - selectedPatient.fee_paid)}</p>
-                </div>
-                <div className="bg-teal-50 rounded-lg p-2 md:p-3">
-                  <p className="text-xs text-teal-600">Last Visit</p>
-                  <p className="text-sm font-semibold text-teal-800">{visits[0]?.visit_date ? formatDate(visits[0].visit_date) : "—"}</p>
-                </div>
-              </div>
+              {(() => {
+                const inv = invSummary(selectedPatient.id);
+                return (
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4">
+                    <div className="bg-teal-50 rounded-lg p-2 md:p-3">
+                      <p className="text-xs text-teal-600">Total Billed</p>
+                      <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {inv.totalBilled.toLocaleString()}</p>
+                      <p className="text-xs text-teal-400">{visits.length} visits</p>
+                    </div>
+                    <div className="bg-green-50 rounded-lg p-2 md:p-3">
+                      <p className="text-xs text-green-600">Total Collected</p>
+                      <p className="text-base md:text-lg font-semibold text-green-700">{symbol} {inv.totalPaid.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-orange-50 rounded-lg p-2 md:p-3">
+                      <p className="text-xs text-orange-600">Still Pending</p>
+                      <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {inv.outstanding.toLocaleString()}</p>
+                    </div>
+                    <div className="bg-teal-50 rounded-lg p-2 md:p-3">
+                      <p className="text-xs text-teal-600">Last Visit</p>
+                      <p className="text-sm font-semibold text-teal-800">{visits[0]?.visit_date ? formatDate(visits[0].visit_date) : "—"}</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
 
             {showAppointmentForm && (
@@ -848,12 +990,15 @@ export default function Patients() {
                       </div>
                       <p className="text-xs text-teal-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· Dr. ${p.doctor_name}` : ""}</p>
                       <div className="flex justify-between items-center">
-                        <p className="text-xs text-teal-500">Paid: {symbol} {p.fee_paid} / {symbol} {p.fee_total}</p>
+                        <p className="text-xs text-teal-500">
+                          Billed: {symbol} {invSummary(p.id).totalBilled.toLocaleString()} · Paid: {symbol} {invSummary(p.id).totalPaid.toLocaleString()}
+                          {invSummary(p.id).outstanding > 0 && <span className="text-orange-500"> · Due: {symbol} {invSummary(p.id).outstanding.toLocaleString()}</span>}
+                        </p>
                         <div className="flex gap-2">
                           <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs">🖨️</button>
                           <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
-                          {p.status !== "Paid" && (
-                            <button onClick={() => { const amount = prompt(`Payment for ${p.name}:`); if (amount) handlePayment(p, parseInt(amount)); }} className="text-teal-600 text-xs font-medium">Pay</button>
+                          {invSummary(p.id).outstanding > 0 && (
+                            <button onClick={() => openPayModal(p)} className="text-white bg-teal-600 hover:bg-teal-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
                           )}
                         </div>
                       </div>
@@ -895,16 +1040,16 @@ export default function Patients() {
                           </td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.doctor_name || "-"}</td>
                           <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.treatment}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_total}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_paid}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {p.fee_total - p.fee_paid}</td>
+                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalBilled.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-green-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalPaid.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-orange-600 cursor-pointer font-medium" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).outstanding.toLocaleString()}</td>
                           <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}><StatusBadge status={p.status} /></td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs font-medium">🖨️</button>
                               <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
-                              {p.status !== "Paid" && (
-                                <button onClick={() => { const amount = prompt(`Payment for ${p.name}:`); if (amount) handlePayment(p, parseInt(amount)); }} className="text-teal-600 text-xs font-medium">Pay</button>
+                              {invSummary(p.id).outstanding > 0 && (
+                                <button onClick={() => openPayModal(p)} className="text-white bg-teal-600 hover:bg-teal-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
                               )}
                             </div>
                           </td>
@@ -918,6 +1063,62 @@ export default function Patients() {
           </div>
         )}
       </div>
+
+      {/* Quick Pay Modal */}
+      {payingPatient && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-base font-semibold text-teal-800 mb-1">Record Payment</h3>
+            <p className="text-xs text-teal-500 mb-4">{payingPatient.name} · Balance: {symbol} {invSummary(payingPatient.id).outstanding.toLocaleString()}</p>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs text-teal-600 mb-1 block">Amount *</label>
+                <input
+                  type="number" min="0" step="0.01"
+                  value={payForm.amount}
+                  onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
+                  className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              <div>
+                <label className="text-xs text-teal-600 mb-1 block">Payment Method</label>
+                <select
+                  value={payForm.method}
+                  onChange={e => setPayForm({ ...payForm, method: e.target.value })}
+                  className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                >
+                  {["Cash", "Card", "Bank Transfer", "Other"].map(m => <option key={m}>{m}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-teal-600 mb-1 block">Notes (optional)</label>
+                <input
+                  value={payForm.notes}
+                  onChange={e => setPayForm({ ...payForm, notes: e.target.value })}
+                  placeholder="Any notes..."
+                  className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+              </div>
+              {payError && <p className="text-red-500 text-xs">{payError}</p>}
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={handleQuickPayment}
+                  disabled={payLoading}
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
+                >
+                  {payLoading ? "Saving..." : "Confirm Payment"}
+                </button>
+                <button
+                  onClick={() => setPayingPatient(null)}
+                  className="flex-1 border border-teal-200 text-teal-700 py-2.5 rounded-xl text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

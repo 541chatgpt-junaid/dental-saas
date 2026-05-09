@@ -40,7 +40,7 @@ export default function Dashboard() {
 
       const { data: invoices } = await supabase.from("invoices").select("balance, status");
       if (invoices) {
-        const outstanding = invoices.filter(i => i.status === "Unpaid" || i.status === "Partial");
+        const outstanding = invoices.filter(i => i.status === "unpaid" || i.status === "partial");
         setPendingPayments(outstanding.reduce((sum, i) => sum + (i.balance || 0), 0));
       }
 
