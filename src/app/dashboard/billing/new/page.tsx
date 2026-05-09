@@ -17,6 +17,23 @@ const QUICK_TREATMENTS = [
   "Denture", "Implant", "Orthodontic Consultation", "Scaling & Polishing",
 ];
 
+const TREATMENT_PRICES: Record<string, number> = {
+  "Dental Consultation": 500,
+  "Teeth Cleaning": 2000,
+  "Tooth Extraction": 3000,
+  "Root Canal Treatment": 15000,
+  "Dental Filling": 3000,
+  "Crown": 20000,
+  "Bridge": 35000,
+  "Veneer": 15000,
+  "Teeth Whitening": 10000,
+  "Dental X-Ray": 1000,
+  "Denture": 25000,
+  "Implant": 80000,
+  "Orthodontic Consultation": 2000,
+  "Scaling & Polishing": 3000,
+};
+
 export default function NewInvoicePage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
@@ -85,13 +102,14 @@ export default function NewInvoicePage() {
 
   const quickAdd = (treatment: string) => {
     if (items.find(i => i.description === treatment)) return;
+    const price = TREATMENT_PRICES[treatment] ?? 0;
     const empties = items.filter(i => !i.description.trim());
     if (empties.length > 0) {
       setItems(items.map((item, i) =>
-        i === items.indexOf(empties[0]) ? { ...item, description: treatment } : item
+        i === items.indexOf(empties[0]) ? { ...item, description: treatment, unit_price: price } : item
       ));
     } else {
-      setItems([...items, { description: treatment, quantity: 1, unit_price: 0 }]);
+      setItems([...items, { description: treatment, quantity: 1, unit_price: price }]);
     }
   };
 
@@ -146,17 +164,17 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-gray-100">
       <Sidebar />
       <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex items-center gap-3 mb-6">
           <button onClick={() => router.push("/dashboard/billing")} className="text-teal-500 hover:text-teal-700 text-sm">← Back</button>
-          <h2 className="text-xl font-semibold text-teal-800">New Invoice</h2>
+          <h2 className="text-xl font-semibold text-gray-800">New Invoice</h2>
         </div>
 
         <div className="max-w-3xl space-y-5">
           {/* Patient & Visit */}
-          <div className="bg-white rounded-xl border border-teal-100 p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">Patient Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -242,23 +260,29 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Quick Add */}
-          <div className="bg-white rounded-xl border border-teal-100 p-5">
-            <h3 className="text-sm font-semibold text-teal-800 mb-3">Quick Add Treatment</h3>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-semibold text-gray-800">Quick Add Treatment</h3>
+              <span className="text-xs text-gray-400">Prices auto-filled — edit as needed</span>
+            </div>
             <div className="flex flex-wrap gap-2">
               {QUICK_TREATMENTS.map(t => (
                 <button
                   key={t}
                   onClick={() => quickAdd(t)}
-                  className="px-3 py-1.5 rounded-lg border border-teal-200 text-teal-700 text-xs hover:bg-teal-50 transition-colors"
+                  className="flex flex-col items-start px-3 py-2 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-400 transition-colors"
                 >
-                  + {t}
+                  <span className="text-xs font-medium">+ {t}</span>
+                  {TREATMENT_PRICES[t] && (
+                    <span className="text-xs text-teal-400 mt-0.5">{symbol} {TREATMENT_PRICES[t].toLocaleString()}</span>
+                  )}
                 </button>
               ))}
             </div>
           </div>
 
           {/* Line Items */}
-          <div className="bg-white rounded-xl border border-teal-100 p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <h3 className="text-sm font-semibold text-teal-800 mb-4">Invoice Items</h3>
             <div className="hidden md:grid grid-cols-12 gap-2 mb-2 text-xs text-teal-500 font-medium px-1">
               <span className="col-span-6">Description</span>
@@ -300,7 +324,7 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Totals */}
-          <div className="bg-white rounded-xl border border-teal-100 p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <div className="max-w-xs ml-auto space-y-2.5">
               <div className="flex justify-between text-sm text-teal-700">
                 <span>Subtotal</span>
@@ -323,7 +347,7 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Notes */}
-          <div className="bg-white rounded-xl border border-teal-100 p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <label className="text-xs text-teal-600 mb-1 block">Notes (optional)</label>
             <textarea
               value={notes}

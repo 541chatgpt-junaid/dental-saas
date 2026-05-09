@@ -117,21 +117,21 @@ export default function InvoiceDetailPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-gray-100">
       <Sidebar />
-      <div className="flex-1 flex items-center justify-center text-teal-400 text-sm mt-14 md:mt-0">Loading invoice...</div>
+      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm mt-14 md:mt-0">Loading invoice...</div>
     </div>
   );
 
   if (!invoice) return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-gray-100">
       <Sidebar />
       <div className="flex-1 flex items-center justify-center text-red-400 text-sm mt-14 md:mt-0">Invoice not found.</div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-gray-100">
       <Sidebar />
       <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         {/* Header */}
@@ -161,104 +161,133 @@ export default function InvoiceDetailPage() {
 
         <div className="max-w-3xl space-y-5">
           {/* Patient Info */}
-          <div className="bg-white rounded-xl border border-teal-100 p-5">
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
               <div>
-                <p className="text-xs text-teal-500 mb-0.5">Patient</p>
-                <p className="font-medium text-teal-800">{invoice.patients?.name || "—"}</p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Patient</p>
+                <p className="font-semibold text-gray-800">{invoice.patients?.name || "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-teal-500 mb-0.5">Phone</p>
-                <p className="text-teal-700">{invoice.patients?.phone || "—"}</p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Phone</p>
+                <p className="text-gray-700">{invoice.patients?.phone || "—"}</p>
               </div>
               <div>
-                <p className="text-xs text-teal-500 mb-0.5">Invoice Date</p>
-                <p className="text-teal-700">{formatDate(invoice.created_at)}</p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Invoice Date</p>
+                <p className="text-gray-700">{formatDate(invoice.created_at)}</p>
               </div>
               <div>
-                <p className="text-xs text-teal-500 mb-0.5">Due Date</p>
-                <p className="text-teal-700">{invoice.due_date ? formatDate(invoice.due_date) : "—"}</p>
+                <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Due Date</p>
+                <p className={`font-medium ${invoice.due_date && new Date(invoice.due_date) < new Date() && invoice.balance > 0 ? "text-red-600" : "text-gray-700"}`}>
+                  {invoice.due_date ? formatDate(invoice.due_date) : "—"}
+                </p>
               </div>
             </div>
           </div>
 
           {/* Items Table */}
-          <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-            <div className="px-5 py-3 border-b border-teal-100 bg-teal-50">
-              <h3 className="text-sm font-semibold text-teal-800">Invoice Items</h3>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-800">Invoice Items</h3>
+              <span className="text-xs text-gray-500">{items.length} item{items.length !== 1 ? "s" : ""}</span>
             </div>
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 text-xs text-teal-600">
+              <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                 <tr>
-                  <th className="text-left px-5 py-2.5">Description</th>
-                  <th className="text-center px-3 py-2.5">Qty</th>
-                  <th className="text-right px-5 py-2.5">Unit Price</th>
-                  <th className="text-right px-5 py-2.5">Total</th>
+                  <th className="text-left px-5 py-3">Description</th>
+                  <th className="text-center px-3 py-3">Qty</th>
+                  <th className="text-right px-5 py-3">Unit Price</th>
+                  <th className="text-right px-5 py-3">Total</th>
                 </tr>
               </thead>
               <tbody>
                 {items.map(item => (
-                  <tr key={item.id} className="border-t border-teal-50">
-                    <td className="px-5 py-2.5 text-teal-800">{item.description}</td>
-                    <td className="px-3 py-2.5 text-center text-teal-600">{item.quantity}</td>
-                    <td className="px-5 py-2.5 text-right text-teal-700">{symbol} {item.unit_price.toLocaleString()}</td>
-                    <td className="px-5 py-2.5 text-right font-medium text-teal-800">{symbol} {item.total.toLocaleString()}</td>
+                  <tr key={item.id} className="border-t border-gray-100 hover:bg-gray-50">
+                    <td className="px-5 py-3 font-medium text-gray-800">{item.description}</td>
+                    <td className="px-3 py-3 text-center text-gray-500">{item.quantity}</td>
+                    <td className="px-5 py-3 text-right text-gray-600">{symbol} {item.unit_price.toLocaleString()}</td>
+                    <td className="px-5 py-3 text-right font-semibold text-gray-800">{symbol} {item.total.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-            <div className="px-5 py-4 border-t border-teal-100 bg-teal-50">
-              <div className="max-w-xs ml-auto space-y-2 text-sm">
-                <div className="flex justify-between text-teal-600">
+            {/* Totals — Item 2 redesign */}
+            <div className="px-5 py-5 border-t border-gray-200 bg-gray-50">
+              <div className="max-w-xs ml-auto space-y-2">
+                <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span>{symbol} {invoice.subtotal.toLocaleString()}</span>
+                  <span className="font-medium">{symbol} {invoice.subtotal.toLocaleString()}</span>
                 </div>
                 {invoice.discount > 0 && (
-                  <div className="flex justify-between text-teal-600">
+                  <div className="flex justify-between text-sm text-emerald-600">
                     <span>Discount</span>
                     <span>− {symbol} {invoice.discount.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between font-semibold text-teal-800 pt-2 border-t border-teal-200">
+                <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
                   <span>Total</span>
                   <span>{symbol} {invoice.total.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-green-700">
+                <div className="flex justify-between text-sm text-emerald-600">
                   <span>Amount Paid</span>
-                  <span>{symbol} {invoice.amount_paid.toLocaleString()}</span>
+                  <span>− {symbol} {invoice.amount_paid.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between font-semibold text-orange-700 pt-2 border-t border-teal-200">
-                  <span>Balance Due</span>
-                  <span>{symbol} {invoice.balance.toLocaleString()}</span>
+                <div className={`rounded-xl px-4 py-3 mt-1 border ${
+                  invoice.balance <= 0
+                    ? "bg-green-50 border-green-200"
+                    : invoice.status === "partial"
+                    ? "bg-orange-50 border-orange-200"
+                    : "bg-red-50 border-red-200"
+                }`}>
+                  <div className="flex justify-between items-center">
+                    <span className={`text-sm font-semibold ${
+                      invoice.balance <= 0 ? "text-green-700" :
+                      invoice.status === "partial" ? "text-orange-700" : "text-red-700"
+                    }`}>
+                      {invoice.balance <= 0 ? "✓ Fully Paid" : "Balance Due"}
+                    </span>
+                    <span className={`text-xl font-bold ${
+                      invoice.balance <= 0 ? "text-green-700" :
+                      invoice.status === "partial" ? "text-orange-700" : "text-red-700"
+                    }`}>
+                      {symbol} {Math.max(0, invoice.balance).toLocaleString()}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Payment History */}
-          <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-            <div className="px-5 py-3 border-b border-teal-100 bg-teal-50">
-              <h3 className="text-sm font-semibold text-teal-800">Payment History</h3>
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+              <h3 className="text-sm font-semibold text-gray-800">Payment History</h3>
+              {payments.length > 0 && (
+                <span className="text-xs font-semibold text-emerald-600">
+                  {payments.length} payment{payments.length !== 1 ? "s" : ""}
+                </span>
+              )}
             </div>
             {payments.length === 0 ? (
-              <p className="text-sm text-teal-400 text-center py-8">No payments recorded yet</p>
+              <p className="text-sm text-gray-400 text-center py-8">No payments recorded yet</p>
             ) : (
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 text-xs text-teal-600">
+                <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                   <tr>
-                    <th className="text-left px-5 py-2.5">Date</th>
-                    <th className="text-left px-5 py-2.5">Method</th>
-                    <th className="text-right px-5 py-2.5">Amount</th>
-                    <th className="text-left px-5 py-2.5">Notes</th>
+                    <th className="text-left px-5 py-3">Date</th>
+                    <th className="text-left px-5 py-3">Method</th>
+                    <th className="text-right px-5 py-3">Amount</th>
+                    <th className="text-left px-5 py-3">Notes</th>
                   </tr>
                 </thead>
                 <tbody>
                   {payments.map(pay => (
-                    <tr key={pay.id} className="border-t border-teal-50">
-                      <td className="px-5 py-2.5 text-teal-600">{formatDate(pay.payment_date)}</td>
-                      <td className="px-5 py-2.5 text-teal-700">{pay.payment_method}</td>
-                      <td className="px-5 py-2.5 text-right font-medium text-green-700">{symbol} {pay.amount.toLocaleString()}</td>
-                      <td className="px-5 py-2.5 text-teal-400 text-xs">{pay.notes || "—"}</td>
+                    <tr key={pay.id} className="border-t border-gray-100 hover:bg-gray-50">
+                      <td className="px-5 py-3 text-gray-600">{formatDate(pay.payment_date)}</td>
+                      <td className="px-5 py-3">
+                        <span className="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full">{pay.payment_method}</span>
+                      </td>
+                      <td className="px-5 py-3 text-right font-bold text-emerald-600">+ {symbol} {pay.amount.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-gray-400 text-xs">{pay.notes || "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -267,9 +296,9 @@ export default function InvoiceDetailPage() {
           </div>
 
           {invoice.notes && (
-            <div className="bg-white rounded-xl border border-teal-100 p-5">
-              <p className="text-xs text-teal-500 mb-1">Notes</p>
-              <p className="text-sm text-teal-700">{invoice.notes}</p>
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+              <p className="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-2">Notes</p>
+              <p className="text-sm text-gray-700">{invoice.notes}</p>
             </div>
           )}
         </div>
@@ -297,7 +326,7 @@ export default function InvoiceDetailPage() {
                     onChange={e => setPayMethod(e.target.value)}
                     className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
                   >
-                    {["Cash", "Card", "Bank Transfer", "Online", "Other"].map(m => (
+                    {["Cash", "Card", "Bank Transfer", "JazzCash", "EasyPaisa", "Benefit", "Other"].map(m => (
                       <option key={m}>{m}</option>
                     ))}
                   </select>

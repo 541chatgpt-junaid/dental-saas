@@ -40,6 +40,8 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("All");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
@@ -60,21 +62,24 @@ export default function BillingPage() {
     const matchSearch = !q ||
       inv.invoice_number.toLowerCase().includes(q) ||
       (inv.patients?.name || "").toLowerCase().includes(q);
-    return matchTab && matchSearch;
+    const invDate = inv.created_at.split("T")[0];
+    const matchFrom = !dateFrom || invDate >= dateFrom;
+    const matchTo = !dateTo || invDate <= dateTo;
+    return matchTab && matchSearch && matchFrom && matchTo;
   });
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-gray-100">
       <Sidebar />
       <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Billing & Invoices</h2>
-            <p className="text-sm text-teal-600 mt-1">Manage invoices and payments</p>
+            <h2 className="text-xl md:text-2xl font-semibold text-gray-800">Billing & Invoices</h2>
+            <p className="text-sm text-gray-500 mt-1">Manage invoices and payments</p>
           </div>
           <Link
             href="/dashboard/billing/new"
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium text-center"
+            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium text-center shadow-sm"
           >
             + New Invoice
           </Link>
@@ -85,36 +90,67 @@ export default function BillingPage() {
           For regular patient receipts and fee collection, use the <span className="font-semibold">Patients</span> page.
         </div>
 
-        <div className="flex flex-col md:flex-row gap-3 mb-5">
-          <div className="flex gap-1 bg-white border border-teal-100 rounded-xl p-1 overflow-x-auto">
-            {STATUS_TABS.map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t ? "bg-teal-600 text-white" : "text-teal-600 hover:bg-teal-50"}`}
-              >
-                {t === "All" ? "All" : statusLabel(t)}
-              </button>
-            ))}
+        {/* Filters row */}
+        <div className="flex flex-col gap-3 mb-5">
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex gap-1 bg-white border border-gray-200 shadow-sm rounded-xl p-1 overflow-x-auto">
+              {STATUS_TABS.map(t => (
+                <button
+                  key={t}
+                  onClick={() => setTab(t)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t ? "bg-teal-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+                >
+                  {t === "All" ? "All" : statusLabel(t)}
+                </button>
+              ))}
+            </div>
+            <input
+              placeholder="Search invoice # or patient..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="flex-1 border border-gray-200 shadow-sm rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
+            />
           </div>
-          <input
-            placeholder="Search invoice # or patient..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="flex-1 border border-teal-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-          />
+          <div className="flex flex-col md:flex-row gap-3">
+            <div className="flex items-center gap-2 flex-1">
+              <label className="text-xs text-gray-500 whitespace-nowrap font-medium">From</label>
+              <input
+                type="date"
+                value={dateFrom}
+                onChange={e => setDateFrom(e.target.value)}
+                className="flex-1 border border-gray-200 shadow-sm rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
+              />
+            </div>
+            <div className="flex items-center gap-2 flex-1">
+              <label className="text-xs text-gray-500 whitespace-nowrap font-medium">To</label>
+              <input
+                type="date"
+                value={dateTo}
+                onChange={e => setDateTo(e.target.value)}
+                className="flex-1 border border-gray-200 shadow-sm rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
+              />
+            </div>
+            {(dateFrom || dateTo) && (
+              <button
+                onClick={() => { setDateFrom(""); setDateTo(""); }}
+                className="text-xs text-gray-500 hover:text-gray-700 underline whitespace-nowrap"
+              >
+                Clear dates
+              </button>
+            )}
+          </div>
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-teal-400 text-sm">Loading invoices...</div>
+          <div className="text-center py-20 text-gray-400 text-sm">Loading invoices...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-teal-400 text-sm">No invoices found</div>
+          <div className="text-center py-20 text-gray-400 text-sm">No invoices found</div>
         ) : (
           <>
             {/* Mobile */}
             <div className="md:hidden flex flex-col gap-3">
               {filtered.map(inv => (
-                <div key={inv.id} className="bg-white rounded-xl border border-teal-100 p-4">
+                <div key={inv.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-semibold text-teal-800 text-sm">{inv.invoice_number}</p>
@@ -148,44 +184,44 @@ export default function BillingPage() {
             </div>
 
             {/* Desktop */}
-            <div className="hidden md:block bg-white rounded-xl border border-teal-100 overflow-hidden">
+            <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-teal-50 border-b border-teal-100">
+                <thead className="bg-gray-50 border-b border-gray-200">
                   <tr>
-                    <th className="text-left px-5 py-3 text-teal-700 font-medium">Invoice #</th>
-                    <th className="text-left px-5 py-3 text-teal-700 font-medium">Patient</th>
-                    <th className="text-left px-5 py-3 text-teal-700 font-medium">Date</th>
-                    <th className="text-right px-5 py-3 text-teal-700 font-medium">Total</th>
-                    <th className="text-right px-5 py-3 text-teal-700 font-medium">Paid</th>
-                    <th className="text-right px-5 py-3 text-teal-700 font-medium">Balance</th>
-                    <th className="text-left px-5 py-3 text-teal-700 font-medium">Status</th>
-                    <th className="text-left px-5 py-3 text-teal-700 font-medium">Actions</th>
+                    <th className="text-left px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Invoice #</th>
+                    <th className="text-left px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Patient</th>
+                    <th className="text-left px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Date</th>
+                    <th className="text-right px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Total</th>
+                    <th className="text-right px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Paid</th>
+                    <th className="text-right px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Balance</th>
+                    <th className="text-left px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Status</th>
+                    <th className="text-left px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map(inv => (
-                    <tr key={inv.id} className="border-t border-teal-50 hover:bg-teal-50">
-                      <td className="px-5 py-3 font-medium text-teal-800">{inv.invoice_number}</td>
-                      <td className="px-5 py-3 text-teal-700">{inv.patients?.name || "—"}</td>
-                      <td className="px-5 py-3 text-teal-500 text-xs">{formatDate(inv.created_at)}</td>
-                      <td className="px-5 py-3 text-right font-medium text-teal-800">{symbol} {inv.total.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-right text-green-700">{symbol} {inv.amount_paid.toLocaleString()}</td>
-                      <td className="px-5 py-3 text-right font-medium text-orange-700">{symbol} {inv.balance.toLocaleString()}</td>
+                    <tr key={inv.id} className="border-t border-gray-100 hover:bg-gray-50">
+                      <td className="px-5 py-3 font-semibold text-teal-700">{inv.invoice_number}</td>
+                      <td className="px-5 py-3 font-medium text-gray-800">{inv.patients?.name || "—"}</td>
+                      <td className="px-5 py-3 text-gray-500 text-xs">{formatDate(inv.created_at)}</td>
+                      <td className="px-5 py-3 text-right font-semibold text-gray-800">{symbol} {inv.total.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-right text-emerald-600 font-medium">{symbol} {inv.amount_paid.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-right font-bold text-orange-600">{symbol} {inv.balance.toLocaleString()}</td>
                       <td className="px-5 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{statusLabel(inv.status)}</span>
+                        <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(inv.status)}`}>{statusLabel(inv.status)}</span>
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex gap-3">
                           <button
                             onClick={() => router.push(`/dashboard/billing/${inv.id}`)}
-                            className="text-teal-600 text-xs font-medium hover:underline"
+                            className="text-teal-600 text-xs font-semibold hover:underline"
                           >
                             View
                           </button>
                           {inv.status !== "paid" && inv.status !== "cancelled" && (
                             <button
                               onClick={() => router.push(`/dashboard/billing/${inv.id}?pay=1`)}
-                              className="text-orange-600 text-xs font-medium hover:underline"
+                              className="text-orange-600 text-xs font-semibold hover:underline"
                             >
                               Pay
                             </button>
