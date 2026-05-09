@@ -131,39 +131,6 @@ export default function Appointments() {
     }`}>{status}</span>
   );
 
-  const AppointmentForm = ({ title }: { title: string }) => (
-    <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-      <h3 className="text-sm font-semibold text-teal-800 mb-4">{title}</h3>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option value="">Select Doctor</option>
-          {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-        </select>
-        <div>
-          <label className="block text-xs text-teal-600 mb-1">Date</label>
-          <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        </div>
-        <div>
-          <label className="block text-xs text-teal-600 mb-1">Time</label>
-          <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        </div>
-        <input placeholder="Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-        <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
-          <option>Scheduled</option>
-          <option>Completed</option>
-          <option>Cancelled</option>
-        </select>
-        <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
-      </div>
-      <div className="flex gap-3 mt-4">
-        <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-          {loading ? "Saving..." : editingId ? "Update Appointment" : "Save Appointment"}
-        </button>
-        <button onClick={() => { setShowForm(false); setEditingId(null); setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" }); }} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
-      </div>
-    </div>
-  );
 
   const AppointmentCard = ({ a }: { a: Appointment }) => (
     <div className="p-4">
@@ -201,8 +168,41 @@ export default function Appointments() {
           </button>
         </div>
 
-        {showForm && <AppointmentForm title="New Appointment" />}
-        {editingId && <AppointmentForm title="Edit Appointment" />}
+        {(showForm || !!editingId) && (
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+            <h3 className="text-sm font-semibold text-teal-800 mb-4">
+              {editingId ? "Edit Appointment" : "New Appointment"}
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+              <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <option value="">Select Doctor</option>
+                {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+              </select>
+              <div>
+                <label className="block text-xs text-teal-600 mb-1">Date</label>
+                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              </div>
+              <div>
+                <label className="block text-xs text-teal-600 mb-1">Time</label>
+                <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              </div>
+              <input placeholder="Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <option>Scheduled</option>
+                <option>Completed</option>
+                <option>Cancelled</option>
+              </select>
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+            </div>
+            <div className="flex gap-3 mt-4">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+                {loading ? "Saving..." : editingId ? "Update Appointment" : "Save Appointment"}
+              </button>
+              <button onClick={() => { setShowForm(false); setEditingId(null); setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" }); }} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+            </div>
+          </div>
+        )}
 
         {/* Today's Appointments */}
         <div className="mb-6">
