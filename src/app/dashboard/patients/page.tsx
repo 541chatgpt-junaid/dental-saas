@@ -124,6 +124,7 @@ export default function Patients() {
     gender: "Male", treatment: "", doctor_name: "",
     fee_total: "", fee_paid: "",
   });
+  const [prescriptionPresets, setPrescriptionPresets] = useState<{ id: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string }[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
@@ -206,6 +207,12 @@ export default function Patients() {
     fetchDoctors();
     fetchInvoiceSummaries();
   }, [router]);
+
+  useEffect(() => {
+    if (!clinicId) return;
+    createClient().from("prescription_presets").select("*").eq("clinic_id", clinicId).order("created_at")
+      .then(({ data }) => setPrescriptionPresets(data || []));
+  }, [clinicId]);
 
   const getClinicPatientNumber = (patientId: number) => {
     const index = allPatients.findIndex(p => p.id === patientId);
@@ -728,7 +735,35 @@ export default function Patients() {
                   </select>
                   <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+                  <div className="md:col-span-2">
+                    <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    {prescriptionPresets.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-teal-500 mb-1.5 font-medium">Quick Rx Presets:</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {prescriptionPresets.map(rx => (
+                            <button
+                              key={rx.id}
+                              type="button"
+                              onClick={() => {
+                                const rxText = [
+                                  `Rx: ${rx.medicine}`,
+                                  rx.dosage ? rx.dosage : null,
+                                  rx.frequency ? rx.frequency : null,
+                                  rx.duration ? `× ${rx.duration}` : null,
+                                  rx.notes ? `(${rx.notes})` : null,
+                                ].filter(Boolean).join(" — ");
+                                setVisitForm(prev => ({ ...prev, notes: prev.notes ? `${prev.notes}\n${rxText}` : rxText }));
+                              }}
+                              className="text-xs px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors"
+                            >
+                              + {rx.medicine}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <ToothChart selected={visitTeeth} onToggle={toggleVisitTooth} />
                 {visitForm.fee && visitForm.fee_paid && (

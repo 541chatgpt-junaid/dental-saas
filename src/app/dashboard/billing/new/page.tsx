@@ -11,29 +11,7 @@ interface Visit { id: number; visit_date: string; treatment: string; }
 interface LineItem { description: string; quantity: number; unit_price: number; }
 interface PatientBilling { totalBilled: number; totalPaid: number; outstanding: number; }
 interface Installment { label: string; amount: number; due_date: string; }
-
-const QUICK_TREATMENTS = [
-  "Dental Consultation", "Teeth Cleaning", "Tooth Extraction", "Root Canal Treatment",
-  "Dental Filling", "Crown", "Bridge", "Veneer", "Teeth Whitening", "Dental X-Ray",
-  "Denture", "Implant", "Orthodontic Consultation", "Scaling & Polishing",
-];
-
-const TREATMENT_PRICES: Record<string, number> = {
-  "Dental Consultation": 500,
-  "Teeth Cleaning": 2000,
-  "Tooth Extraction": 3000,
-  "Root Canal Treatment": 15000,
-  "Dental Filling": 3000,
-  "Crown": 20000,
-  "Bridge": 35000,
-  "Veneer": 15000,
-  "Teeth Whitening": 10000,
-  "Dental X-Ray": 1000,
-  "Denture": 25000,
-  "Implant": 80000,
-  "Orthodontic Consultation": 2000,
-  "Scaling & Polishing": 3000,
-};
+interface TreatmentPreset { id: string; name: string; price: number; }
 
 export default function NewInvoicePage() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -43,6 +21,7 @@ export default function NewInvoicePage() {
   const [patientId, setPatientId] = useState("");
   const [visitId, setVisitId] = useState("");
   const [items, setItems] = useState<LineItem[]>([{ description: "", quantity: 1, unit_price: 0 }]);
+  const [treatmentPresets, setTreatmentPresets] = useState<TreatmentPreset[]>([]);
   const [discount, setDiscount] = useState(0);
   const [notes, setNotes] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -61,6 +40,8 @@ export default function NewInvoicePage() {
     if (!clinicId) return;
     createClient().from("patients").select("id, name, phone, age, gender").order("name")
       .then(({ data }) => setPatients(data || []));
+    createClient().from("treatment_presets").select("*").eq("clinic_id", clinicId).order("created_at")
+      .then(({ data }) => setTreatmentPresets(data || []));
   }, [clinicId]);
 
   const handlePatientChange = (val: string) => {
@@ -106,16 +87,15 @@ export default function NewInvoicePage() {
   const updateItem = (idx: number, field: keyof LineItem, val: string | number) =>
     setItems(items.map((item, i) => i === idx ? { ...item, [field]: val } : item));
 
-  const quickAdd = (treatment: string) => {
-    if (items.find(i => i.description === treatment)) return;
-    const price = TREATMENT_PRICES[treatment] ?? 0;
+  const quickAdd = (preset: TreatmentPreset) => {
+    if (items.find(i => i.description === preset.name)) return;
     const empties = items.filter(i => !i.description.trim());
     if (empties.length > 0) {
       setItems(items.map((item, i) =>
-        i === items.indexOf(empties[0]) ? { ...item, description: treatment, unit_price: price } : item
+        i === items.indexOf(empties[0]) ? { ...item, description: preset.name, unit_price: preset.price } : item
       ));
     } else {
-      setItems([...items, { description: treatment, quantity: 1, unit_price: price }]);
+      setItems([...items, { description: preset.name, quantity: 1, unit_price: preset.price }]);
     }
   };
 
@@ -276,22 +256,29 @@ export default function NewInvoicePage() {
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-gray-800">Quick Add Treatment</h3>
-              <span className="text-xs text-gray-400">Prices auto-filled — edit as needed</span>
+              <a href="/dashboard/settings" className="text-xs text-teal-500 hover:underline">⚙ Manage Presets</a>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {QUICK_TREATMENTS.map(t => (
-                <button
-                  key={t}
-                  onClick={() => quickAdd(t)}
-                  className="flex flex-col items-start px-3 py-2 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-400 transition-colors"
-                >
-                  <span className="text-xs font-medium">+ {t}</span>
-                  {TREATMENT_PRICES[t] && (
-                    <span className="text-xs text-teal-400 mt-0.5">{symbol} {TREATMENT_PRICES[t].toLocaleString()}</span>
-                  )}
-                </button>
-              ))}
-            </div>
+            {treatmentPresets.length === 0 ? (
+              <div className="text-center py-4 text-sm text-gray-400">
+                No treatment presets configured.{" "}
+                <a href="/dashboard/settings" className="text-teal-500 underline">Add in Settings → Treatment Presets</a>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {treatmentPresets.map(t => (
+                  <button
+                    key={t.id}
+                    onClick={() => quickAdd(t)}
+                    className="flex flex-col items-start px-3 py-2 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-400 transition-colors"
+                  >
+                    <span className="text-xs font-medium">+ {t.name}</span>
+                    {t.price > 0 && (
+                      <span className="text-xs text-teal-400 mt-0.5">{symbol} {t.price.toLocaleString()}</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Line Items */}
