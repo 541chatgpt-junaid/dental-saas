@@ -124,7 +124,7 @@ export default function Patients() {
     gender: "Male", treatment: "", doctor_name: "",
     fee_total: "", fee_paid: "",
   });
-  const [prescriptionPresets, setPrescriptionPresets] = useState<{ id: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string }[]>([]);
+  const [prescriptionPresets, setPrescriptionPresets] = useState<{ id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string }[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
@@ -737,32 +737,50 @@ export default function Patients() {
                   <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
                   <div className="md:col-span-2">
                     <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                    {prescriptionPresets.length > 0 && (
-                      <div className="mt-2">
-                        <p className="text-xs text-teal-500 mb-1.5 font-medium">Quick Rx Presets:</p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {prescriptionPresets.map(rx => (
-                            <button
-                              key={rx.id}
-                              type="button"
-                              onClick={() => {
-                                const rxText = [
-                                  `Rx: ${rx.medicine}`,
-                                  rx.dosage ? rx.dosage : null,
-                                  rx.frequency ? rx.frequency : null,
-                                  rx.duration ? `× ${rx.duration}` : null,
-                                  rx.notes ? `(${rx.notes})` : null,
-                                ].filter(Boolean).join(" — ");
-                                setVisitForm(prev => ({ ...prev, notes: prev.notes ? `${prev.notes}\n${rxText}` : rxText }));
-                              }}
-                              className="text-xs px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors"
-                            >
-                              + {rx.medicine}
-                            </button>
+                    {prescriptionPresets.length > 0 && (() => {
+                      const rxGroups = prescriptionPresets.reduce<Record<string, typeof prescriptionPresets>>((acc, rx) => {
+                        const k = rx.group_name || "Other";
+                        if (!acc[k]) acc[k] = [];
+                        acc[k].push(rx);
+                        return acc;
+                      }, {});
+                      const formatRx = (rx: typeof prescriptionPresets[0]) =>
+                        [`Rx: ${rx.medicine}`, rx.dosage || null, rx.frequency || null, rx.duration ? `× ${rx.duration}` : null, rx.notes ? `(${rx.notes})` : null].filter(Boolean).join(" — ");
+                      const appendNotes = (text: string) =>
+                        setVisitForm(prev => ({ ...prev, notes: prev.notes ? `${prev.notes}\n${text}` : text }));
+                      return (
+                        <div className="mt-2 space-y-2">
+                          <p className="text-xs text-teal-500 font-medium">Quick Prescription Presets:</p>
+                          {Object.entries(rxGroups).map(([groupName, meds]) => (
+                            <div key={groupName} className="border border-teal-100 rounded-xl overflow-hidden">
+                              <div className="flex items-center justify-between bg-teal-50 px-3 py-1.5">
+                                <span className="text-xs font-semibold text-teal-700">{groupName}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => appendNotes(meds.map(formatRx).join("\n"))}
+                                  className="text-xs bg-teal-600 text-white px-2.5 py-1 rounded-lg font-medium hover:bg-teal-700"
+                                >
+                                  Add All ({meds.length})
+                                </button>
+                              </div>
+                              <div className="flex flex-wrap gap-1.5 p-2">
+                                {meds.map(rx => (
+                                  <button
+                                    key={rx.id}
+                                    type="button"
+                                    onClick={() => appendNotes(formatRx(rx))}
+                                    className="text-xs px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors"
+                                  >
+                                    + {rx.medicine}
+                                    {rx.dosage && <span className="text-teal-400 ml-1">{rx.dosage}</span>}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
                           ))}
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                   </div>
                 </div>
                 <ToothChart selected={visitTeeth} onToggle={toggleVisitTooth} />
