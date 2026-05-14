@@ -25,15 +25,21 @@ export function ClinicProvider({ children }: { children: React.ReactNode }) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const { data } = await supabase
+      const { data: staffData } = await supabase
         .from("staff")
-        .select("clinic_id, clinics(name)")
+        .select("clinic_id")
         .eq("user_id", user.id)
         .single();
 
-      if (data?.clinic_id) {
-        setClinicId(data.clinic_id);
-        setClinicName((data as any).clinics?.name ?? null);
+      if (staffData?.clinic_id) {
+        setClinicId(staffData.clinic_id);
+
+        const { data: clinicData } = await supabase
+          .from("clinics")
+          .select("name")
+          .eq("id", staffData.clinic_id)
+          .single();
+        setClinicName(clinicData?.name ?? null);
       }
       setLoading(false);
     })();
