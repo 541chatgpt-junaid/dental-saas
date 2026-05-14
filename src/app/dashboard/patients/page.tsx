@@ -69,6 +69,7 @@ interface Doctor {
 }
 
 type InvoiceSummary = { totalBilled: number; totalPaid: number; outstanding: number };
+interface TreatmentPreset { id: string; name: string; price: number; }
 
 const upperRight = [18,17,16,15,14,13,12,11];
 const upperLeft = [21,22,23,24,25,26,27,28];
@@ -125,6 +126,7 @@ export default function Patients() {
     fee_total: "", fee_paid: "",
   });
   const [prescriptionPresets, setPrescriptionPresets] = useState<{ id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string }[]>([]);
+  const [treatmentPresets, setTreatmentPresets] = useState<TreatmentPreset[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
@@ -212,6 +214,8 @@ export default function Patients() {
     if (!clinicId) return;
     createClient().from("prescription_presets").select("*").eq("clinic_id", clinicId).order("created_at")
       .then(({ data }) => setPrescriptionPresets(data || []));
+    createClient().from("treatment_presets").select("*").eq("clinic_id", clinicId).order("created_at")
+      .then(({ data }) => setTreatmentPresets(data || []));
   }, [clinicId]);
 
   const getClinicPatientNumber = (patientId: number) => {
@@ -727,7 +731,23 @@ export default function Patients() {
                     <option value="">Select Doctor</option>
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
-                  <input placeholder="Treatment done" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <div>
+                    <input placeholder="Treatment done" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    {treatmentPresets.length > 0 && (
+                      <div className="mt-1.5 flex flex-wrap gap-1.5">
+                        {treatmentPresets.map(t => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            onClick={() => setVisitForm(f => ({ ...f, treatment: t.name, fee: f.fee || String(t.price) }))}
+                            className="text-xs px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors"
+                          >
+                            {t.name}{t.price > 0 && <span className="text-teal-400 ml-1">({symbol} {t.price.toLocaleString()})</span>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <select value={visitForm.status} onChange={e => setVisitForm({...visitForm, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
                     <option>Pending</option>
                     <option>Partial</option>

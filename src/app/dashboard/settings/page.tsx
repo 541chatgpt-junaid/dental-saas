@@ -56,7 +56,8 @@ export default function Settings() {
   // Prescription presets
   const [prescriptions, setPrescriptions] = useState<PrescriptionPreset[]>([]);
   const [pLoading, setPLoading] = useState(false);
-  const [pForm, setPForm] = useState({ group_name: "", medicine: "", dosage: "", frequency: "", duration: "", notes: "" });
+  const [pGroupName, setPGroupName] = useState("");
+  const [medicineRows, setMedicineRows] = useState([{ medicine: "", dosage: "", frequency: "", duration: "", notes: "" }]);
   const [pEditId, setPEditId] = useState<string | null>(null);
   const [pEditForm, setPEditForm] = useState({ group_name: "", medicine: "", dosage: "", frequency: "", duration: "", notes: "" });
 
@@ -136,13 +137,29 @@ export default function Settings() {
 
   // Prescription preset actions
   const addPrescription = async () => {
-    if (!pForm.medicine.trim()) return;
+    if (!pGroupName.trim()) return;
+    const validRows = medicineRows.filter(r => r.medicine.trim());
+    if (!validRows.length) return;
     setPLoading(true);
-    await createClient().from("prescription_presets").insert([{ clinic_id: clinicId, group_name: pForm.group_name.trim(), medicine: pForm.medicine.trim(), dosage: pForm.dosage, frequency: pForm.frequency, duration: pForm.duration, notes: pForm.notes }]);
-    setPForm(f => ({ ...f, medicine: "", dosage: "", frequency: "", duration: "", notes: "" }));
+    await createClient().from("prescription_presets").insert(
+      validRows.map(r => ({
+        clinic_id: clinicId,
+        group_name: pGroupName.trim(),
+        medicine: r.medicine.trim(),
+        dosage: r.dosage,
+        frequency: r.frequency,
+        duration: r.duration,
+        notes: r.notes,
+      }))
+    );
+    setPGroupName("");
+    setMedicineRows([{ medicine: "", dosage: "", frequency: "", duration: "", notes: "" }]);
     await fetchPrescriptions();
     setPLoading(false);
   };
+
+  const updateMedicineRow = (idx: number, field: string, val: string) =>
+    setMedicineRows(rows => rows.map((r, i) => i === idx ? { ...r, [field]: val } : r));
 
   const savePrescriptionEdit = async (id: string) => {
     await createClient().from("prescription_presets").update({ group_name: pEditForm.group_name.trim(), medicine: pEditForm.medicine.trim(), dosage: pEditForm.dosage, frequency: pEditForm.frequency, duration: pEditForm.duration, notes: pEditForm.notes }).eq("id", id);
@@ -337,52 +354,92 @@ export default function Settings() {
 
             {/* Add form */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Add Medicine to Prescription Group</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">Treatment / Group Name *</label>
-                  <input
-                    list="group-list"
-                    placeholder="e.g. Root Canal Treatment, Extraction, Filling..."
-                    value={pForm.group_name}
-                    onChange={e => setPForm({ ...pForm, group_name: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
-                  />
-                  <datalist id="group-list">
-                    {existingGroups.map(g => <option key={g} value={g} />)}
-                  </datalist>
-                  <p className="text-xs text-gray-400 mt-1">Type an existing group to add to it, or a new name to create a new group.</p>
-                </div>
-                <div className="md:col-span-2">
-                  <label className="text-xs text-gray-500 mb-1 block">Medicine Name *</label>
-                  <input placeholder="e.g. Augmentin 625mg" value={pForm.medicine} onChange={e => setPForm({ ...pForm, medicine: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Dosage</label>
-                  <input placeholder="e.g. 1 tab, 500mg" value={pForm.dosage} onChange={e => setPForm({ ...pForm, dosage: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Frequency</label>
-                  <input placeholder="e.g. 2x daily" value={pForm.frequency} onChange={e => setPForm({ ...pForm, frequency: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Duration</label>
-                  <input placeholder="e.g. 5 days" value={pForm.duration} onChange={e => setPForm({ ...pForm, duration: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                </div>
-                <div>
-                  <label className="text-xs text-gray-500 mb-1 block">Instructions</label>
-                  <input placeholder="e.g. After meals" value={pForm.notes} onChange={e => setPForm({ ...pForm, notes: e.target.value })}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                </div>
+              <h3 className="text-sm font-semibold text-gray-800 mb-4">Add Prescription Group</h3>
+
+              {/* Group name */}
+              <div className="mb-4">
+                <label className="text-xs text-gray-500 mb-1 block">Treatment / Group Name *</label>
+                <input
+                  list="group-list"
+                  placeholder="e.g. Root Canal Treatment, Extraction, Filling..."
+                  value={pGroupName}
+                  onChange={e => setPGroupName(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                />
+                <datalist id="group-list">
+                  {existingGroups.map(g => <option key={g} value={g} />)}
+                </datalist>
+                <p className="text-xs text-gray-400 mt-1">Type an existing group to add to it, or a new name to create a new group.</p>
               </div>
-              <button onClick={addPrescription} disabled={pLoading || !pForm.medicine.trim() || !pForm.group_name.trim()}
-                className="mt-4 bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50">
-                {pLoading ? "Adding..." : "+ Add Medicine"}
-              </button>
+
+              {/* Medicine rows */}
+              <div className="space-y-3">
+                {medicineRows.map((row, idx) => (
+                  <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs font-medium text-gray-600">Medicine {idx + 1}</span>
+                      {medicineRows.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setMedicineRows(rows => rows.filter((_, i) => i !== idx))}
+                          className="text-xs text-red-400 hover:text-red-600 font-medium"
+                        >Remove</button>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="md:col-span-2">
+                        <input
+                          placeholder="Medicine Name * (e.g. Augmentin 625mg)"
+                          value={row.medicine}
+                          onChange={e => updateMedicineRow(idx, "medicine", e.target.value)}
+                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                        />
+                      </div>
+                      <input
+                        placeholder="Dosage (e.g. 1 tab, 2 tabs, 500mg)"
+                        value={row.dosage}
+                        onChange={e => updateMedicineRow(idx, "dosage", e.target.value)}
+                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      />
+                      <input
+                        placeholder="Frequency (e.g. 2x daily)"
+                        value={row.frequency}
+                        onChange={e => updateMedicineRow(idx, "frequency", e.target.value)}
+                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      />
+                      <input
+                        placeholder="Duration (e.g. 5 days)"
+                        value={row.duration}
+                        onChange={e => updateMedicineRow(idx, "duration", e.target.value)}
+                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      />
+                      <input
+                        placeholder="Instructions (e.g. After meals)"
+                        value={row.notes}
+                        onChange={e => updateMedicineRow(idx, "notes", e.target.value)}
+                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-3 mt-4">
+                <button
+                  type="button"
+                  onClick={() => setMedicineRows(rows => [...rows, { medicine: "", dosage: "", frequency: "", duration: "", notes: "" }])}
+                  className="text-teal-600 text-sm hover:underline"
+                >
+                  + Add Another Medicine
+                </button>
+                <button
+                  onClick={addPrescription}
+                  disabled={pLoading || !pGroupName.trim() || !medicineRows.some(r => r.medicine.trim())}
+                  className="ml-auto bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
+                >
+                  {pLoading ? "Saving..." : `Save Group (${medicineRows.filter(r => r.medicine.trim()).length} medicine${medicineRows.filter(r => r.medicine.trim()).length !== 1 ? "s" : ""})`}
+                </button>
+              </div>
             </div>
 
             {/* Grouped List */}
