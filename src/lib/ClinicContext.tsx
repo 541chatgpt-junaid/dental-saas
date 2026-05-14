@@ -1,6 +1,5 @@
 "use client";
 import { createContext, useContext, useEffect, useState } from "react";
-import { createClient } from "./supabase";
 
 interface ClinicContextType {
   clinicId: string | null;
@@ -20,29 +19,16 @@ export function ClinicProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    (async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { setLoading(false); return; }
-
-      const { data: staffData } = await supabase
-        .from("staff")
-        .select("clinic_id")
-        .eq("user_id", user.id)
-        .single();
-
-      if (staffData?.clinic_id) {
-        setClinicId(staffData.clinic_id);
-
-        const { data: clinicData } = await supabase
-          .from("clinics")
-          .select("name")
-          .eq("id", staffData.clinic_id)
-          .single();
-        setClinicName(clinicData?.name ?? null);
-      }
-      setLoading(false);
-    })();
+    fetch("/api/my-clinic")
+      .then(r => r.json())
+      .then(({ clinicId, clinicName }) => {
+        if (clinicId) {
+          setClinicId(clinicId);
+          setClinicName(clinicName ?? null);
+        }
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
   return (
