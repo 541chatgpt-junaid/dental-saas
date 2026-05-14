@@ -211,12 +211,13 @@ export default function Patients() {
   }, [router]);
 
   useEffect(() => {
-    if (!clinicId) return;
-    createClient().from("prescription_presets").select("*").eq("clinic_id", clinicId).order("created_at")
-      .then(({ data }) => setPrescriptionPresets(data || []));
-    createClient().from("treatment_presets").select("*").eq("clinic_id", clinicId).order("created_at")
-      .then(({ data }) => setTreatmentPresets(data || []));
-  }, [clinicId]);
+    fetch("/api/presets?type=prescriptions")
+      .then(r => r.json())
+      .then(json => setPrescriptionPresets(json.data || []));
+    fetch("/api/presets?type=treatments")
+      .then(r => r.json())
+      .then(json => setTreatmentPresets(json.data || []));
+  }, []);
 
   const getClinicPatientNumber = (patientId: number) => {
     const index = allPatients.findIndex(p => p.id === patientId);

@@ -83,19 +83,20 @@ export default function Settings() {
   }, [router]);
 
   useEffect(() => {
-    if (!clinicId) return;
     fetchTreatments();
     fetchPrescriptions();
-  }, [clinicId]);
+  }, []);
 
   const fetchTreatments = async () => {
-    const { data } = await createClient().from("treatment_presets").select("*").eq("clinic_id", clinicId).order("created_at");
-    setTreatments(data || []);
+    const res = await fetch("/api/presets?type=treatments");
+    const json = await res.json();
+    setTreatments(json.data || []);
   };
 
   const fetchPrescriptions = async () => {
-    const { data } = await createClient().from("prescription_presets").select("*").eq("clinic_id", clinicId).order("created_at");
-    setPrescriptions(data || []);
+    const res = await fetch("/api/presets?type=prescriptions");
+    const json = await res.json();
+    setPrescriptions(json.data || []);
   };
 
   // General save
@@ -117,21 +118,29 @@ export default function Settings() {
   const addTreatment = async () => {
     if (!tForm.name.trim()) return;
     setTLoading(true);
-    await createClient().from("treatment_presets").insert([{ clinic_id: clinicId, name: tForm.name.trim(), price: Number(tForm.price) || 0 }]);
+    await fetch("/api/presets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "treatments", name: tForm.name.trim(), price: Number(tForm.price) || 0 }),
+    });
     setTForm({ name: "", price: "" });
     await fetchTreatments();
     setTLoading(false);
   };
 
   const saveTreatmentEdit = async (id: string) => {
-    await createClient().from("treatment_presets").update({ name: tEditForm.name.trim(), price: Number(tEditForm.price) || 0 }).eq("id", id);
+    await fetch("/api/presets", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "treatments", id, name: tEditForm.name.trim(), price: Number(tEditForm.price) || 0 }),
+    });
     setTEditId(null);
     fetchTreatments();
   };
 
   const deleteTreatment = async (id: string) => {
     if (!confirm("Delete this treatment preset?")) return;
-    await createClient().from("treatment_presets").delete().eq("id", id);
+    await fetch(`/api/presets?type=treatments&id=${id}`, { method: "DELETE" });
     fetchTreatments();
   };
 
@@ -141,17 +150,15 @@ export default function Settings() {
     const validRows = medicineRows.filter(r => r.medicine.trim());
     if (!validRows.length) return;
     setPLoading(true);
-    await createClient().from("prescription_presets").insert(
-      validRows.map(r => ({
-        clinic_id: clinicId,
+    await fetch("/api/presets", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        type: "prescriptions",
         group_name: pGroupName.trim(),
-        medicine: r.medicine.trim(),
-        dosage: r.dosage,
-        frequency: r.frequency,
-        duration: r.duration,
-        notes: r.notes,
-      }))
-    );
+        rows: validRows.map(r => ({ ...r, medicine: r.medicine.trim() })),
+      }),
+    });
     setPGroupName("");
     setMedicineRows([{ medicine: "", dosage: "", frequency: "", duration: "", notes: "" }]);
     await fetchPrescriptions();
@@ -162,7 +169,11 @@ export default function Settings() {
     setMedicineRows(rows => rows.map((r, i) => i === idx ? { ...r, [field]: val } : r));
 
   const savePrescriptionEdit = async (id: string) => {
-    await createClient().from("prescription_presets").update({ group_name: pEditForm.group_name.trim(), medicine: pEditForm.medicine.trim(), dosage: pEditForm.dosage, frequency: pEditForm.frequency, duration: pEditForm.duration, notes: pEditForm.notes }).eq("id", id);
+    await fetch("/api/presets", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "prescriptions", id, ...pEditForm, group_name: pEditForm.group_name.trim(), medicine: pEditForm.medicine.trim() }),
+    });
     setPEditId(null);
     fetchPrescriptions();
   };
@@ -177,7 +188,7 @@ export default function Settings() {
 
   const deletePrescription = async (id: string) => {
     if (!confirm("Delete this prescription preset?")) return;
-    await createClient().from("prescription_presets").delete().eq("id", id);
+    await fetch(`/api/presets?type=prescriptions&id=${id}`, { method: "DELETE" });
     fetchPrescriptions();
   };
 

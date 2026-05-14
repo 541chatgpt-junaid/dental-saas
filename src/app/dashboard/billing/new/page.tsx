@@ -37,12 +37,12 @@ export default function NewInvoicePage() {
   const { clinicId } = useClinic();
 
   useEffect(() => {
-    if (!clinicId) return;
     createClient().from("patients").select("id, name, phone, age, gender").order("name")
       .then(({ data }) => setPatients(data || []));
-    createClient().from("treatment_presets").select("*").eq("clinic_id", clinicId).order("created_at")
-      .then(({ data }) => setTreatmentPresets(data || []));
-  }, [clinicId]);
+    fetch("/api/presets?type=treatments")
+      .then(r => r.json())
+      .then(json => setTreatmentPresets(json.data || []));
+  }, []);
 
   const handlePatientChange = (val: string) => {
     setPatientId(val);
