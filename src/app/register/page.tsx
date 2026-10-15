@@ -1,19 +1,16 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function RegisterPage() {
   const [form, setForm] = useState({
     clinicName: "", email: "", password: "", confirmPassword: "", phone: "", address: "",
   });
-  const [captchaToken, setCaptchaToken] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const captchaRef = useRef<HCaptcha>(null);
   const router = useRouter();
 
   const handleSubmit = async () => {
@@ -28,10 +25,6 @@ export default function RegisterPage() {
     }
     if (form.password.length < 6) {
       setError("Password must be at least 6 characters.");
-      return;
-    }
-    if (!captchaToken) {
-      setError("Please complete the captcha.");
       return;
     }
 
@@ -50,8 +43,6 @@ export default function RegisterPage() {
     const data = await res.json();
     if (data.error) {
       setError(data.error);
-      captchaRef.current?.resetCaptcha();
-      setCaptchaToken("");
     } else {
       setSuccess(true);
       setTimeout(() => router.push("/login"), 2500);
@@ -136,14 +127,6 @@ export default function RegisterPage() {
             className="w-full border border-teal-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
           />
 
-          <div className="flex justify-center pt-1">
-            <HCaptcha
-              sitekey="6fec9dbc-a6d4-4e7a-b9ca-79f08b62d37e"
-              onVerify={token => setCaptchaToken(token)}
-              onExpire={() => setCaptchaToken("")}
-              ref={captchaRef}
-            />
-          </div>
 
           {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 

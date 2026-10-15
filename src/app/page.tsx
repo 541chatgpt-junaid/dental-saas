@@ -436,6 +436,9 @@ export default function LandingPage() {
   const [reviewClinic, setReviewClinic] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
+  const [reviewWebsite, setReviewWebsite] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -451,10 +454,30 @@ export default function LandingPage() {
     return () => { window.removeEventListener("scroll", onScroll); obs.disconnect(); };
   }, []);
 
-  const submitReview = () => {
-    if (!reviewName || !reviewText) return;
-    setShowThankyou(true);
-    setReviewName(""); setReviewClinic(""); setReviewText(""); setReviewRating(5);
+  const submitReview = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (reviewSubmitting) return;
+    const name = reviewName.trim();
+    const text = reviewText.trim();
+    if (name.length < 2) { setReviewError("Please enter your name."); return; }
+    if (text.length < 10) { setReviewError("Please write at least 10 characters in your review."); return; }
+    setReviewError("");
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, clinic: reviewClinic.trim(), review: text, rating: reviewRating, website: reviewWebsite }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setReviewError(data.error || "Could not submit your review. Please try again."); return; }
+      setShowThankyou(true);
+      setReviewName(""); setReviewClinic(""); setReviewText(""); setReviewRating(5);
+    } catch {
+      setReviewError("Network error. Please check your connection and try again.");
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   const goldBtn = "btn-gold inline-flex items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-navy transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(212,175,55,.45)]";
@@ -692,14 +715,15 @@ export default function LandingPage() {
 
           {/* Share your experience */}
           <div {...rv(100)} className="mx-auto mt-20 max-w-2xl px-4 sm:px-6">
-            <div className="rounded-2xl border border-navy/8 bg-white p-6 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:p-8">
+            <form onSubmit={submitReview} noValidate className="relative rounded-2xl border border-navy/8 bg-white p-6 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:p-8">
               <h3 className="font-display text-2xl font-semibold text-navy">Share your experience</h3>
               <p className="mt-1 text-sm text-navy/60">Using DentEase in your clinic? We would love to hear from you.</p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                <input value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="Your name *" aria-label="Your name" className="rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
-                <input value={reviewClinic} onChange={e => setReviewClinic(e.target.value)} placeholder="Clinic name" aria-label="Clinic name" className="rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
+                <input value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="Your name *" aria-label="Your name" name="name" required maxLength={80} autoComplete="name" className="rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
+                <input value={reviewClinic} onChange={e => setReviewClinic(e.target.value)} placeholder="Clinic name" aria-label="Clinic name" name="clinic" maxLength={120} autoComplete="organization" className="rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
               </div>
-              <textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Your review *" aria-label="Your review" rows={3} className="mt-3 w-full resize-none rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
+              <input type="text" value={reviewWebsite} onChange={e => setReviewWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-px w-px opacity-0" />
+              <textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Your review *" aria-label="Your review" name="review" required maxLength={1000} rows={3} className="mt-3 w-full resize-none rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
               <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
                 <div className="flex gap-1" role="radiogroup" aria-label="Rating">
                   {[1, 2, 3, 4, 5].map(s => (
@@ -708,11 +732,12 @@ export default function LandingPage() {
                     </button>
                   ))}
                 </div>
-                <button type="button" onClick={submitReview} className="rounded-full bg-navy px-7 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg">
-                  Submit review
+                <button type="submit" disabled={reviewSubmitting} className="rounded-full bg-navy px-7 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-none">
+                  {reviewSubmitting ? "Submitting..." : "Submit review"}
                 </button>
               </div>
-            </div>
+              {reviewError && <p role="alert" className="mt-4 text-sm font-medium text-red-600">{reviewError}</p>}
+            </form>
           </div>
         </section>
 

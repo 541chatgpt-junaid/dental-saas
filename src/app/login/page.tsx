@@ -1,9 +1,8 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -11,29 +10,18 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [captchaToken, setCaptchaToken] = useState("");
-  const captchaRef = useRef<HCaptcha>(null);
   const router = useRouter();
 
   const handleLogin = async () => {
-    if (!captchaToken) {
-      setError("Please complete the captcha.");
-      return;
-    }
     setLoading(true);
     setError("");
     const supabase = createClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        captchaToken,
-      },
     });
     if (error) {
       setError(error.message);
-      captchaRef.current?.resetCaptcha();
-      setCaptchaToken("");
     } else {
       router.push("/dashboard/patients");
     }
@@ -106,14 +94,6 @@ export default function Home() {
             </button>
           </div>
 
-          <div className="flex justify-center">
-            <HCaptcha
-              sitekey="6fec9dbc-a6d4-4e7a-b9ca-79f08b62d37e"
-              onVerify={token => setCaptchaToken(token)}
-              onExpire={() => setCaptchaToken("")}
-              ref={captchaRef}
-            />
-          </div>
 
           {error && <p className="text-red-500 text-xs text-center">{error}</p>}
 
