@@ -294,26 +294,40 @@ function DemoForm() {
   const [size, setSize] = useState<string | null>(null);
   const [needs, setNeeds] = useState<string[]>([]);
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [clinic, setClinic] = useState("");
+  const [website, setWebsite] = useState(""); // honeypot, hidden from real visitors
   const [sending, setSending] = useState(false);
+  const [error, setError] = useState("");
+  const [done, setDone] = useState(false);
 
   const steps = ["Choose plan", "Clinic size", "Features needed", "Your details"];
-  const canNext = [!!path, !!size, needs.length > 0, name.trim().length > 1][step];
+  const canNext = [!!path, !!size, needs.length > 0, name.trim().length > 1 && phone.replace(/\D/g, "").length >= 7][step];
   const pathTitle = PATHS.find(p => p.id === path)?.title;
 
-  const submit = () => {
-    if (!canNext) return;
+  const submit = async () => {
+    if (!canNext || sending) return;
     setSending(true);
-    const msg = [
-      "Hello DentEase team!",
-      `Name: ${name}`,
-      clinic && `Clinic: ${clinic}`,
-      `Looking for: ${pathTitle}`,
-      `Clinic size: ${size}`,
-      `Interested in: ${needs.join(", ")}`,
-    ].filter(Boolean).join("\n");
-    window.open(`${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
-    setTimeout(() => setSending(false), 1200);
+    setError("");
+    try {
+      const res = await fetch("/api/demo-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, clinic, plan: pathTitle, clinicSize: size, features: needs, website }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Could not send your request. Please try again.");
+      setDone(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not send your request. Please try again.");
+    } finally {
+      setSending(false);
+    }
+  };
+
+  const reset = () => {
+    setStep(0); setPath(null); setSize(null); setNeeds([]);
+    setName(""); setPhone(""); setClinic(""); setDone(false); setError("");
   };
 
   const choice = (active: boolean) =>
@@ -321,7 +335,26 @@ function DemoForm() {
 
   return (
     <div className="grid overflow-hidden rounded-3xl bg-white shadow-[0_30px_80px_rgba(15,29,61,.12)] lg:grid-cols-[1.5fr_1fr]">
-      <div className="p-6 sm:p-10">
+      {done ? (
+        <div className="flex animate-scale-in flex-col items-center justify-center p-10 text-center sm:p-14">
+          <span className="flex h-16 w-16 items-center justify-center rounded-full bg-gold/15">
+            <Check className="h-8 w-8 text-gold" />
+          </span>
+          <h3 className="mt-6 font-display text-3xl font-semibold text-navy">Request received</h3>
+          <p className="mt-3 max-w-sm text-[15px] leading-relaxed text-navy/65">
+            Thank you, {name.trim()}. Our team will contact you on {phone} shortly.
+          </p>
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href={WHATSAPP} target="_blank" rel="noreferrer" className="inline-flex items-center justify-center gap-2 rounded-full bg-navy px-6 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg">
+              <MessageCircle className="h-4 w-4" /> Chat on WhatsApp now
+            </a>
+            <button type="button" onClick={reset} className="rounded-full border border-navy/15 px-6 py-3 text-sm font-semibold text-navy transition-colors duration-300 hover:border-gold">
+              Send another request
+            </button>
+          </div>
+        </div>
+      ) : (
+      <div className="relative p-6 sm:p-10">
         {/* Step indicator */}
         <ol className="mb-8 flex flex-wrap gap-x-5 gap-y-2">
           {steps.map((s, i) => (
@@ -377,10 +410,16 @@ function DemoForm() {
                 <input value={name} onChange={e => setName(e.target.value)} placeholder="Dr. Ayesha Malik" className="w-full rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-navy outline-none transition-colors duration-300 focus:border-gold" />
               </label>
               <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-navy/60">Phone / WhatsApp *</span>
+                <input value={phone} onChange={e => setPhone(e.target.value)} type="tel" inputMode="tel" autoComplete="tel" placeholder="+92 300 1234567" className="w-full rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-navy outline-none transition-colors duration-300 focus:border-gold" />
+              </label>
+              <label className="block sm:col-span-2">
                 <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-navy/60">Clinic name</span>
                 <input value={clinic} onChange={e => setClinic(e.target.value)} placeholder="Bright Smile Dental" className="w-full rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-navy outline-none transition-colors duration-300 focus:border-gold" />
               </label>
-              <p className="text-sm text-navy/60 sm:col-span-2">We&apos;ll open WhatsApp with your request filled in, so you can send it to our team in one tap.</p>
+              <input value={website} onChange={e => setWebsite(e.target.value)} tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 opacity-0" />
+              <p className="text-sm text-navy/60 sm:col-span-2">Our team will contact you on this number to set up your account or demo.</p>
+              {error && <p role="alert" className="text-sm font-medium text-red-600 sm:col-span-2">{error}</p>}
             </div>
           )}
         </div>
@@ -396,11 +435,12 @@ function DemoForm() {
           ) : (
             <button type="button" disabled={!canNext || sending} onClick={submit} className="btn-gold inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3 text-sm font-semibold text-navy transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(212,175,55,.4)] disabled:cursor-not-allowed disabled:opacity-40">
               {sending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              {sending ? "Opening WhatsApp…" : "Send request"}
+              {sending ? "Sending…" : "Send request"}
             </button>
           )}
         </div>
       </div>
+      )}
 
       {/* Live summary */}
       <aside className="relative overflow-hidden bg-navy p-6 text-white sm:p-10">
