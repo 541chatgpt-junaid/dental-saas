@@ -270,6 +270,9 @@ export default function LandingPage() {
   const [reviewClinic, setReviewClinic] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
+  const [reviewWebsite, setReviewWebsite] = useState("");
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [reviewError, setReviewError] = useState("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const statsRef = useRef<HTMLDivElement>(null);
   const [statsActive, setStatsActive] = useState(false);
@@ -289,10 +292,30 @@ export default function LandingPage() {
     return () => { clearTimeout(t1); window.removeEventListener("scroll", onScroll); };
   }, []);
 
-  const submitReview = () => {
-    if (!reviewName || !reviewText) return;
-    setShowThankyou(true);
-    setReviewName(""); setReviewClinic(""); setReviewText(""); setReviewRating(5);
+  const submitReview = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (reviewSubmitting) return;
+    const name = reviewName.trim();
+    const text = reviewText.trim();
+    if (name.length < 2) { setReviewError("Please enter your name."); return; }
+    if (text.length < 10) { setReviewError("Please write at least 10 characters in your review."); return; }
+    setReviewError("");
+    setReviewSubmitting(true);
+    try {
+      const res = await fetch("/api/reviews", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, clinic: reviewClinic.trim(), review: text, rating: reviewRating, website: reviewWebsite }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setReviewError(data.error || "Could not submit your review. Please try again."); return; }
+      setShowThankyou(true);
+      setReviewName(""); setReviewClinic(""); setReviewText(""); setReviewRating(5);
+    } catch {
+      setReviewError("Network error. Please check your connection and try again.");
+    } finally {
+      setReviewSubmitting(false);
+    }
   };
 
   return (
@@ -548,27 +571,29 @@ export default function LandingPage() {
               ))}
             </div>
             <Reveal delay={100}>
-              <div style={{ background: "#F8FAFF", borderRadius: "24px", padding: "28px", border: "1px solid rgba(99,102,241,0.1)", maxWidth: "560px", margin: "0 auto" }}>
+              <form onSubmit={submitReview} noValidate style={{ background: "#F8FAFF", borderRadius: "24px", padding: "28px", border: "1px solid rgba(99,102,241,0.1)", maxWidth: "560px", margin: "0 auto" }}>
                 <h3 style={{ fontSize: "19px", fontWeight: 700, color: "#0A1628", marginBottom: "4px" }}>Share your experience</h3>
                 <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "18px" }}>We would love to hear from you!</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }} className="mobile-grid-1">
-                  <input value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="Your name *" aria-label="Your name" style={{ padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
-                  <input value={reviewClinic} onChange={e => setReviewClinic(e.target.value)} placeholder="Clinic name" aria-label="Clinic name" style={{ padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
+                  <input value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="Your name *" aria-label="Your name" name="name" required maxLength={80} autoComplete="name" style={{ padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
+                  <input value={reviewClinic} onChange={e => setReviewClinic(e.target.value)} placeholder="Clinic name" aria-label="Clinic name" name="clinic" maxLength={120} autoComplete="organization" style={{ padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
                 </div>
-                <textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Your review *" aria-label="Your review" rows={3} style={{ width: "100%", padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", resize: "none", marginBottom: "12px", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
+                <input type="text" value={reviewWebsite} onChange={e => setReviewWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }} />
+                <textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Your review *" aria-label="Your review" name="review" required maxLength={1000} rows={3} style={{ width: "100%", padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", resize: "none", marginBottom: "12px", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
                   <div style={{ display: "flex", gap: "2px" }} aria-label="Rating">
                     {[1, 2, 3, 4, 5].map(s => (
-                      <button key={s} onClick={() => setReviewRating(s)} aria-label={`${s} star`} style={{ fontSize: "26px", background: "none", border: "none", cursor: "pointer", color: s <= reviewRating ? "#FBBF24" : "#D1D5DB", transition: "transform 0.15s ease" }}
+                      <button type="button" key={s} onClick={() => setReviewRating(s)} aria-pressed={s <= reviewRating} aria-label={`${s} star`} style={{ fontSize: "26px", background: "none", border: "none", cursor: "pointer", color: s <= reviewRating ? "#FBBF24" : "#D1D5DB", transition: "transform 0.15s ease" }}
                         onMouseOver={e => e.currentTarget.style.transform = "scale(1.2)"} onMouseOut={e => e.currentTarget.style.transform = ""}>★</button>
                     ))}
                   </div>
-                  <button onClick={submitReview} style={{ padding: "11px 28px", borderRadius: "999px", background: "#0A1628", color: "#fff", border: "none", fontWeight: 700, fontSize: "14px", cursor: "pointer", transition: "all 0.25s" }}
-                    onMouseOver={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(10,22,40,0.2)"; }} onMouseOut={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
-                    Submit Review
+                  <button type="submit" disabled={reviewSubmitting} style={{ padding: "11px 28px", borderRadius: "999px", background: "#0A1628", color: "#fff", border: "none", fontWeight: 700, fontSize: "14px", cursor: reviewSubmitting ? "wait" : "pointer", opacity: reviewSubmitting ? 0.7 : 1, transition: "all 0.25s" }}
+                    onMouseOver={e => { if (reviewSubmitting) return; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(10,22,40,0.2)"; }} onMouseOut={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
+                    {reviewSubmitting ? "Submitting..." : "Submit Review"}
                   </button>
                 </div>
-              </div>
+                {reviewError && <p role="alert" style={{ marginTop: "12px", fontSize: "13px", color: "#DC2626", fontWeight: 500 }}>{reviewError}</p>}
+              </form>
             </Reveal>
           </div>
         </section>
