@@ -1,1 +1,140 @@
 @import "tailwindcss";
+
+/* ─── Landing page design tokens ───────────────────────────
+   Only adds new utilities (bg-navy, text-gold, font-display,
+   ease-out-expo, animate-*). Nothing here restyles the dashboard. */
+@theme {
+  --color-navy: #0f1d3d;
+  --color-navy-2: #141932;
+  --color-gold: #d4af37;
+  --color-gold-soft: #e8cf7a;
+  --color-cream: #f6f4ee;
+  --color-cream-2: #fcfbf9;
+  --color-ink: #141932;
+
+  --font-display: "Playfair Display", "Cormorant Garamond", serif;
+
+  --ease-out-expo: cubic-bezier(.16, 1, .3, 1);
+
+  --animate-ken-burns: ken-burns 24s ease-in-out infinite alternate;
+  --animate-fade-up: fade-up .9s var(--ease-out-expo) both;
+  --animate-fade-in: fade-in .9s var(--ease-out-expo) both;
+  --animate-scale-in: scale-in .7s var(--ease-out-expo) both;
+  --animate-shimmer: shimmer 3.5s linear infinite;
+  --animate-float-up: float-up 3.2s ease-in-out infinite alternate;
+  --animate-marquee: marquee 45s linear infinite;
+  --animate-crown-draw: crown-draw 2.4s var(--ease-out-expo) .3s both;
+  --animate-accordion-down: accordion-down .45s var(--ease-out-expo) both;
+  --animate-accordion-up: accordion-up .35s var(--ease-out-expo) both;
+
+  @keyframes ken-burns {
+    from { transform: scale(1.05); }
+    to { transform: scale(1.2) translate(-2%, -1%); }
+  }
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes scale-in {
+    from { opacity: 0; transform: scale(.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes gold-sweep {
+    0% { transform: translateX(-120%) skewX(-20deg); opacity: 0; }
+    50% { opacity: .6; }
+    100% { transform: translateX(220%) skewX(-20deg); opacity: 0; }
+  }
+  @keyframes shimmer {
+    from { background-position: -200% 0; }
+    to { background-position: 200% 0; }
+  }
+  @keyframes float-up {
+    from { transform: translateY(0); }
+    to { transform: translateY(-8px); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes crown-draw {
+    from { stroke-dashoffset: var(--dash, 400); }
+    to { stroke-dashoffset: 0; }
+  }
+  @keyframes accordion-down {
+    from { height: 0; opacity: 0; }
+    to { height: var(--accordion-height); opacity: 1; }
+  }
+  @keyframes accordion-up {
+    from { height: var(--accordion-height); opacity: 1; }
+    to { height: 0; opacity: 0; }
+  }
+}
+
+/* ─── Landing page scope ─── */
+.de-landing {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: #ffffff;
+}
+.de-landing h1,
+.de-landing h2 {
+  font-family: var(--font-display);
+}
+.de-landing *,
+.de-landing *::before,
+.de-landing *::after {
+  transition-timing-function: var(--ease-out-expo);
+}
+
+/* Scroll-triggered reveals: elements start hidden and animate once
+   IntersectionObserver sets data-shown. Delay comes from --d. */
+.de-landing [data-reveal] { opacity: 0; }
+.de-landing [data-reveal][data-shown] { animation: var(--animate-fade-up); animation-delay: var(--d, 0ms); }
+.de-landing [data-reveal="fade"][data-shown] { animation: var(--animate-fade-in); animation-delay: var(--d, 0ms); }
+.de-landing [data-reveal="scale"][data-shown] { animation: var(--animate-scale-in); animation-delay: var(--d, 0ms); }
+
+/* Gold CTA with a skewed shine sweeping across it */
+.btn-gold {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-gold::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  z-index: -1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .85), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+  opacity: 0;
+  animation: gold-sweep 1.1s var(--ease-out-expo) 1.2s, gold-sweep 1.1s var(--ease-out-expo) 6s;
+}
+.btn-gold:hover::after { animation: gold-sweep 1.6s var(--ease-out-expo) infinite; }
+
+/* Gold text shimmer for highlighted words and loading states */
+.text-shimmer {
+  background: linear-gradient(90deg, #d4af37 0%, #f5e6a8 25%, #d4af37 50%, #f5e6a8 75%, #d4af37 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: var(--animate-shimmer);
+}
+
+.marquee-track:hover { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .de-landing [data-reveal] { opacity: 1; }
+  .de-landing *,
+  .de-landing *::before,
+  .de-landing *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
