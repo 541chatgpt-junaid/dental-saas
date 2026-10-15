@@ -1,271 +1,437 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
+import {
+  ArrowLeftRight, ArrowRight, BadgeCheck, Building2, CalendarCheck, Check, ChevronDown, ClipboardList,
+  Clock, Cloud, FlaskConical, LayoutDashboard, LoaderCircle, Lock, LogIn, Menu, MessageCircle, Phone,
+  Quote, Receipt, Send, ShieldCheck, Sparkles, Star, Users, X,
+} from "lucide-react";
+
+/* ─── CONTACT ───────────────────────────────────────────── */
+const PHONE_DISPLAY = "+92 310 5913101";
+const PHONE_TEL = "tel:+923105913101";
+const WHATSAPP = "https://wa.me/923105913101";
 
 /* ─── DATA ─────────────────────────────────────────────── */
+const NAV = [
+  ["#features", "Features"],
+  ["#workflow", "Workflow"],
+  ["#why", "Why DentEase"],
+  ["#reviews", "Reviews"],
+  ["#faq", "FAQ"],
+] as const;
+
+const STATS = [
+  { num: 500, suffix: "+", label: "Clinics onboard" },
+  { num: 50000, suffix: "+", label: "Patient records managed" },
+  { num: 99.9, suffix: "%", label: "Platform uptime", decimals: 1 },
+  { num: 100, suffix: "%", label: "Free to get started" },
+];
+
 const FEATURES = [
-  { title: "Patient Records", desc: "Complete patient history, visit records, medical notes and FDI tooth chart — all searchable instantly.", img: "/images/patient-records.webp", tag: "Complete history" },
-  { title: "Smart Appointments", desc: "Book, reschedule and track appointments easily. See today's full schedule at a glance.", img: "/images/appointments.webp", tag: "Auto scheduling" },
-  { title: "Lab Records & FDI Chart", desc: "Track lab work with interactive FDI tooth chart, delivery dates and material types.", img: "/images/lab-records.webp", tag: "FDI standard" },
-  { title: "Revenue & Reports", desc: "Monthly income charts, doctor performance tracking and expense management.", img: "/images/revenue-reports.webp", tag: "Visual analytics" },
-  { title: "Staff Management", desc: "Add doctors, set role-based permissions and manage login access for your whole team.", img: "/images/staff-management.webp", tag: "Role permissions" },
-  { title: "WhatsApp Reminders", desc: "Send appointment confirmations and payment reminders directly via WhatsApp.", img: "/images/whatsapp-reminders.webp", tag: "Coming soon" },
+  { icon: CalendarCheck, title: "Appointment Booking", desc: "Book, reschedule and confirm visits in seconds, with the whole day's chair schedule on one calm screen." },
+  { icon: ClipboardList, title: "Patient Records", desc: "Medical history, visit notes, prescriptions and an FDI tooth chart for every patient, searchable instantly." },
+  { icon: Receipt, title: "Billing & Receipts", desc: "Record payments, track balances and print professional receipts the moment treatment is complete." },
+  { icon: Users, title: "Staff Scheduling", desc: "Add doctors and assistants, assign role-based permissions and control exactly who sees what." },
+  { icon: FlaskConical, title: "Lab Case Tracking", desc: "Follow every crown, bridge and aligner from impression to delivery, with due dates you can trust." },
+  { icon: LayoutDashboard, title: "Revenue Reports", desc: "Monthly income, expenses and doctor performance charts that show how your practice is really doing." },
+];
+
+const PRINCIPLES = [
+  { icon: BadgeCheck, title: "Reliable", desc: "Cloud-hosted and always available, so your front desk never waits on a server in the back room. Your schedule is ready the moment the clinic opens." },
+  { icon: ShieldCheck, title: "Secure", desc: "Encrypted storage, per-clinic data isolation and staff-level permissions keep patient information where it belongs: with you." },
+  { icon: Sparkles, title: "Simple", desc: "Designed around how dental teams actually work. New staff are confident within a day, with no lengthy training or IT setup." },
+];
+
+const TESTIMONIALS = [
+  { name: "Dr. Ahmed Raza", clinic: "Raza Dental Care, Lahore", rating: 5, text: "DentEase has completely transformed how we manage our clinic. Patient records and lab work tracking is now seamless." },
+  { name: "Dr. Sarah Khan", clinic: "SmilePro Dental, Karachi", rating: 5, text: "The FDI tooth chart feature is brilliant! Our lab record management has never been this organized. Highly recommended." },
+  { name: "Dr. Usman Ali", clinic: "Ali Dental Clinic, Islamabad", rating: 5, text: "Free software with this many features? Unbelievable. The reports section alone saves us hours every month." },
 ];
 
 const FAQS = [
-  { q: "Is DentEase really free?", a: "Yes! DentEase is completely free to use. No hidden charges, no credit card required." },
-  { q: "Can multiple doctors use the same account?", a: "Yes, you can add multiple staff members with different role-based permissions." },
-  { q: "Is my patient data secure?", a: "Absolutely. Your data is encrypted and stored securely. Only your clinic can access it." },
-  { q: "Does it work on mobile and desktop?", a: "Yes, DentEase works on all devices — desktop, tablet, and mobile browsers." },
-  { q: "Can I install it as an app?", a: "Yes! DentEase can be installed as a PWA on your phone or desktop — no app store needed." },
+  { q: "Is DentEase really free to start?", a: "Yes. You can create your clinic account and start managing patients, appointments and billing without a credit card or setup fee." },
+  { q: "Can multiple doctors and staff use one clinic account?", a: "Absolutely. Add as many team members as you need and give each one role-based permissions, so receptionists, assistants and doctors only see the modules relevant to them." },
+  { q: "How is patient data kept secure?", a: "All data is encrypted and stored in the cloud with strict per-clinic isolation. Only the staff you invite, with the permissions you grant, can access your records." },
+  { q: "Does DentEase work on phones and tablets?", a: "Yes. DentEase runs in any modern browser on desktop, tablet and mobile, and can be installed as an app on your device without an app store." },
+  { q: "Can I move my existing paper records over?", a: "Yes. You can add patients as they visit, or enter historical records at your own pace. Book a demo and we will walk you through the quickest way to migrate." },
 ];
 
-const STATS = [
-  { num: 500, suffix: "+", label: "Clinics using DentEase" },
-  { num: 50000, suffix: "+", label: "Patients managed" },
-  { num: 99, suffix: ".9%", label: "Uptime guaranteed" },
-  { num: 100, suffix: "%", label: "Free forever" },
+const PATHS = [
+  { id: "free", title: "Start free", desc: "Set up my clinic myself and begin today." },
+  { id: "demo", title: "Guided demo", desc: "Walk me through DentEase on a call first." },
+  { id: "multi", title: "Multi-branch", desc: "I run more than one location." },
 ];
+const SIZES = ["Solo dentist", "2–5 chairs", "6–10 chairs", "10+ chairs"];
+const NEEDS = ["Appointment booking", "Patient records", "Billing & receipts", "Staff scheduling", "Lab case tracking", "Revenue reports"];
 
-/* ─── HOOKS ─────────────────────────────────────────────── */
-function useInView(threshold = 0.15) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [inView, setInView] = useState(false);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setInView(true); obs.disconnect(); } }, { threshold });
-    obs.observe(el);
-    return () => obs.disconnect();
-  }, [threshold]);
-  return { ref, inView };
+/* ─── HELPERS ───────────────────────────────────────────── */
+/** Props that make an element fade up when scrolled into view. */
+function rv(delay = 0, kind: "up" | "fade" | "scale" = "up") {
+  return { "data-reveal": kind === "up" ? "" : kind, style: { "--d": `${delay}ms` } as CSSProperties };
 }
 
-function useCountUp(target: number, active: boolean, duration = 1800) {
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    if (!active) return;
-    let start = 0;
-    const step = target / (duration / 16);
-    const timer = setInterval(() => {
-      start += step;
-      if (start >= target) { setVal(target); clearInterval(timer); }
-      else setVal(Math.floor(start));
-    }, 16);
-    return () => clearInterval(timer);
-  }, [active, target, duration]);
-  return val;
-}
-
-/* ─── ANIMATED SECTION WRAPPER ─────────────────────────── */
-function Reveal({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const { ref, inView } = useInView();
+function Eyebrow({ children, light = false }: { children: ReactNode; light?: boolean }) {
   return (
-    <div ref={ref} className={className} style={{
-      opacity: inView ? 1 : 0,
-      transform: inView ? "translateY(0px)" : "translateY(40px)",
-      transition: `opacity 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms, transform 0.7s cubic-bezier(0.22,1,0.36,1) ${delay}ms`,
-    }}>
+    <div className={`inline-flex items-center gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] sm:tracking-[0.25em] ${light ? "text-gold-soft" : "text-gold"}`}>
+      <span className="h-px w-8 bg-gold" aria-hidden="true" />
       {children}
+      <span className="h-px w-8 bg-gold" aria-hidden="true" />
     </div>
   );
 }
 
-/* ─── ANIMATED WORD ─────────────────────────────────────── */
-function AnimatedWord({ words }: { words: string[] }) {
-  const [index, setIndex] = useState(0);
-  const [visible, setVisible] = useState(true);
-  useEffect(() => {
-    const t = setInterval(() => {
-      setVisible(false);
-      setTimeout(() => { setIndex(p => (p + 1) % words.length); setVisible(true); }, 300);
-    }, 2500);
-    return () => clearInterval(t);
-  }, [words]);
+/* ─── LOGO (SVG mark, stroke draws on in the hero) ───────── */
+function LogoMark({ className = "", draw = false }: { className?: string; draw?: boolean }) {
+  const drawStyle = (delay: number) =>
+    draw ? ({ strokeDasharray: 1, "--dash": 1, animationDelay: `${delay}s` } as CSSProperties) : undefined;
+  const cls = draw ? "animate-crown-draw" : "";
   return (
-    <span style={{
-      color: "#6366F1", fontStyle: "italic",
-      opacity: visible ? 1 : 0,
-      transform: visible ? "translateY(0)" : "translateY(12px)",
-      display: "inline-block",
-      transition: "opacity 0.3s ease, transform 0.3s ease",
-    }}>
-      {words[index]}
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <path pathLength={1} className={cls} style={drawStyle(0.3)} stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        d="M15 6c-5.5 0-9.5 4.2-9.5 10.2 0 5.6 2.2 8.6 3.2 13.6 1.2 6 2 12.2 6.2 12.2 3.2 0 3.4-5.2 4.4-9 .8-3 2-5 4.7-5s3.9 2 4.7 5c1 3.8 1.2 9 4.4 9 4.2 0 5-6.2 6.2-12.2 1-5 3.2-8 3.2-13.6C42.5 10.2 38.5 6 33 6c-4 0-5.8 2-9 2s-5-2-9-2z" />
+      <path pathLength={1} className={cls} style={drawStyle(1.1)} stroke="#d4af37" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+        d="M9 21h7.5l2.2-4.5 3.2 9 2.4-4.5H32" />
+      <path pathLength={1} className={cls} style={drawStyle(1.6)} stroke="#d4af37" strokeWidth="1.8" strokeLinecap="round"
+        d="M32 21h5M30 17.5h4M30 24.5h4" />
+    </svg>
+  );
+}
+
+function Wordmark({ light = true }: { light?: boolean }) {
+  return (
+    <span className="flex items-center gap-2.5">
+      <LogoMark className={`h-9 w-9 ${light ? "text-white" : "text-navy"}`} />
+      <span className={`font-display text-2xl font-semibold tracking-tight ${light ? "text-white" : "text-navy"}`}>
+        Dent<span className="text-gold">Ease</span>
+      </span>
     </span>
   );
 }
 
-/* ─── WAVE BACKGROUND ───────────────────────────────────── */
-function WaveBackground() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const mouseRef = useRef({ x: 0.5, y: 0.5 });
+/* ─── COUNT-UP STAT ─────────────────────────────────────── */
+function CountUp({ num, suffix, decimals = 0 }: { num: number; suffix: string; decimals?: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [val, setVal] = useState(0);
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-    let id: number, t = 0;
-    const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
-    resize();
-    window.addEventListener("resize", resize);
-    const onMouse = (e: MouseEvent) => {
-      mouseRef.current = { x: e.clientX / window.innerWidth, y: e.clientY / window.innerHeight };
-    };
-    window.addEventListener("mousemove", onMouse);
-    const draw = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      t += 0.007;
-      const mx = mouseRef.current.x;
-      for (let i = 0; i < 5; i++) {
-        ctx.beginPath();
-        ctx.moveTo(0, canvas.height * 0.5);
-        for (let x = 0; x <= canvas.width; x += 4) {
-          const y = canvas.height * 0.5
-            + Math.sin(x * 0.003 + t + i * 0.8) * (55 + i * 18 + mx * 20)
-            + Math.sin(x * 0.007 + t * 1.3 + i) * 28;
-          ctx.lineTo(x, y);
-        }
-        ctx.lineTo(canvas.width, canvas.height); ctx.lineTo(0, canvas.height); ctx.closePath();
-        ctx.fillStyle = `rgba(99,102,241,${0.035 + i * 0.018})`; ctx.fill();
-      }
-      id = requestAnimationFrame(draw);
-    };
-    draw();
-    return () => { cancelAnimationFrame(id); window.removeEventListener("resize", resize); window.removeEventListener("mousemove", onMouse); };
-  }, []);
-  return <canvas ref={canvasRef} aria-hidden="true" style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", pointerEvents: "none" }} />;
+    const el = ref.current;
+    if (!el) return;
+    let raf = 0;
+    const obs = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      obs.disconnect();
+      const start = performance.now();
+      const dur = 2000;
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / dur, 1);
+        setVal(num * (1 - Math.pow(2, -10 * p))); // ease-out-expo
+        if (p < 1) raf = requestAnimationFrame(tick);
+        else setVal(num);
+      };
+      raf = requestAnimationFrame(tick);
+    }, { threshold: 0.4 });
+    obs.observe(el);
+    return () => { obs.disconnect(); cancelAnimationFrame(raf); };
+  }, [num]);
+  const shown = num >= 1000 ? `${Math.floor(val / 1000)}K` : val.toFixed(decimals);
+  return <span ref={ref}>{shown}{suffix}</span>;
 }
 
-/* ─── MOUSE PARALLAX BACKGROUND ────────────────────────── */
-function MouseParallaxBg() {
+/* ─── BEFORE / AFTER SLIDER ─────────────────────────────── */
+function PaperRecords() {
+  const rows = [
+    ["9:00", "Mrs. Farah — scaling", true],
+    ["9:30", "Ali H. — RCT #36 ??", false],
+    ["10:00", "", false],
+    ["10:15", "Bilal — crown (lab?)", true],
+    ["11:00", "Sana — extraction", false],
+    ["11:30", "call back re: bill", false],
+  ] as const;
+  return (
+    <div className="absolute inset-0 bg-[#ece4cf] p-5 sm:p-8">
+      <div className="relative h-full rounded-md bg-[#fbf6e6] p-4 shadow-[0_8px_30px_rgba(0,0,0,.12)] sm:p-6" style={{ transform: "rotate(-1.2deg)", backgroundImage: "repeating-linear-gradient(#fbf6e6 0 31px, #c9d6e8 31px 32px)" }}>
+        <div className="mb-3 flex items-baseline justify-between border-b-2 border-red-300 pb-2">
+          <span className="font-display text-lg italic text-[#4a3f2a] sm:text-xl">Appointment Register</span>
+          <span className="text-xs text-[#7a6a48]">Tues ??</span>
+        </div>
+        <ul className="space-y-[7px] font-[cursive] text-[13px] text-[#3d4a6b] sm:text-sm">
+          {rows.map(([t, n, struck]) => (
+            <li key={t} className="flex gap-3">
+              <span className="w-12 shrink-0 text-[#7a6a48]">{t}</span>
+              <span className={struck ? "line-through decoration-red-400" : ""}>{n}</span>
+            </li>
+          ))}
+        </ul>
+        <div className="absolute bottom-6 right-4 w-32 rotate-3 bg-[#fde68a] p-3 text-[11px] leading-snug text-[#5b4a12] shadow-md sm:w-40 sm:text-xs" style={{ fontFamily: "cursive" }}>
+          Lab called — Bilal&apos;s crown late again. Find his file!
+        </div>
+        <div className="absolute -top-3 left-1/3 h-6 w-20 rotate-[-4deg] bg-white/60" aria-hidden="true" />
+      </div>
+    </div>
+  );
+}
+
+function DashboardView() {
+  const appts = [
+    ["09:00", "Farah Naveed", "Scaling & polish", "Confirmed"],
+    ["09:30", "Ali Hassan", "Root canal · #36", "In chair"],
+    ["10:15", "Bilal Ahmed", "Crown fitting", "Lab ready"],
+    ["11:00", "Sana Iqbal", "Extraction · #48", "Confirmed"],
+  ];
+  return (
+    <div className="absolute inset-0 bg-navy p-5 sm:p-8">
+      <div className="flex h-full flex-col rounded-xl bg-cream-2 p-4 shadow-2xl sm:p-6">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">Today</p>
+            <p className="font-display text-lg font-semibold text-navy sm:text-xl">Clinic Overview</p>
+          </div>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Synced
+          </span>
+        </div>
+        <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-3">
+          {[["14", "Appointments"], ["3", "Lab cases due"], ["86%", "Chairs booked"]].map(([n, l]) => (
+            <div key={l} className="rounded-lg border border-navy/5 bg-white p-2 sm:p-3">
+              <p className="font-display text-lg font-bold text-navy sm:text-2xl">{n}</p>
+              <p className="text-[9px] text-navy/60 sm:text-[11px]">{l}</p>
+            </div>
+          ))}
+        </div>
+        <ul className="flex-1 space-y-1.5 overflow-hidden sm:space-y-2">
+          {appts.map(([t, n, p, s]) => (
+            <li key={t} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2 text-[11px] sm:text-xs">
+              <span className="w-10 font-semibold text-navy">{t}</span>
+              <span className="flex-1 truncate"><span className="font-medium text-navy">{n}</span> <span className="text-navy/50">· {p}</span></span>
+              <span className="hidden rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-[#8a6d12] sm:inline">{s}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function BeforeAfter() {
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const onMove = (e: MouseEvent) => {
-      if (!ref.current) return;
-      const x = (e.clientX / window.innerWidth - 0.5) * 24;
-      const y = (e.clientY / window.innerHeight - 0.5) * 24;
-      ref.current.style.transform = `translate(${x}px, ${y}px)`;
-    };
-    window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
+  const [pos, setPos] = useState(50);
+  const dragging = useRef(false);
+  const update = useCallback((clientX: number) => {
+    const r = ref.current?.getBoundingClientRect();
+    if (!r) return;
+    setPos(Math.min(100, Math.max(0, ((clientX - r.left) / r.width) * 100)));
   }, []);
   return (
-    <div aria-hidden="true" ref={ref} style={{ position: "absolute", inset: "-40px", transition: "transform 0.12s ease-out", pointerEvents: "none" }}>
-      <div style={{ position: "absolute", top: "15%", left: "10%", width: "320px", height: "320px", borderRadius: "50%", background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, transparent 70%)" }} />
-      <div style={{ position: "absolute", top: "50%", right: "8%", width: "280px", height: "280px", borderRadius: "50%", background: "radial-gradient(circle, rgba(147,197,253,0.18) 0%, transparent 70%)" }} />
-      <div style={{ position: "absolute", bottom: "10%", left: "35%", width: "200px", height: "200px", borderRadius: "50%", background: "radial-gradient(circle, rgba(196,181,253,0.15) 0%, transparent 70%)" }} />
+    <div
+      ref={ref}
+      className="relative aspect-[4/5] w-full touch-none select-none overflow-hidden rounded-2xl shadow-[0_30px_80px_rgba(15,29,61,.18)] sm:aspect-[16/10]"
+      onPointerDown={e => { dragging.current = true; e.currentTarget.setPointerCapture(e.pointerId); update(e.clientX); }}
+      onPointerMove={e => { if (dragging.current) update(e.clientX); }}
+      onPointerUp={() => { dragging.current = false; }}
+      onPointerCancel={() => { dragging.current = false; }}
+    >
+      <DashboardView />
+      <div className="absolute inset-0" style={{ clipPath: `inset(0 ${100 - pos}% 0 0)` }}>
+        <PaperRecords />
+      </div>
+      <span className="pointer-events-none absolute left-4 top-4 rounded-full bg-navy/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-white backdrop-blur">Before</span>
+      <span className="pointer-events-none absolute right-4 top-4 rounded-full bg-gold px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-navy">With DentEase</span>
+      <div className="pointer-events-none absolute inset-y-0 w-[3px] -translate-x-1/2 bg-gold shadow-[0_0_20px_rgba(212,175,55,.7)]" style={{ left: `${pos}%` }} />
+      <button
+        type="button"
+        role="slider"
+        aria-label="Compare paper records with the DentEase dashboard"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={Math.round(pos)}
+        onKeyDown={e => {
+          if (e.key === "ArrowLeft") setPos(p => Math.max(0, p - 5));
+          if (e.key === "ArrowRight") setPos(p => Math.min(100, p + 5));
+        }}
+        className="absolute top-1/2 flex h-12 w-12 -translate-x-1/2 -translate-y-1/2 cursor-ew-resize items-center justify-center rounded-full border-2 border-white bg-gold text-navy shadow-xl transition-transform duration-300 hover:scale-110 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-gold/40"
+        style={{ left: `${pos}%` }}
+      >
+        <ArrowLeftRight className="h-5 w-5" />
+      </button>
     </div>
   );
 }
 
-/* ─── FEATURE SLIDER ────────────────────────────────────── */
-function FeatureSlider() {
-  const [active, setActive] = useState(0);
-  const total = FEATURES.length;
-  const prev = () => setActive(i => (i - 1 + total) % total);
-  const next = () => setActive(i => (i + 1) % total);
-  const gi = (o: number) => (active + o + total) % total;
-
+/* ─── FAQ ITEM (accordion-down / accordion-up) ───────────── */
+function FaqItem({ q, a, open, onToggle }: { q: string; a: string; open: boolean; onToggle: () => void }) {
+  const inner = useRef<HTMLDivElement>(null);
+  const [h, setH] = useState(0);
+  const [touched, setTouched] = useState(false);
+  useEffect(() => { if (inner.current) setH(inner.current.scrollHeight); }, [open, a]);
+  const anim = !touched ? "" : open ? "animate-accordion-down" : "animate-accordion-up";
   return (
-    <div>
-      {/* Mobile */}
-      <div className="md:hidden">
-        <div style={{ borderRadius: "20px", overflow: "hidden", boxShadow: "0 12px 40px rgba(10,22,40,0.12)", background: "#fff", marginBottom: "20px", transition: "all 0.4s cubic-bezier(0.22,1,0.36,1)" }}>
-          <div style={{ height: "220px", overflow: "hidden", position: "relative" }}>
-            <img src={FEATURES[active].img} alt={FEATURES[active].title} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s cubic-bezier(0.22,1,0.36,1)", transform: "scale(1.04)" }} loading="lazy" />
-            <div style={{ position: "absolute", top: "12px", left: "12px", background: "rgba(255,255,255,0.92)", borderRadius: "999px", padding: "5px 12px", fontSize: "11px", fontWeight: 600, color: "#0A1628" }}>{FEATURES[active].tag}</div>
-          </div>
-          <div style={{ padding: "20px" }}>
-            <h3 style={{ fontSize: "18px", fontWeight: 700, color: "#0A1628", marginBottom: "8px" }}>{FEATURES[active].title}</h3>
-            <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.7 }}>{FEATURES[active].desc}</p>
-          </div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px" }}>
-          <button onClick={prev} aria-label="Previous" style={{ width: "40px", height: "40px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
-          </button>
-          <div style={{ display: "flex", gap: "6px" }}>
-            {FEATURES.map((_, i) => <button key={i} onClick={() => setActive(i)} aria-label={`Slide ${i + 1}`} style={{ width: i === active ? "20px" : "7px", height: "7px", borderRadius: "999px", border: "none", background: i === active ? "#0A1628" : "rgba(10,22,40,0.2)", cursor: "pointer", transition: "all 0.35s cubic-bezier(0.22,1,0.36,1)", padding: 0 }} />)}
-          </div>
-          <button onClick={next} aria-label="Next" style={{ width: "40px", height: "40px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.2s" }}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-          </button>
-        </div>
-      </div>
-
-      {/* Desktop */}
-      <div className="hidden md:block">
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", minHeight: "420px" }}>
-          {/* Left */}
-          <div onClick={prev} style={{ width: "200px", height: "300px", borderRadius: "20px", overflow: "hidden", cursor: "pointer", opacity: 0.45, transform: "scale(0.88) translateX(10px)", transition: "all 0.5s cubic-bezier(0.22,1,0.36,1)", flexShrink: 0, position: "relative" }}
-            onMouseOver={e => { e.currentTarget.style.opacity = "0.65"; e.currentTarget.style.transform = "scale(0.91) translateX(10px)"; }}
-            onMouseOut={e => { e.currentTarget.style.opacity = "0.45"; e.currentTarget.style.transform = "scale(0.88) translateX(10px)"; }}>
-            <img src={FEATURES[gi(-1)].img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-            <div style={{ position: "absolute", inset: 0, background: "rgba(10,22,40,0.25)" }} />
-          </div>
-          {/* Center */}
-          <div style={{ width: "390px", borderRadius: "24px", overflow: "hidden", boxShadow: "0 28px 70px rgba(10,22,40,0.18)", transition: "all 0.5s cubic-bezier(0.22,1,0.36,1)", flexShrink: 0, background: "#fff" }}>
-            <div style={{ height: "250px", overflow: "hidden", position: "relative" }}>
-              <img src={FEATURES[active].img} alt={FEATURES[active].title} style={{ width: "100%", height: "100%", objectFit: "cover", transition: "transform 0.6s cubic-bezier(0.22,1,0.36,1)", transform: "scale(1.06)" }} loading="lazy" />
-              <div style={{ position: "absolute", top: "16px", left: "16px", background: "rgba(255,255,255,0.92)", backdropFilter: "blur(8px)", borderRadius: "999px", padding: "6px 14px", fontSize: "12px", fontWeight: 600, color: "#0A1628" }}>{FEATURES[active].tag}</div>
-            </div>
-            <div style={{ padding: "24px" }}>
-              <h3 style={{ fontSize: "20px", fontWeight: 700, color: "#0A1628", marginBottom: "10px", letterSpacing: "-0.5px" }}>{FEATURES[active].title}</h3>
-              <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.7 }}>{FEATURES[active].desc}</p>
-            </div>
-          </div>
-          {/* Right */}
-          <div onClick={next} style={{ width: "200px", height: "300px", borderRadius: "20px", overflow: "hidden", cursor: "pointer", opacity: 0.45, transform: "scale(0.88) translateX(-10px)", transition: "all 0.5s cubic-bezier(0.22,1,0.36,1)", flexShrink: 0, position: "relative" }}
-            onMouseOver={e => { e.currentTarget.style.opacity = "0.65"; e.currentTarget.style.transform = "scale(0.91) translateX(-10px)"; }}
-            onMouseOut={e => { e.currentTarget.style.opacity = "0.45"; e.currentTarget.style.transform = "scale(0.88) translateX(-10px)"; }}>
-            <img src={FEATURES[gi(1)].img} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} loading="lazy" />
-            <div style={{ position: "absolute", inset: 0, background: "rgba(10,22,40,0.25)" }} />
-          </div>
-        </div>
-        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "16px", marginTop: "32px" }}>
-          <button onClick={prev} aria-label="Previous"
-            style={{ width: "44px", height: "44px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.25s" }}
-            onMouseOver={e => { e.currentTarget.style.background = "#0A1628"; (e.currentTarget.querySelector("svg") as SVGSVGElement)?.setAttribute("stroke", "#fff"); }}
-            onMouseOut={e => { e.currentTarget.style.background = "#fff"; (e.currentTarget.querySelector("svg") as SVGSVGElement)?.setAttribute("stroke", "#0A1628"); }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7" /></svg>
-          </button>
-          <div style={{ display: "flex", gap: "6px" }}>
-            {FEATURES.map((_, i) => <button key={i} onClick={() => setActive(i)} aria-label={`Slide ${i + 1}`} style={{ width: i === active ? "24px" : "8px", height: "8px", borderRadius: "999px", border: "none", background: i === active ? "#0A1628" : "rgba(10,22,40,0.2)", cursor: "pointer", transition: "all 0.35s cubic-bezier(0.22,1,0.36,1)", padding: 0 }} />)}
-          </div>
-          <button onClick={next} aria-label="Next"
-            style={{ width: "44px", height: "44px", borderRadius: "50%", border: "1.5px solid rgba(10,22,40,0.15)", background: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", transition: "all 0.25s" }}
-            onMouseOver={e => { e.currentTarget.style.background = "#0A1628"; (e.currentTarget.querySelector("svg") as SVGSVGElement)?.setAttribute("stroke", "#fff"); }}
-            onMouseOut={e => { e.currentTarget.style.background = "#fff"; (e.currentTarget.querySelector("svg") as SVGSVGElement)?.setAttribute("stroke", "#0A1628"); }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-          </button>
-        </div>
-        <p style={{ textAlign: "center", marginTop: "14px", fontSize: "13px", color: "#9CA3AF" }}>{active + 1} / {total} — {FEATURES[active].title}</p>
+    <div className="border-b border-navy/10 last:border-b-0">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => { setTouched(true); onToggle(); }}
+        className="flex w-full items-center justify-between gap-6 px-6 py-5 text-left transition-colors duration-300 hover:bg-cream-2 sm:px-8"
+      >
+        <span className="text-[15px] font-semibold text-navy sm:text-base">{q}</span>
+        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-all duration-500 ${open ? "rotate-180 border-gold bg-gold text-navy" : "border-navy/15 text-navy"}`}>
+          <ChevronDown className="h-4 w-4" />
+        </span>
+      </button>
+      <div
+        className={`overflow-hidden ${anim}`}
+        style={{ "--accordion-height": `${h}px`, height: touched ? undefined : open ? "auto" : 0 } as CSSProperties}
+      >
+        <div ref={inner} className="px-6 pb-6 text-[15px] leading-relaxed text-navy/70 sm:px-8">{a}</div>
       </div>
     </div>
   );
 }
 
-/* ─── STAT CARD ─────────────────────────────────────────── */
-function StatCard({ num, suffix, label, active }: { num: number; suffix: string; label: string; active: boolean }) {
-  const val = useCountUp(num, active);
+/* ─── DEMO REQUEST (multi-step + live summary) ───────────── */
+function DemoForm() {
+  const [step, setStep] = useState(0);
+  const [path, setPath] = useState<string | null>(null);
+  const [size, setSize] = useState<string | null>(null);
+  const [needs, setNeeds] = useState<string[]>([]);
+  const [name, setName] = useState("");
+  const [clinic, setClinic] = useState("");
+  const [sending, setSending] = useState(false);
+
+  const steps = ["Choose plan", "Clinic size", "Features needed", "Your details"];
+  const canNext = [!!path, !!size, needs.length > 0, name.trim().length > 1][step];
+  const pathTitle = PATHS.find(p => p.id === path)?.title;
+
+  const submit = () => {
+    if (!canNext) return;
+    setSending(true);
+    const msg = [
+      "Hello DentEase team!",
+      `Name: ${name}`,
+      clinic && `Clinic: ${clinic}`,
+      `Looking for: ${pathTitle}`,
+      `Clinic size: ${size}`,
+      `Interested in: ${needs.join(", ")}`,
+    ].filter(Boolean).join("\n");
+    window.open(`${WHATSAPP}?text=${encodeURIComponent(msg)}`, "_blank", "noopener,noreferrer");
+    setTimeout(() => setSending(false), 1200);
+  };
+
+  const choice = (active: boolean) =>
+    `rounded-xl border-2 p-4 text-left transition-all duration-500 hover:-translate-y-0.5 ${active ? "border-gold bg-gold/10 shadow-[0_10px_30px_rgba(212,175,55,.18)]" : "border-navy/10 bg-white hover:border-navy/25"}`;
+
   return (
-    <div style={{ background: "#fff", borderRadius: "14px", padding: "16px 18px", border: "1px solid rgba(99,102,241,0.1)", transition: "transform 0.3s ease, box-shadow 0.3s ease" }}
-      onMouseOver={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 32px rgba(10,22,40,0.1)"; }}
-      onMouseOut={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}>
-      <div style={{ fontSize: "24px", fontWeight: 800, color: "#0A1628", letterSpacing: "-1px" }}>
-        {num >= 1000 ? Math.floor(val / 1000) + "K" : val}{suffix}
+    <div className="grid overflow-hidden rounded-3xl bg-white shadow-[0_30px_80px_rgba(15,29,61,.12)] lg:grid-cols-[1.5fr_1fr]">
+      <div className="p-6 sm:p-10">
+        {/* Step indicator */}
+        <ol className="mb-8 flex flex-wrap gap-x-5 gap-y-2">
+          {steps.map((s, i) => (
+            <li key={s} className={`flex items-center gap-2 text-xs font-semibold transition-colors duration-500 ${i <= step ? "text-navy" : "text-navy/35"}`}>
+              <span className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] transition-all duration-500 ${i < step ? "bg-gold text-navy" : i === step ? "bg-navy text-white" : "bg-navy/10 text-navy/50"}`}>
+                {i < step ? <Check className="h-3.5 w-3.5" /> : i + 1}
+              </span>
+              {s}
+            </li>
+          ))}
+        </ol>
+
+        <div key={step} className="animate-fade-up min-h-[230px]">
+          {step === 0 && (
+            <div className="grid gap-3 sm:grid-cols-3">
+              {PATHS.map(p => (
+                <button key={p.id} type="button" onClick={() => setPath(p.id)} className={choice(path === p.id)}>
+                  <p className="font-semibold text-navy">{p.title}</p>
+                  <p className="mt-1 text-sm text-navy/60">{p.desc}</p>
+                </button>
+              ))}
+            </div>
+          )}
+          {step === 1 && (
+            <div className="grid grid-cols-2 gap-3">
+              {SIZES.map(s => (
+                <button key={s} type="button" onClick={() => setSize(s)} className={choice(size === s)}>
+                  <Building2 className="mb-2 h-5 w-5 text-gold" />
+                  <p className="font-semibold text-navy">{s}</p>
+                </button>
+              ))}
+            </div>
+          )}
+          {step === 2 && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              {NEEDS.map(n => {
+                const on = needs.includes(n);
+                return (
+                  <button key={n} type="button" aria-pressed={on} onClick={() => setNeeds(v => on ? v.filter(x => x !== n) : [...v, n])} className={`${choice(on)} flex items-center gap-3`}>
+                    <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors duration-300 ${on ? "border-gold bg-gold text-navy" : "border-navy/20"}`}>
+                      {on && <Check className="h-3 w-3" />}
+                    </span>
+                    <span className="font-medium text-navy">{n}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          {step === 3 && (
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-navy/60">Your name *</span>
+                <input value={name} onChange={e => setName(e.target.value)} placeholder="Dr. Ayesha Malik" className="w-full rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-navy outline-none transition-colors duration-300 focus:border-gold" />
+              </label>
+              <label className="block">
+                <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-navy/60">Clinic name</span>
+                <input value={clinic} onChange={e => setClinic(e.target.value)} placeholder="Bright Smile Dental" className="w-full rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-navy outline-none transition-colors duration-300 focus:border-gold" />
+              </label>
+              <p className="text-sm text-navy/60 sm:col-span-2">We&apos;ll open WhatsApp with your request filled in, so you can send it to our team in one tap.</p>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-8 flex items-center justify-between gap-4">
+          <button type="button" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0} className="text-sm font-semibold text-navy/60 transition-colors duration-300 hover:text-navy disabled:invisible">
+            ← Back
+          </button>
+          {step < steps.length - 1 ? (
+            <button type="button" disabled={!canNext} onClick={() => setStep(s => s + 1)} className="inline-flex items-center gap-2 rounded-full bg-navy px-7 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-30">
+              Continue <ArrowRight className="h-4 w-4" />
+            </button>
+          ) : (
+            <button type="button" disabled={!canNext || sending} onClick={submit} className="btn-gold inline-flex items-center gap-2 rounded-full bg-gold px-7 py-3 text-sm font-semibold text-navy transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(212,175,55,.4)] disabled:cursor-not-allowed disabled:opacity-40">
+              {sending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+              {sending ? "Opening WhatsApp…" : "Send request"}
+            </button>
+          )}
+        </div>
       </div>
-      <div style={{ fontSize: "12px", color: "#6B7280", marginTop: "3px" }}>{label}</div>
+
+      {/* Live summary */}
+      <aside className="relative overflow-hidden bg-navy p-6 text-white sm:p-10">
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 animate-float-up rounded-full border border-gold/20" aria-hidden="true" />
+        <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold">Your summary</p>
+        <h3 className="mt-2 font-display text-2xl font-semibold">Tailored for your clinic</h3>
+        <dl className="mt-8 space-y-5 text-sm">
+          {[
+            ["Plan", pathTitle],
+            ["Clinic size", size],
+            ["Features", needs.length ? needs.join(", ") : null],
+            ["Contact", name ? `${name}${clinic ? ` · ${clinic}` : ""}` : null],
+          ].map(([k, v]) => (
+            <div key={k} className="border-b border-white/10 pb-4">
+              <dt className="text-xs uppercase tracking-wider text-white/45">{k}</dt>
+              <dd key={v ?? "empty"} className={`mt-1 animate-fade-in ${v ? "text-white" : "text-shimmer"}`}>{v ?? "Waiting for your choice…"}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-6 flex items-center gap-2 text-xs text-white/50"><Clock className="h-3.5 w-3.5 text-gold" /> Our team usually replies within a few hours.</p>
+      </aside>
     </div>
   );
 }
 
 /* ─── MAIN PAGE ─────────────────────────────────────────── */
 export default function LandingPage() {
-  const [navScrolled, setNavScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [showThankyou, setShowThankyou] = useState(false);
-  const [heroReady, setHeroReady] = useState(false);
   const [reviewName, setReviewName] = useState("");
   const [reviewClinic, setReviewClinic] = useState("");
   const [reviewText, setReviewText] = useState("");
@@ -273,23 +439,19 @@ export default function LandingPage() {
   const [reviewWebsite, setReviewWebsite] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState("");
-  const [openFaq, setOpenFaq] = useState<number | null>(null);
-  const statsRef = useRef<HTMLDivElement>(null);
-  const [statsActive, setStatsActive] = useState(false);
 
   useEffect(() => {
-    // Hero entrance
-    const t1 = setTimeout(() => setHeroReady(true), 80);
-    const onScroll = () => setNavScrolled(window.scrollY > 20);
-    window.addEventListener("scroll", onScroll);
-    // Stats observer
-    const statsEl = statsRef.current;
-    if (statsEl) {
-      const obs = new IntersectionObserver(([e]) => { if (e.isIntersecting) { setStatsActive(true); obs.disconnect(); } }, { threshold: 0.3 });
-      obs.observe(statsEl);
-      return () => { clearTimeout(t1); window.removeEventListener("scroll", onScroll); obs.disconnect(); };
-    }
-    return () => { clearTimeout(t1); window.removeEventListener("scroll", onScroll); };
+    const onScroll = () => setScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    // Scroll-triggered reveals for every [data-reveal] element on the page
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (e.isIntersecting) { e.target.setAttribute("data-shown", ""); obs.unobserve(e.target); }
+      });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    document.querySelectorAll("[data-reveal]").forEach(el => obs.observe(el));
+    return () => { window.removeEventListener("scroll", onScroll); obs.disconnect(); };
   }, []);
 
   const submitReview = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -318,377 +480,343 @@ export default function LandingPage() {
     }
   };
 
+  const goldBtn = "btn-gold inline-flex items-center justify-center gap-2 rounded-full bg-gold px-7 py-3.5 text-sm font-semibold text-navy transition-all duration-500 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(212,175,55,.45)]";
+  const ghostBtn = "inline-flex items-center justify-center gap-2 rounded-full border border-white/35 px-7 py-3.5 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:border-gold hover:text-gold";
+  const sectionHead = "mt-4 font-display text-[clamp(2rem,4.5vw,3.25rem)] font-semibold leading-[1.1] tracking-tight";
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
-        *{margin:0;padding:0;box-sizing:border-box;}
-        html{scroll-behavior:smooth;}
-        body{font-family:'Plus Jakarta Sans',sans-serif;background:#EEF2FF;color:#0A1628;overflow-x:hidden;}
-        .nav-link{color:#0A1628;font-size:14px;font-weight:500;text-decoration:none;transition:opacity 0.2s;}
-        .nav-link:hover{opacity:0.55;}
-        .faq-border{border-bottom:1px solid rgba(10,22,40,0.07);}
-        .faq-border:last-child{border-bottom:none;}
-        @keyframes fadeSlideUp{from{opacity:0;transform:translateY(32px);}to{opacity:1;transform:translateY(0);}}
-        @keyframes scaleIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
-        @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-        @keyframes imgZoom{from{transform:scale(1.12);}to{transform:scale(1.04);}}
-        .hero-img{animation:imgZoom 1.2s cubic-bezier(0.22,1,0.36,1) forwards;}
-        .scale-in{animation:scaleIn 0.32s cubic-bezier(0.22,1,0.36,1) forwards;}
-        @media(max-width:767px){
-          .hide-mobile{display:none!important;}
-          .mobile-grid-1{grid-template-columns:1fr!important;}
-          .md\\:hidden{display:block!important;}
-          .hidden.md\\:block{display:none!important;}
-        }
-        @media(min-width:768px){
-          .md\\:hidden{display:none!important;}
-          .hidden.md\\:block{display:block!important;}
-        }
-        .cta-btn{background:#0A1628;color:#fff;border-radius:999px;padding:16px 36px;font-size:16px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:all 0.3s cubic-bezier(0.22,1,0.36,1);box-shadow:0 4px 24px rgba(10,22,40,0.15);}
-        .cta-btn:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 18px 48px rgba(10,22,40,0.28);}
-        .cta-btn-white{background:#fff;color:#0A1628;border-radius:999px;padding:16px 40px;font-size:16px;font-weight:700;border:none;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:all 0.3s cubic-bezier(0.22,1,0.36,1);}
-        .cta-btn-white:hover{transform:translateY(-4px) scale(1.02);box-shadow:0 18px 48px rgba(255,255,255,0.25);}
-        .nav-btn{background:#0A1628;color:#fff;border-radius:999px;padding:10px 22px;font-size:14px;font-weight:600;border:none;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.25s;}
-        .nav-btn:hover{opacity:0.82;transform:translateY(-1px);}
-      `}</style>
+    <div className="de-landing overflow-x-hidden">
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      {/* Fonts are only needed on the landing page, so they load here instead of the root layout */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link
+        rel="stylesheet"
+        precedence="default"
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap"
+      />
 
       {/* THANK YOU POPUP */}
       {showThankyou && (
-        <div role="dialog" aria-modal="true" style={{ position: "fixed", inset: 0, zIndex: 1000, background: "rgba(10,22,40,0.6)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", padding: "16px" }}>
-          <div className="scale-in" style={{ background: "#fff", borderRadius: "24px", padding: "44px 32px", maxWidth: "380px", width: "100%", textAlign: "center", boxShadow: "0 40px 100px rgba(10,22,40,0.25)" }}>
-            <div style={{ width: "68px", height: "68px", borderRadius: "50%", background: "#DCFCE7", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px" }}>
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[1000] flex items-center justify-center bg-navy/70 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="w-full max-w-sm animate-scale-in rounded-3xl bg-white p-10 text-center shadow-2xl">
+            <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-gold/15">
+              <Check className="h-8 w-8 text-gold" />
             </div>
-            <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "32px", objectFit: "contain", margin: "0 auto 16px", display: "block" }} />
-            <h3 style={{ fontSize: "26px", fontWeight: 800, color: "#0A1628", marginBottom: "8px", fontStyle: "italic" }}>Thank You!</h3>
-            <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.7, marginBottom: "28px" }}>Your review has been submitted successfully. We really appreciate your feedback!</p>
-            <button onClick={() => setShowThankyou(false)} style={{ padding: "13px 36px", borderRadius: "999px", background: "#0A1628", color: "#fff", border: "none", fontWeight: 700, fontSize: "14px", cursor: "pointer", transition: "all 0.2s" }}
-              onMouseOver={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(10,22,40,0.2)"; }} onMouseOut={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
-              Back to Home
+            <h3 className="font-display text-3xl font-semibold text-navy">Thank you</h3>
+            <p className="mt-3 text-sm leading-relaxed text-navy/65">Your review has been submitted. We truly appreciate you taking the time to share your experience.</p>
+            <button onClick={() => setShowThankyou(false)} className="mt-8 rounded-full bg-navy px-8 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg">
+              Back to page
             </button>
           </div>
         </div>
       )}
 
-      {/* WHATSAPP FLOAT */}
-      <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"
-        style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 999, width: "54px", height: "54px", borderRadius: "50%", background: "#25D366", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 24px rgba(37,211,102,0.45)", transition: "transform 0.25s cubic-bezier(0.22,1,0.36,1)" }}
-        onMouseOver={e => e.currentTarget.style.transform = "scale(1.12) translateY(-2px)"}
-        onMouseOut={e => e.currentTarget.style.transform = "scale(1) translateY(0)"}>
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="white" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z" /></svg>
+      {/* LIVE CHAT / WHATSAPP */}
+      <a href={WHATSAPP} target="_blank" rel="noreferrer" aria-label="Chat with DentEase on WhatsApp"
+        className="group fixed bottom-5 right-5 z-[999] flex items-center gap-3 rounded-full bg-navy py-2 pl-2 pr-5 text-white shadow-[0_14px_40px_rgba(15,29,61,.35)] ring-1 ring-gold/30 transition-all duration-500 hover:-translate-y-1">
+        <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gold text-navy">
+          <MessageCircle className="h-5 w-5" />
+          <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex h-3.5 w-3.5 animate-pulse rounded-full border-2 border-navy bg-emerald-500" />
+          </span>
+        </span>
+        <span className="hidden text-sm font-semibold sm:block">Live support</span>
       </a>
 
       {/* NAVBAR */}
-      <nav role="navigation" aria-label="Main navigation" style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 50, background: "rgba(255,255,255,0.96)", backdropFilter: "blur(20px)", borderBottom: navScrolled ? "1px solid rgba(10,22,40,0.07)" : "none", boxShadow: navScrolled ? "0 2px 24px rgba(10,22,40,0.07)" : "none", transition: "all 0.3s ease" }}>
-        <div style={{ width: "100%", maxWidth: "1200px", margin: "0 auto", padding: "10px 24px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Link href="/" aria-label="DentEase Home">
-            <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "56px", objectFit: "contain", display: "block", background: "none", transition: "transform 0.2s" }}
-              onMouseOver={e => e.currentTarget.style.transform = "scale(1.03)"} onMouseOut={e => e.currentTarget.style.transform = "scale(1)"} />
-          </Link>
-          <div className="hide-mobile" style={{ display: "flex", alignItems: "center", gap: "36px" }}>
-            {[["#features", "Features"], ["#how-it-works", "How it works"], ["#reviews", "Reviews"], ["#faq", "FAQ"]].map(([href, label]) => (
-              <a key={label} href={href} className="nav-link">{label}</a>
+      <nav aria-label="Main navigation" className={`sticky top-0 z-50 transition-all duration-500 ${scrolled ? "bg-navy/95 shadow-[0_10px_30px_rgba(0,0,0,.25)] backdrop-blur-md" : "bg-navy"}`}>
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
+          <Link href="/" aria-label="DentEase home"><Wordmark /></Link>
+          <div className="hidden items-center gap-9 lg:flex">
+            {NAV.map(([href, label]) => (
+              <a key={href} href={href} className="relative text-sm font-medium text-white/75 transition-colors duration-300 after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-full after:origin-left after:scale-x-0 after:bg-gold after:transition-transform after:duration-500 hover:text-white hover:after:scale-x-100">
+                {label}
+              </a>
             ))}
           </div>
-          <div className="hide-mobile" style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-            <a href="tel:+923105913101" className="nav-link" style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "5px" }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2A19.79 19.79 0 0 1 11.61 19a19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 3 3.18 2 2 0 0 1 4.11 1h3a2 2 0 0 1 2 1.72 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z" /></svg>
-              +92 310 5913101
-            </a>
-            <Link href="/login"><button className="nav-btn">Get Started Free <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10" /></svg></button></Link>
+          <div className="hidden items-center gap-5 lg:flex">
+            <Link href="/login" className="inline-flex items-center gap-1.5 text-sm font-medium text-white/75 transition-colors duration-300 hover:text-gold">
+              <LogIn className="h-4 w-4" /> Login
+            </Link>
+            <a href="#demo" className={goldBtn.replace("px-7 py-3.5", "px-5 py-2.5")}>Book a demo</a>
           </div>
-          <button className="md:hidden" onClick={() => setMobileMenu(!mobileMenu)} aria-label={mobileMenu ? "Close menu" : "Open menu"} style={{ background: "none", border: "none", cursor: "pointer", padding: "4px" }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A1628" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
-              {mobileMenu ? <><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></> : <><line x1="3" y1="6" x2="21" y2="6" /><line x1="3" y1="12" x2="21" y2="12" /><line x1="3" y1="18" x2="21" y2="18" /></>}
-            </svg>
+          <button type="button" className="text-white lg:hidden" onClick={() => setMobileMenu(v => !v)} aria-label={mobileMenu ? "Close menu" : "Open menu"} aria-expanded={mobileMenu}>
+            {mobileMenu ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
         </div>
         {mobileMenu && (
-          <div style={{ padding: "14px 24px 20px", borderTop: "1px solid rgba(10,22,40,0.06)", background: "#fff", display: "flex", flexDirection: "column", gap: "14px", animation: "fadeSlideUp 0.3s ease" }}>
-            {[["features", "Features"], ["how-it-works", "How it works"], ["reviews", "Reviews"], ["faq", "FAQ"]].map(([id, label]) => (
-              <a key={id} href={`#${id}`} className="nav-link" style={{ padding: "6px 0", borderBottom: "1px solid rgba(10,22,40,0.05)" }} onClick={() => setMobileMenu(false)}>{label}</a>
+          <div className="animate-fade-in border-t border-white/10 bg-navy px-4 pb-6 pt-2 lg:hidden">
+            {NAV.map(([href, label]) => (
+              <a key={href} href={href} onClick={() => setMobileMenu(false)} className="block border-b border-white/5 py-3 text-white/80">{label}</a>
             ))}
-            <a href="tel:+923105913101" className="nav-link" style={{ padding: "6px 0" }}>📞 +92 310 5913101</a>
-            <Link href="/login"><button style={{ width: "100%", padding: "13px", borderRadius: "999px", fontSize: "14px", fontWeight: 700, color: "#fff", background: "#0A1628", border: "none", cursor: "pointer" }}>Get Started Free</button></Link>
+            <div className="mt-5 flex flex-col gap-3">
+              <Link href="/login" className={ghostBtn}><LogIn className="h-4 w-4" /> Login</Link>
+              <a href="#demo" onClick={() => setMobileMenu(false)} className={goldBtn}>Book a demo</a>
+            </div>
           </div>
         )}
       </nav>
 
       <main>
         {/* ── HERO ── */}
-        <section aria-label="Hero" style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", paddingTop: "80px", background: "linear-gradient(160deg,#dde8ff 0%,#e8eeff 40%,#d8e4ff 100%)", position: "relative", overflow: "hidden" }}>
-          <WaveBackground />
-          <MouseParallaxBg />
-          <div style={{ position: "relative", zIndex: 1, maxWidth: "860px", margin: "0 auto", padding: "40px 20px", textAlign: "center" }}>
-            {/* Badge */}
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "8px", borderRadius: "999px", padding: "8px 18px", marginBottom: "28px", background: "rgba(255,255,255,0.75)", border: "1px solid rgba(10,22,40,0.1)", backdropFilter: "blur(10px)", opacity: heroReady ? 1 : 0, transform: heroReady ? "translateY(0)" : "translateY(20px)", transition: "opacity 0.7s ease 0.1s, transform 0.7s cubic-bezier(0.22,1,0.36,1) 0.1s" }}>
-              <span style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#22C55E", display: "inline-block" }} aria-hidden="true" />
-              <span style={{ fontSize: "13px", fontWeight: 500, color: "#0A1628" }}>Now accepting new clinics worldwide</span>
+        <section aria-label="Hero" className="relative flex min-h-[calc(100svh-72px)] items-center overflow-hidden bg-navy">
+          <div className="absolute inset-0 animate-fade-in">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/images/patient-records.webp" alt="" className="h-full w-full animate-ken-burns object-cover" />
+          </div>
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,29,61,.82)_0%,rgba(15,29,61,.72)_45%,rgba(15,29,61,.96)_100%)]" aria-hidden="true" />
+          <div className="pointer-events-none absolute left-[8%] top-[22%] hidden h-24 w-24 animate-float-up rounded-full border border-gold/30 md:block" aria-hidden="true" />
+          <div className="pointer-events-none absolute bottom-[18%] right-[10%] hidden h-3 w-3 animate-float-up rounded-full bg-gold md:block" style={{ animationDelay: "1s" }} aria-hidden="true" />
+
+          <div className="relative mx-auto w-full max-w-4xl px-4 py-24 text-center sm:px-6">
+            <LogoMark draw className="mx-auto mb-8 h-20 w-20 text-white sm:h-24 sm:w-24" />
+            <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
+              <Eyebrow light>Dental clinic management software</Eyebrow>
             </div>
-            {/* H1 */}
-            <h1 style={{ fontSize: "clamp(36px, 7vw, 84px)", fontWeight: 800, lineHeight: 1.05, color: "#0A1628", letterSpacing: "-2px", marginBottom: "24px", opacity: heroReady ? 1 : 0, transform: heroReady ? "translateY(0)" : "translateY(32px)", transition: "opacity 0.8s ease 0.2s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.2s" }}>
-              Smarter way to <AnimatedWord words={["manage", "grow", "run", "track"]} />
-              <br />your dental clinic
+            <h1 className="mt-6 animate-fade-up text-[clamp(2.5rem,7vw,5rem)] font-semibold leading-[1.05] tracking-tight text-white" style={{ animationDelay: "350ms" }}>
+              Run your practice with <span className="text-shimmer italic">quiet confidence</span>
             </h1>
-            {/* Sub */}
-            <p style={{ fontSize: "clamp(15px, 2vw, 18px)", color: "#4B5563", lineHeight: 1.7, maxWidth: "500px", margin: "0 auto 40px", opacity: heroReady ? 1 : 0, transform: heroReady ? "translateY(0)" : "translateY(24px)", transition: "opacity 0.8s ease 0.35s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.35s" }}>
-              Patients, appointments, lab records and revenue — all in one beautifully simple platform. Free to use. No paperwork.
+            <p className="mx-auto mt-6 max-w-2xl animate-fade-up text-base font-light leading-relaxed text-white/75 sm:text-lg" style={{ animationDelay: "500ms" }}>
+              Appointments, patient records, billing and staff schedules brought together in one elegant, cloud-based workspace, built for the way modern dental clinics operate.
             </p>
-            {/* CTA */}
-            <div style={{ opacity: heroReady ? 1 : 0, transform: heroReady ? "translateY(0)" : "translateY(20px)", transition: "opacity 0.8s ease 0.5s, transform 0.8s cubic-bezier(0.22,1,0.36,1) 0.5s" }}>
-              <Link href="/login"><button className="cta-btn">
-                Get started free — it takes 30 seconds
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10" /></svg>
-              </button></Link>
+            <div className="mt-10 flex animate-fade-up flex-col items-center justify-center gap-3 sm:flex-row" style={{ animationDelay: "650ms" }}>
+              <Link href="/login" className={goldBtn}>Start free today <ArrowRight className="h-4 w-4" /></Link>
+              <a href="#demo" className={ghostBtn}>Book a free demo</a>
             </div>
-            {/* Trust badges */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "24px", marginTop: "36px", flexWrap: "wrap", opacity: heroReady ? 1 : 0, transition: "opacity 0.8s ease 0.65s" }}>
-              {["500+ clinics", "No credit card", "Free forever"].map(t => (
-                <div key={t} style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5" /></svg>
-                  <span style={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>{t}</span>
-                </div>
-              ))}
+            <div className="mt-12 flex animate-fade-in flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm text-white/70" style={{ animationDelay: "900ms" }}>
+              {[[Cloud, "Cloud-based"], [Lock, "Secure & encrypted"], [CalendarCheck, "Free demo"]].map(([Icon, label], i) => {
+                const I = Icon as typeof Cloud;
+                return (
+                  <span key={label as string} className="flex items-center gap-2">
+                    {i > 0 && <span className="mr-4 hidden h-1 w-1 rounded-full bg-gold sm:block" aria-hidden="true" />}
+                    <I className="h-4 w-4 text-gold" /> {label as string}
+                  </span>
+                );
+              })}
             </div>
+          </div>
+        </section>
+
+        {/* ── STATS ── */}
+        <section aria-label="DentEase in numbers" className="bg-navy-2">
+          <div className="mx-auto grid max-w-7xl grid-cols-2 px-4 sm:px-6 lg:grid-cols-4">
+            {STATS.map((s, i) => (
+              <div key={s.label} {...rv(i * 120)} className={`px-4 py-10 text-center sm:py-14 ${i % 2 === 1 ? "border-l border-gold/20" : ""} ${i >= 2 ? "border-t border-gold/20 lg:border-t-0" : ""} ${i === 2 ? "lg:border-l" : ""}`}>
+                <p className="font-display text-4xl font-semibold text-gold sm:text-5xl">
+                  <CountUp num={s.num} suffix={s.suffix} decimals={s.decimals} />
+                </p>
+                <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-white/60">{s.label}</p>
+              </div>
+            ))}
           </div>
         </section>
 
         {/* ── FEATURES ── */}
-        <section id="features" aria-label="Features" style={{ background: "#EEF2FF", padding: "80px 0", overflow: "hidden" }}>
-          <div style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 20px" }}>
-            <Reveal><div style={{ textAlign: "center", marginBottom: "10px" }}><span style={{ fontSize: "12px", fontWeight: 700, color: "#6366F1", letterSpacing: "1.5px", textTransform: "uppercase" }}>+ OUR FEATURES</span></div></Reveal>
-            <Reveal delay={80}>
-              <h2 style={{ textAlign: "center", fontSize: "clamp(26px, 5vw, 52px)", fontWeight: 800, color: "#0A1628", letterSpacing: "-1.5px", lineHeight: 1.1, marginBottom: "48px" }}>
-                <span style={{ color: "#6366F1", fontStyle: "italic" }}>Everything</span> your clinic needs,<br />under one roof
-              </h2>
-            </Reveal>
-            <Reveal delay={160}><FeatureSlider /></Reveal>
-          </div>
-        </section>
-
-        {/* ── HOW IT WORKS ── */}
-        <section id="how-it-works" aria-label="How it works" style={{ background: "#fff", padding: "80px 0" }}>
-          <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 20px" }}>
-            <Reveal><div style={{ textAlign: "center", marginBottom: "10px" }}><span style={{ fontSize: "12px", fontWeight: 700, color: "#6366F1", letterSpacing: "1.5px", textTransform: "uppercase" }}>+ HOW IT WORKS</span></div></Reveal>
-            <Reveal delay={80}>
-              <h2 style={{ textAlign: "center", fontSize: "clamp(24px, 4vw, 48px)", fontWeight: 800, color: "#0A1628", letterSpacing: "-1.5px", marginBottom: "44px" }}>
-                Up and running in <span style={{ color: "#6366F1", fontStyle: "italic" }}>3 simple steps</span>
-              </h2>
-            </Reveal>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "20px" }}>
-              {[
-                { step: "01", title: "Create your account", desc: "Sign up free in 30 seconds. No credit card. No setup fee. Just your email.", icon: "👤" },
-                { step: "02", title: "Add your clinic & staff", desc: "Set up your clinic profile, add doctors and configure role-based permissions.", icon: "🏥" },
-                { step: "03", title: "Start managing", desc: "Add patients, book appointments, track lab work and monitor revenue instantly.", icon: "🚀" },
-              ].map((item, i) => (
-                <Reveal key={item.step} delay={i * 120}>
-                  <div style={{ background: "#F8FAFF", borderRadius: "20px", padding: "28px", border: "1px solid rgba(99,102,241,0.1)", position: "relative", overflow: "hidden", height: "100%", transition: "transform 0.3s ease, box-shadow 0.3s ease" }}
-                    onMouseOver={e => { e.currentTarget.style.transform = "translateY(-6px)"; e.currentTarget.style.boxShadow = "0 16px 40px rgba(10,22,40,0.1)"; }}
-                    onMouseOut={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
-                    <div style={{ position: "absolute", top: "12px", right: "16px", fontSize: "44px", fontWeight: 900, color: "rgba(99,102,241,0.07)", lineHeight: 1 }} aria-hidden="true">{item.step}</div>
-                    <div style={{ fontSize: "32px", marginBottom: "14px" }} aria-hidden="true">{item.icon}</div>
-                    <h3 style={{ fontSize: "17px", fontWeight: 700, color: "#0A1628", marginBottom: "8px" }}>{item.title}</h3>
-                    <p style={{ fontSize: "14px", color: "#6B7280", lineHeight: 1.7 }}>{item.desc}</p>
-                  </div>
-                </Reveal>
+        <section id="features" aria-label="Features" className="scroll-mt-20 bg-white py-24 sm:py-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <div {...rv()}><Eyebrow>Our features</Eyebrow></div>
+              <h2 {...rv(100)} className={`${sectionHead} text-navy`}>Everything your clinic needs, beautifully organised</h2>
+              <p {...rv(200)} className="mt-5 text-base leading-relaxed text-navy/65">From the first phone call to the final receipt, DentEase keeps every part of the patient journey in one place.</p>
+            </div>
+            <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map((f, i) => (
+                <article key={f.title} {...rv(i * 110)} className="group relative overflow-hidden rounded-2xl border border-navy/8 bg-cream-2 p-8 transition-all duration-700 hover:-translate-y-1.5 hover:bg-white hover:shadow-[0_24px_60px_rgba(15,29,61,.10)]">
+                  <span className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-gold transition-transform duration-700 group-hover:scale-x-100" aria-hidden="true" />
+                  <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-navy text-gold transition-transform duration-700 group-hover:-rotate-6 group-hover:scale-110">
+                    <f.icon className="h-6 w-6" strokeWidth={1.75} />
+                  </span>
+                  <h3 className="mt-6 text-lg font-semibold text-navy">{f.title}</h3>
+                  <p className="mt-2 text-[15px] leading-relaxed text-navy/65">{f.desc}</p>
+                  <a href="#demo" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-navy transition-colors duration-300 hover:text-gold">
+                    Learn more <ArrowRight className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-1" />
+                  </a>
+                </article>
               ))}
             </div>
           </div>
         </section>
 
-        {/* ── IMAGE + STATS ── */}
-        <section aria-label="Why DentEase" style={{ background: "#EEF2FF", padding: "80px 0" }}>
-          <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 20px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "48px", alignItems: "center" }} className="mobile-grid-1">
-              {/* Image grid with parallax feel */}
-              <Reveal>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                  {[
-                    { src: "/images/patient-records.webp", alt: "Patient records", mt: "0" },
-                    { src: "/images/revenue-reports.webp", alt: "Revenue reports", mt: "24px" },
-                    { src: "/images/lab-records.webp", alt: "Lab records", mt: "0" },
-                    { src: "/images/staff-management.webp", alt: "Staff management", mt: "24px" },
-                  ].map((img) => (
-                    <div key={img.src} style={{ borderRadius: "14px", overflow: "hidden", marginTop: img.mt, transition: "transform 0.4s ease" }}
-                      onMouseOver={e => { (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1.08)"; }}
-                      onMouseOut={e => { (e.currentTarget.querySelector("img") as HTMLImageElement).style.transform = "scale(1)"; }}>
-                      <img src={img.src} alt={img.alt} style={{ width: "100%", height: "160px", objectFit: "cover", transition: "transform 0.5s cubic-bezier(0.22,1,0.36,1)" }} loading="lazy" />
+        {/* ── BEFORE / AFTER ── */}
+        <section id="workflow" aria-label="Before and after DentEase" className="scroll-mt-20 bg-cream py-24 sm:py-32">
+          <div className="mx-auto grid max-w-7xl items-center gap-14 px-4 sm:px-6 lg:grid-cols-[1fr_1.4fr]">
+            <div>
+              <div {...rv()}><Eyebrow>The transformation</Eyebrow></div>
+              <h2 {...rv(100)} className={`${sectionHead} text-navy`}>From paper registers to a clear daily view</h2>
+              <p {...rv(200)} className="mt-5 text-base leading-relaxed text-navy/65">
+                Lost files, double bookings and sticky-note reminders cost your clinic time every single day. Drag the gold line to see what your front desk looks like once everything lives in DentEase.
+              </p>
+              <ul className="mt-8 space-y-4">
+                {["Every appointment confirmed and visible to the whole team", "Lab cases tracked with clear due dates", "Patient files found in seconds, not minutes"].map((t, i) => (
+                  <li key={t} {...rv(280 + i * 90)} className="flex items-start gap-3 text-[15px] text-navy">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold text-navy"><Check className="h-3 w-3" strokeWidth={3} /></span>
+                    {t}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div {...rv(150, "scale")}><BeforeAfter /></div>
+          </div>
+        </section>
+
+        {/* ── WHY DENTEASE ── */}
+        <section id="why" aria-label="Why choose DentEase" className="scroll-mt-20 bg-white py-24 sm:py-32">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <div {...rv()}><Eyebrow>Why choose DentEase</Eyebrow></div>
+              <h2 {...rv(100)} className={`${sectionHead} text-navy`}>Built on three simple principles</h2>
+            </div>
+            <div className="mt-16 grid gap-6 md:grid-cols-3">
+              {PRINCIPLES.map((p, i) => (
+                <article key={p.title} {...rv(i * 140)} className="group rounded-2xl bg-navy p-10 text-white shadow-[0_24px_60px_rgba(15,29,61,.18)] transition-transform duration-700 hover:-translate-y-2">
+                  <span className="font-display text-sm text-gold">0{i + 1}</span>
+                  <p.icon className="mt-6 h-10 w-10 text-gold transition-transform duration-700 group-hover:scale-110" strokeWidth={1.5} />
+                  <h3 className="mt-6 font-display text-2xl font-semibold">{p.title}</h3>
+                  <span className="mt-4 block h-px w-12 bg-gold transition-all duration-700 group-hover:w-24" aria-hidden="true" />
+                  <p className="mt-5 text-[15px] leading-relaxed text-white/70">{p.desc}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── TESTIMONIALS ── */}
+        <section id="reviews" aria-label="Reviews" className="scroll-mt-20 overflow-hidden bg-cream-2 py-24 sm:py-32">
+          <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
+            <div {...rv()}><Eyebrow>Testimonials</Eyebrow></div>
+            <h2 {...rv(100)} className={`${sectionHead} text-navy`}>Trusted by dental professionals</h2>
+          </div>
+          <div {...rv(200, "fade")} className="relative mt-16 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+            <div className="marquee-track flex w-max animate-marquee gap-6">
+              {[...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
+                <article key={i} aria-hidden={i >= TESTIMONIALS.length} className="w-[320px] shrink-0 rounded-2xl border border-navy/8 bg-white p-8 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:w-[380px]">
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-0.5" aria-label={`${t.rating} out of 5 stars`}>
+                      {Array.from({ length: 5 }).map((_, s) => <Star key={s} className={`h-4 w-4 ${s < t.rating ? "fill-gold text-gold" : "text-navy/15"}`} />)}
                     </div>
-                  ))}
-                </div>
-              </Reveal>
-              <div>
-                <Reveal><span style={{ fontSize: "12px", fontWeight: 700, color: "#6366F1", letterSpacing: "1.5px", textTransform: "uppercase" }}>+ WHY DENTEASE</span></Reveal>
-                <Reveal delay={80}>
-                  <h2 style={{ fontSize: "clamp(24px, 4vw, 44px)", fontWeight: 800, color: "#0A1628", letterSpacing: "-1.5px", lineHeight: 1.1, marginTop: "12px", marginBottom: "16px" }}>
-                    Built for real<br /><span style={{ color: "#6366F1", fontStyle: "italic" }}>dental clinics</span>
-                  </h2>
-                </Reveal>
-                <Reveal delay={140}>
-                  <p style={{ fontSize: "15px", color: "#6B7280", lineHeight: 1.8, marginBottom: "24px" }}>DentEase is designed specifically for dental professionals. Every feature — from FDI tooth charts to lab record tracking — is built around how dental clinics actually work.</p>
-                </Reveal>
-                {/* STATS with count-up */}
-                <div ref={statsRef} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-                  {STATS.map((s, i) => (
-                    <Reveal key={s.label} delay={i * 80}>
-                      <StatCard num={s.num} suffix={s.suffix} label={s.label} active={statsActive} />
-                    </Reveal>
-                  ))}
-                </div>
+                    <Quote className="h-6 w-6 text-gold/40" />
+                  </div>
+                  <p className="mt-5 text-[15px] leading-relaxed text-navy/80">&ldquo;{t.text}&rdquo;</p>
+                  <div className="mt-6 flex items-center gap-3 border-t border-navy/8 pt-5">
+                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-navy font-display text-sm font-semibold text-gold">
+                      {t.name.replace("Dr. ", "").split(" ").map(w => w[0]).join("")}
+                    </span>
+                    <div>
+                      <p className="text-sm font-semibold text-navy">{t.name}</p>
+                      <p className="text-xs text-navy/55">{t.clinic}</p>
+                    </div>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+
+          {/* Share your experience */}
+          <div {...rv(100)} className="mx-auto mt-20 max-w-2xl px-4 sm:px-6">
+            <form onSubmit={submitReview} noValidate className="relative rounded-2xl border border-navy/8 bg-white p-6 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:p-8">
+              <h3 className="font-display text-2xl font-semibold text-navy">Share your experience</h3>
+              <p className="mt-1 text-sm text-navy/60">Using DentEase in your clinic? We would love to hear from you.</p>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                <input value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="Your name *" aria-label="Your name" name="name" required maxLength={80} autoComplete="name" className="rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
+                <input value={reviewClinic} onChange={e => setReviewClinic(e.target.value)} placeholder="Clinic name" aria-label="Clinic name" name="clinic" maxLength={120} autoComplete="organization" className="rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
               </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ── REVIEWS ── */}
-        <section id="reviews" aria-label="Reviews" style={{ background: "#fff", padding: "80px 0" }}>
-          <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "0 20px" }}>
-            <Reveal><div style={{ textAlign: "center", marginBottom: "10px" }}><span style={{ fontSize: "12px", fontWeight: 700, color: "#6366F1", letterSpacing: "1.5px", textTransform: "uppercase" }}>+ REVIEWS</span></div></Reveal>
-            <Reveal delay={80}>
-              <h2 style={{ textAlign: "center", fontSize: "clamp(24px, 4vw, 48px)", fontWeight: 800, color: "#0A1628", letterSpacing: "-1.5px", marginBottom: "40px" }}>
-                Loved by <span style={{ color: "#6366F1", fontStyle: "italic" }}>dental professionals</span>
-              </h2>
-            </Reveal>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(240px,1fr))", gap: "16px", marginBottom: "44px" }}>
-              {[
-                { name: "Dr. Ahmed Raza", clinic: "Raza Dental Care, Lahore", rating: 5, text: "DentEase has completely transformed how we manage our clinic. Patient records and lab work tracking is now seamless." },
-                { name: "Dr. Sarah Khan", clinic: "SmilePro Dental, Karachi", rating: 5, text: "The FDI tooth chart feature is brilliant! Our lab record management has never been this organized. Highly recommended." },
-                { name: "Dr. Usman Ali", clinic: "Ali Dental Clinic, Islamabad", rating: 5, text: "Free software with this many features? Unbelievable. The reports section alone saves us hours every month." },
-              ].map((r, i) => (
-                <Reveal key={r.name} delay={i * 100}>
-                  <article style={{ background: "#F8FAFF", borderRadius: "20px", padding: "22px", border: "1px solid rgba(99,102,241,0.1)", height: "100%", transition: "transform 0.3s ease, box-shadow 0.3s ease" }}
-                    onMouseOver={e => { e.currentTarget.style.transform = "translateY(-5px)"; e.currentTarget.style.boxShadow = "0 14px 36px rgba(10,22,40,0.1)"; }}
-                    onMouseOut={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
-                    <div style={{ display: "flex", gap: "3px", marginBottom: "10px" }} aria-label={`${r.rating} stars`}>
-                      {Array(r.rating).fill(0).map((_, i) => <span key={i} style={{ color: "#FBBF24", fontSize: "15px" }} aria-hidden="true">★</span>)}
-                    </div>
-                    <p style={{ fontSize: "14px", color: "#374151", lineHeight: 1.7, marginBottom: "14px", fontStyle: "italic" }}>"{r.text}"</p>
-                    <div style={{ fontSize: "14px", fontWeight: 700, color: "#0A1628" }}>{r.name}</div>
-                    <div style={{ fontSize: "12px", color: "#6B7280" }}>{r.clinic}</div>
-                  </article>
-                </Reveal>
-              ))}
-            </div>
-            <Reveal delay={100}>
-              <form onSubmit={submitReview} noValidate style={{ background: "#F8FAFF", borderRadius: "24px", padding: "28px", border: "1px solid rgba(99,102,241,0.1)", maxWidth: "560px", margin: "0 auto" }}>
-                <h3 style={{ fontSize: "19px", fontWeight: 700, color: "#0A1628", marginBottom: "4px" }}>Share your experience</h3>
-                <p style={{ fontSize: "13px", color: "#6B7280", marginBottom: "18px" }}>We would love to hear from you!</p>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" }} className="mobile-grid-1">
-                  <input value={reviewName} onChange={e => setReviewName(e.target.value)} placeholder="Your name *" aria-label="Your name" name="name" required maxLength={80} autoComplete="name" style={{ padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
-                  <input value={reviewClinic} onChange={e => setReviewClinic(e.target.value)} placeholder="Clinic name" aria-label="Clinic name" name="clinic" maxLength={120} autoComplete="organization" style={{ padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
+              <input type="text" value={reviewWebsite} onChange={e => setReviewWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-px w-px opacity-0" />
+              <textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Your review *" aria-label="Your review" name="review" required maxLength={1000} rows={3} className="mt-3 w-full resize-none rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-sm text-navy outline-none transition-colors duration-300 focus:border-gold" />
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+                <div className="flex gap-1" role="radiogroup" aria-label="Rating">
+                  {[1, 2, 3, 4, 5].map(s => (
+                    <button key={s} type="button" role="radio" aria-checked={s === reviewRating} aria-label={`${s} star${s > 1 ? "s" : ""}`} onClick={() => setReviewRating(s)} className="transition-transform duration-300 hover:scale-125">
+                      <Star className={`h-6 w-6 ${s <= reviewRating ? "fill-gold text-gold" : "text-navy/20"}`} />
+                    </button>
+                  ))}
                 </div>
-                <input type="text" value={reviewWebsite} onChange={e => setReviewWebsite(e.target.value)} name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }} />
-                <textarea value={reviewText} onChange={e => setReviewText(e.target.value)} placeholder="Your review *" aria-label="Your review" name="review" required maxLength={1000} rows={3} style={{ width: "100%", padding: "12px 14px", borderRadius: "12px", border: "1.5px solid rgba(10,22,40,0.1)", fontSize: "14px", outline: "none", resize: "none", marginBottom: "12px", background: "#fff", fontFamily: "inherit", transition: "border-color 0.2s" }} onFocus={e => e.target.style.borderColor = "#6366F1"} onBlur={e => e.target.style.borderColor = "rgba(10,22,40,0.1)"} />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px" }}>
-                  <div style={{ display: "flex", gap: "2px" }} aria-label="Rating">
-                    {[1, 2, 3, 4, 5].map(s => (
-                      <button type="button" key={s} onClick={() => setReviewRating(s)} aria-pressed={s <= reviewRating} aria-label={`${s} star`} style={{ fontSize: "26px", background: "none", border: "none", cursor: "pointer", color: s <= reviewRating ? "#FBBF24" : "#D1D5DB", transition: "transform 0.15s ease" }}
-                        onMouseOver={e => e.currentTarget.style.transform = "scale(1.2)"} onMouseOut={e => e.currentTarget.style.transform = ""}>★</button>
-                    ))}
-                  </div>
-                  <button type="submit" disabled={reviewSubmitting} style={{ padding: "11px 28px", borderRadius: "999px", background: "#0A1628", color: "#fff", border: "none", fontWeight: 700, fontSize: "14px", cursor: reviewSubmitting ? "wait" : "pointer", opacity: reviewSubmitting ? 0.7 : 1, transition: "all 0.25s" }}
-                    onMouseOver={e => { if (reviewSubmitting) return; e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(10,22,40,0.2)"; }} onMouseOut={e => { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = ""; }}>
-                    {reviewSubmitting ? "Submitting..." : "Submit Review"}
-                  </button>
-                </div>
-                {reviewError && <p role="alert" style={{ marginTop: "12px", fontSize: "13px", color: "#DC2626", fontWeight: 500 }}>{reviewError}</p>}
-              </form>
-            </Reveal>
+                <button type="submit" disabled={reviewSubmitting} className="rounded-full bg-navy px-7 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-none">
+                  {reviewSubmitting ? "Submitting..." : "Submit review"}
+                </button>
+              </div>
+              {reviewError && <p role="alert" className="mt-4 text-sm font-medium text-red-600">{reviewError}</p>}
+            </form>
           </div>
         </section>
 
         {/* ── FAQ ── */}
-        <section id="faq" aria-label="FAQ" style={{ background: "#EEF2FF", padding: "80px 0" }}>
-          <div style={{ maxWidth: "700px", margin: "0 auto", padding: "0 20px" }}>
-            <Reveal><div style={{ textAlign: "center", marginBottom: "10px" }}><span style={{ fontSize: "12px", fontWeight: 700, color: "#6366F1", letterSpacing: "1.5px", textTransform: "uppercase" }}>+ FAQ</span></div></Reveal>
-            <Reveal delay={80}>
-              <h2 style={{ textAlign: "center", fontSize: "clamp(24px, 4vw, 48px)", fontWeight: 800, color: "#0A1628", letterSpacing: "-1.5px", marginBottom: "36px" }}>
-                Frequently asked <span style={{ color: "#6366F1", fontStyle: "italic" }}>questions</span>
-              </h2>
-            </Reveal>
-            <Reveal delay={120}>
-              <div style={{ background: "#fff", borderRadius: "20px", overflow: "hidden", border: "1px solid rgba(99,102,241,0.1)" }}>
-                {FAQS.map((faq, i) => (
-                  <div key={i} className="faq-border">
-                    <button onClick={() => setOpenFaq(openFaq === i ? null : i)} aria-expanded={openFaq === i} style={{ width: "100%", padding: "18px 20px", display: "flex", justifyContent: "space-between", alignItems: "center", background: "none", border: "none", cursor: "pointer", textAlign: "left", gap: "12px", transition: "background 0.2s" }}
-                      onMouseOver={e => e.currentTarget.style.background = "rgba(99,102,241,0.03)"} onMouseOut={e => e.currentTarget.style.background = "none"}>
-                      <span style={{ fontSize: "15px", fontWeight: 600, color: "#0A1628" }}>{faq.q}</span>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6366F1" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true" style={{ transform: openFaq === i ? "rotate(180deg)" : "rotate(0)", transition: "transform 0.3s cubic-bezier(0.22,1,0.36,1)", flexShrink: 0 }}><path d="M6 9l6 6 6-6" /></svg>
-                    </button>
-                    {openFaq === i && (
-                      <div style={{ padding: "0 20px 18px", fontSize: "14px", color: "#6B7280", lineHeight: 1.7, animation: "fadeSlideUp 0.3s ease" }}>{faq.a}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </Reveal>
+        <section id="faq" aria-label="Frequently asked questions" className="scroll-mt-20 bg-cream py-24 sm:py-32">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6">
+            <div className="text-center">
+              <div {...rv()}><Eyebrow>FAQ</Eyebrow></div>
+              <h2 {...rv(100)} className={`${sectionHead} text-navy`}>Questions, answered</h2>
+            </div>
+            <div {...rv(200)} className="mt-14 overflow-hidden rounded-2xl bg-white shadow-[0_20px_50px_rgba(15,29,61,.08)]">
+              {FAQS.map((f, i) => (
+                <FaqItem key={f.q} q={f.q} a={f.a} open={openFaq === i} onToggle={() => setOpenFaq(openFaq === i ? null : i)} />
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* ── CTA ── */}
-        <section aria-label="Call to action" style={{ background: "#0A1628", padding: "88px 20px", textAlign: "center", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: "700px", height: "700px", borderRadius: "50%", background: "radial-gradient(circle,rgba(99,102,241,0.18) 0%,transparent 70%)", pointerEvents: "none" }} aria-hidden="true" />
-          <div style={{ position: "absolute", top: "20%", right: "10%", width: "200px", height: "200px", borderRadius: "50%", background: "radial-gradient(circle,rgba(129,140,248,0.12) 0%,transparent 70%)", pointerEvents: "none" }} aria-hidden="true" />
-          <Reveal>
-            <div style={{ position: "relative", zIndex: 1, maxWidth: "580px", margin: "0 auto" }}>
-              <h2 style={{ fontSize: "clamp(28px, 5vw, 56px)", fontWeight: 800, color: "#fff", letterSpacing: "-2px", marginBottom: "18px", lineHeight: 1.1 }}>
-                Ready to <span style={{ color: "#818CF8", fontStyle: "italic" }}>transform</span> your clinic?
-              </h2>
-              <p style={{ fontSize: "15px", color: "rgba(255,255,255,0.6)", marginBottom: "36px", lineHeight: 1.7 }}>
-                Join hundreds of dental professionals who trust DentEase to run their clinic every day. Free forever.
-              </p>
-              <Link href="/login"><button className="cta-btn-white">
-                Start for free today
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M7 17L17 7M17 7H7M17 7v10" /></svg>
-              </button></Link>
+        {/* ── DEMO / CTA ── */}
+        <section id="demo" aria-label="Book a demo" className="relative scroll-mt-20 overflow-hidden bg-white py-24 sm:py-32">
+          <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 animate-float-up rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
+          <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+            <div className="mx-auto max-w-2xl text-center">
+              <div {...rv()}><Eyebrow>Get started</Eyebrow></div>
+              <h2 {...rv(100)} className={`${sectionHead} text-navy`}>Let&apos;s set up DentEase for your clinic</h2>
+              <p {...rv(200)} className="mt-5 text-base leading-relaxed text-navy/65">Answer three quick questions and our team will tailor your onboarding or demo to exactly what your practice needs.</p>
             </div>
-          </Reveal>
+            <div {...rv(250, "scale")} className="mt-14"><DemoForm /></div>
+          </div>
         </section>
       </main>
 
       {/* ── FOOTER ── */}
-      <footer aria-label="Footer" style={{ background: "#060E1C", padding: "52px 20px 28px", color: "rgba(255,255,255,0.5)" }}>
-        <div style={{ maxWidth: "1100px", margin: "0 auto" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: "36px", marginBottom: "44px" }} className="mobile-grid-1">
-            <div>
-              <img src="/images/dentease-logo.webp" alt="DentEase" style={{ height: "52px", objectFit: "contain", marginBottom: "14px", display: "block" }} />
-              <p style={{ fontSize: "13px", lineHeight: 1.8, maxWidth: "210px", marginBottom: "16px" }}>The smarter way to manage your dental clinic. Free forever, no credit card required.</p>
-              <a href="tel:+923105913101" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px", fontSize: "13px", color: "rgba(255,255,255,0.7)", textDecoration: "none" }}>📞 +92 310 5913101</a>
-              <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "#4ADE80", textDecoration: "none" }}>💬 WhatsApp Us</a>
-            </div>
-            <div>
-              <h4 style={{ fontSize: "12px", fontWeight: 700, color: "#fff", marginBottom: "14px", letterSpacing: "0.5px" }}>PRODUCT</h4>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {[["#features", "Features"], ["#how-it-works", "How it works"], ["#reviews", "Reviews"], ["#faq", "FAQ"]].map(([href, label]) => (
-                  <a key={label} href={href} style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", textDecoration: "none", transition: "color 0.2s" }}
-                    onMouseOver={e => e.currentTarget.style.color = "#fff"} onMouseOut={e => e.currentTarget.style.color = "rgba(255,255,255,0.5)"}>{label}</a>
-                ))}
+      <footer aria-label="Footer" className="bg-navy text-white/60">
+        <div className="mx-auto max-w-7xl px-4 pb-10 pt-20 sm:px-6">
+          <div className="grid gap-12 md:grid-cols-[1.5fr_1fr_1fr_1.2fr]">
+            <div {...rv()}>
+              <Wordmark />
+              <p className="mt-5 max-w-xs text-sm leading-relaxed">Elegant, secure clinic management for modern dental practices: appointments, records, billing and staff in one place.</p>
+              <div className="mt-6 flex gap-3">
+                {[[MessageCircle, WHATSAPP, "WhatsApp"], [Phone, PHONE_TEL, "Call us"]].map(([Icon, href, label]) => {
+                  const I = Icon as typeof Phone;
+                  return (
+                    <a key={label as string} href={href as string} target={(href as string).startsWith("http") ? "_blank" : undefined} rel="noreferrer" aria-label={label as string}
+                      className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 transition-all duration-500 hover:-translate-y-0.5 hover:border-gold hover:bg-gold hover:text-navy">
+                      <I className="h-4 w-4" />
+                    </a>
+                  );
+                })}
               </div>
             </div>
-            <div>
-              <h4 style={{ fontSize: "12px", fontWeight: 700, color: "#fff", marginBottom: "14px", letterSpacing: "0.5px" }}>ACCOUNT</h4>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {[["/login", "Login"], ["/login", "Sign Up Free"]].map(([href, label]) => (
-                  <Link key={label} href={href} style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", textDecoration: "none", transition: "color 0.2s" }}
-                    onMouseOver={e => (e.currentTarget as HTMLElement).style.color = "#fff"} onMouseOut={e => (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.5)"}>{label}</Link>
-                ))}
-              </div>
+            <div {...rv(100)}>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Product</h4>
+              <ul className="mt-5 space-y-3 text-sm">
+                {NAV.map(([href, label]) => <li key={href}><a href={href} className="transition-colors duration-300 hover:text-white">{label}</a></li>)}
+              </ul>
             </div>
-            <div>
-              <h4 style={{ fontSize: "12px", fontWeight: 700, color: "#fff", marginBottom: "14px", letterSpacing: "0.5px" }}>CONTACT</h4>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                <a href="tel:+923105913101" style={{ fontSize: "13px", color: "rgba(255,255,255,0.5)", textDecoration: "none" }}>+92 310 5913101</a>
-                <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" style={{ fontSize: "13px", color: "#4ADE80", textDecoration: "none" }}>WhatsApp</a>
-              </div>
+            <div {...rv(200)}>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Account</h4>
+              <ul className="mt-5 space-y-3 text-sm">
+                <li><Link href="/login" className="transition-colors duration-300 hover:text-white">Login</Link></li>
+                <li><Link href="/login" className="transition-colors duration-300 hover:text-white">Create free account</Link></li>
+                <li><a href="#demo" className="transition-colors duration-300 hover:text-white">Book a demo</a></li>
+              </ul>
+            </div>
+            <div {...rv(300)}>
+              <h4 className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">Contact</h4>
+              <ul className="mt-5 space-y-4 text-sm">
+                <li><a href={PHONE_TEL} className="flex items-center gap-3 transition-colors duration-300 hover:text-white"><Phone className="h-4 w-4 text-gold" /> {PHONE_DISPLAY}</a></li>
+                <li><a href={WHATSAPP} target="_blank" rel="noreferrer" className="flex items-center gap-3 transition-colors duration-300 hover:text-white"><MessageCircle className="h-4 w-4 text-gold" /> WhatsApp support</a></li>
+              </ul>
             </div>
           </div>
-          <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "22px", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px" }}>
-            <p style={{ fontSize: "12px" }}>© 2026 DentEase. All rights reserved.</p>
-            <p style={{ fontSize: "12px" }}>Developed by <a href="https://wa.me/923105913101" target="_blank" rel="noreferrer" style={{ color: "#818CF8", textDecoration: "none" }}>Junaid Mazhar</a></p>
+          <div className="mt-16 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-8 text-xs sm:flex-row">
+            <p>© {new Date().getFullYear()} DentEase. All rights reserved.</p>
+            <p>Developed by <a href={WHATSAPP} target="_blank" rel="noreferrer" className="text-gold transition-colors duration-300 hover:text-gold-soft">Junaid Mazhar</a></p>
           </div>
         </div>
       </footer>
-    </>
+    </div>
   );
 }
