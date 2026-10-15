@@ -1,0 +1,873 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DentEase Auth Form</title>
+  <style>
+    /* Demo page only — not part of the drop-in block */
+    body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 16px; box-sizing: border-box; background: #f6f4ee; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════ DENTEASE AUTH FORM — DROP-IN BLOCK START ═══════════════ -->
+<section class="da-root" data-da-auth aria-label="Sign in or create a DentEase account">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" />
+
+  <style>
+/* ── tokens ─────────────────────────────────────────────── */
+.da-root {
+  --navy: #0f1d3d;
+  --gold: #d4af37;
+  --gold-dark: #b8962c;
+  --cream: #f6f4ee;
+  --white: #ffffff;
+  --ink-soft: rgba(15, 29, 61, 0.62);
+  --line: rgba(15, 29, 61, 0.12);
+  --error: #c0392b;
+  --ease: cubic-bezier(.16, 1, .3, 1);
+  --slide: 0.8s;
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--navy);
+  -webkit-font-smoothing: antialiased;
+}
+.da-root *,
+.da-root *::before,
+.da-root *::after { box-sizing: border-box; }
+
+/* ── card + sliding layout ─────────────────────────────── */
+.da-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 100%;
+  min-height: 620px;
+  background: var(--white);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(15, 29, 61, 0.16), 0 2px 6px rgba(15, 29, 61, 0.06);
+}
+.da-form-wrap {
+  grid-area: 1 / 1;
+  position: relative;
+  width: 50%;
+  display: flex;
+  align-items: center;
+  background: var(--white);
+  transition: transform var(--slide) var(--ease), opacity var(--slide) var(--ease);
+}
+.da-signin { z-index: 2; }
+.da-signup { z-index: 1; opacity: 0; }
+.da-active .da-signin { transform: translateX(100%); opacity: 0; }
+.da-active .da-signup {
+  transform: translateX(100%);
+  opacity: 1;
+  z-index: 5;
+  animation: da-show var(--slide) var(--ease);
+}
+@keyframes da-show {
+  0%, 49.99% { opacity: 0; z-index: 1; }
+  50%, 100% { opacity: 1; z-index: 5; }
+}
+
+/* decorative navy panel */
+.da-overlay-wrap {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 100;
+  transition: transform var(--slide) var(--ease);
+}
+.da-active .da-overlay-wrap { transform: translateX(-100%); }
+.da-overlay {
+  position: relative;
+  left: -100%;
+  width: 200%;
+  height: 100%;
+  color: var(--white);
+  background-color: var(--navy);
+  background-image:
+    radial-gradient(circle at 18% 12%, rgba(212, 175, 55, 0.22), transparent 42%),
+    radial-gradient(circle at 82% 88%, rgba(212, 175, 55, 0.16), transparent 40%),
+    radial-gradient(rgba(255, 255, 255, 0.09) 1px, transparent 1.4px);
+  background-size: auto, auto, 22px 22px;
+  transition: transform var(--slide) var(--ease);
+}
+.da-active .da-overlay { transform: translateX(50%); }
+.da-overlay::before,
+.da-overlay::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, 0.22);
+  pointer-events: none;
+}
+.da-overlay::before { width: 420px; height: 420px; top: -160px; left: 32%; }
+.da-overlay::after { width: 300px; height: 300px; bottom: -120px; right: 30%; }
+.da-panel {
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 48px;
+  text-align: center;
+  transition: transform var(--slide) var(--ease);
+}
+.da-panel-left { left: 0; transform: translateX(-20%); }
+.da-active .da-panel-left { transform: translateX(0); }
+.da-panel-right { right: 0; transform: translateX(0); }
+.da-active .da-panel-right { transform: translateX(20%); }
+.da-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 18px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.da-eyebrow::before,
+.da-eyebrow::after { content: ""; width: 22px; height: 1px; background: currentColor; opacity: 0.7; }
+.da-panel-title {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: clamp(30px, 4vw, 42px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+.da-panel-title em { font-style: italic; color: var(--gold); }
+.da-panel-text {
+  max-width: 300px;
+  margin: 16px 0 30px;
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: rgba(246, 244, 238, 0.72);
+}
+
+/* ── form ──────────────────────────────────────────────── */
+.da-form {
+  width: 100%;
+  padding: 44px 48px;
+}
+.da-title {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 32px;
+  font-weight: 700;
+  line-height: 1.15;
+  color: var(--navy);
+}
+.da-subtitle { margin: 6px 0 26px; font-size: 14px; color: var(--ink-soft); }
+.da-fields { display: grid; gap: 14px; }
+.da-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.da-field { min-width: 0; }
+.da-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.da-control {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 46px;
+  border: 1.5px solid var(--line);
+  border-radius: 12px;
+  background: var(--cream);
+  transition: border-color 0.6s var(--ease), box-shadow 0.6s var(--ease), background-color 0.6s var(--ease);
+}
+.da-control:hover { border-color: rgba(15, 29, 61, 0.24); }
+.da-control:focus-within {
+  border-color: var(--gold);
+  background: var(--white);
+  box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.18), 0 6px 18px rgba(212, 175, 55, 0.14);
+}
+.da-icon {
+  position: absolute;
+  left: 14px;
+  width: 17px;
+  height: 17px;
+  color: rgba(15, 29, 61, 0.42);
+  pointer-events: none;
+  transition: color 0.6s var(--ease);
+}
+.da-control:focus-within .da-icon { color: var(--gold-dark); }
+.da-input {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 0 14px 0 42px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  color: var(--navy);
+}
+.da-input::placeholder { color: rgba(15, 29, 61, 0.36); }
+.da-input:-webkit-autofill { -webkit-box-shadow: 0 0 0 40px var(--cream) inset; -webkit-text-fill-color: var(--navy); }
+.da-has-eye .da-input { padding-right: 44px; }
+.da-eye {
+  position: absolute;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(15, 29, 61, 0.48);
+  cursor: pointer;
+  transition: color 0.6s var(--ease), background-color 0.6s var(--ease);
+}
+.da-eye:hover { color: var(--navy); background: rgba(15, 29, 61, 0.06); }
+.da-eye svg { width: 18px; height: 18px; }
+.da-eye .da-eye-off { display: none; }
+.da-eye.da-is-visible .da-eye-on { display: none; }
+.da-eye.da-is-visible .da-eye-off { display: block; }
+
+/* validation */
+.da-is-invalid .da-control { border-color: var(--error); background: #fdf6f5; }
+.da-is-invalid .da-control:focus-within { box-shadow: 0 0 0 4px rgba(192, 57, 43, 0.14); }
+.da-is-invalid .da-icon { color: var(--error); }
+.da-error {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--error);
+}
+.da-error:empty { display: none; }
+.da-is-invalid .da-error { animation: da-fade-down 0.6s var(--ease); }
+@keyframes da-fade-down {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.da-shake { animation: da-shake 0.55s var(--ease); }
+@keyframes da-shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-7px); }
+  40%, 60% { transform: translateX(7px); }
+}
+
+/* checkbox + links row */
+.da-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.da-check-label {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.da-checkbox {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin: 1px 0 0;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.da-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: underline;
+  text-decoration-color: rgba(212, 175, 55, 0.7);
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  transition: color 0.6s var(--ease), text-decoration-color 0.6s var(--ease);
+}
+.da-link:hover { color: var(--gold-dark); text-decoration-color: var(--gold); }
+
+/* ── buttons ───────────────────────────────────────────── */
+.da-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.6s var(--ease), background-color 0.6s var(--ease), box-shadow 0.6s var(--ease), border-color 0.6s var(--ease), color 0.6s var(--ease);
+}
+.da-btn::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  transform: translateX(-160%) skewX(-24deg);
+  pointer-events: none;
+}
+.da-btn:hover::after { animation: da-sweep 0.9s var(--ease); }
+@keyframes da-sweep {
+  from { transform: translateX(-160%) skewX(-24deg); }
+  to { transform: translateX(360%) skewX(-24deg); }
+}
+.da-btn-primary {
+  width: 100%;
+  height: 50px;
+  margin-top: 22px;
+  border: 0;
+  background: var(--gold);
+  color: var(--navy);
+  box-shadow: 0 8px 22px rgba(212, 175, 55, 0.32);
+}
+.da-btn-primary:hover {
+  background: var(--gold-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 14px 32px rgba(212, 175, 55, 0.42);
+}
+.da-btn-primary:active { transform: translateY(0); }
+.da-btn-primary:disabled { cursor: wait; transform: none; }
+.da-btn-label { transition: opacity 0.3s var(--ease); }
+.da-spinner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(15, 29, 61, 0.25);
+  border-top-color: var(--navy);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+}
+.da-is-loading .da-btn-label { opacity: 0; }
+.da-is-loading .da-spinner { opacity: 1; animation: da-spin 0.8s linear infinite; }
+.da-is-loading::after { display: none; }
+@keyframes da-spin { to { transform: rotate(360deg); } }
+
+.da-btn-ghost {
+  height: 46px;
+  padding: 0 38px;
+  border: 1.5px solid rgba(246, 244, 238, 0.7);
+  background: transparent;
+  color: var(--white);
+  letter-spacing: 0.04em;
+}
+.da-btn-ghost::after { background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.45), transparent); }
+.da-btn-ghost:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+.da-btn-google {
+  width: 100%;
+  height: 46px;
+  border: 1.5px solid var(--line);
+  background: var(--white);
+  color: var(--navy);
+}
+.da-btn-google::after { background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.22), transparent); }
+.da-btn-google:hover {
+  border-color: rgba(15, 29, 61, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(15, 29, 61, 0.08);
+}
+.da-btn-google svg { width: 18px; height: 18px; }
+
+.da-divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 22px 0 16px;
+  font-size: 12px;
+  color: rgba(15, 29, 61, 0.5);
+}
+.da-divider::before,
+.da-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.da-switch { margin: 20px 0 0; text-align: center; font-size: 13.5px; color: var(--ink-soft); }
+
+/* focus rings */
+.da-root :focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+.da-root .da-input:focus-visible { outline: none; }
+.da-btn-primary:focus-visible { outline-color: var(--navy); }
+
+/* ── success state ─────────────────────────────────────── */
+.da-success {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  text-align: center;
+  background: var(--white);
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.96);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease), visibility 0s linear 0.6s;
+}
+.da-is-success .da-success {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1);
+  transition: opacity 0.6s var(--ease), transform 0.6s var(--ease), visibility 0s;
+}
+.da-checkmark { width: 88px; height: 88px; margin-bottom: 22px; }
+.da-checkmark-bg { fill: rgba(212, 175, 55, 0.12); }
+.da-checkmark-circle {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2.5;
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  transform: rotate(-90deg);
+  transform-origin: center;
+}
+.da-checkmark-tick {
+  fill: none;
+  stroke: var(--navy);
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 32;
+  stroke-dashoffset: 32;
+}
+.da-is-success .da-checkmark-circle { animation: da-draw 0.8s var(--ease) 0.15s forwards; }
+.da-is-success .da-checkmark-tick { animation: da-draw 0.6s var(--ease) 0.7s forwards; }
+.da-is-success .da-checkmark { animation: da-pop 0.7s var(--ease) 1.1s; }
+@keyframes da-draw { to { stroke-dashoffset: 0; } }
+@keyframes da-pop { 50% { transform: scale(1.08); } }
+.da-success-title {
+  margin: 0;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--navy);
+}
+.da-success-title:focus { outline: none; }
+.da-success-text { max-width: 280px; margin: 10px 0 24px; font-size: 14px; line-height: 1.6; color: var(--ink-soft); }
+
+.da-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── mobile: stacked, no horizontal sliding ────────────── */
+@media (max-width: 767px) {
+  .da-card { min-height: 0; border-radius: 20px; }
+  .da-form-wrap {
+    grid-area: 2 / 1;
+    width: 100%;
+    transform: none !important;
+    animation: da-fade-in 0.6s var(--ease);
+  }
+  .da-signup { display: none; }
+  .da-active .da-signup { display: flex; animation: da-fade-in 0.6s var(--ease); }
+  .da-active .da-signin { display: none; }
+  .da-overlay-wrap {
+    position: relative;
+    grid-area: 1 / 1;
+    left: auto;
+    width: 100%;
+    height: auto;
+    transform: none !important;
+  }
+  .da-overlay {
+    left: 0;
+    width: 100%;
+    height: auto;
+    display: grid;
+    transform: none !important;
+  }
+  .da-overlay::before { width: 260px; height: 260px; top: -140px; left: auto; right: -60px; }
+  .da-overlay::after { display: none; }
+  .da-panel {
+    position: relative;
+    grid-area: 1 / 1;
+    width: 100%;
+    height: auto;
+    padding: 32px 24px 28px;
+    transform: none !important;
+    transition: opacity 0.6s var(--ease), visibility 0.6s;
+  }
+  .da-panel-left { opacity: 0; visibility: hidden; }
+  .da-active .da-panel-left { opacity: 1; visibility: visible; }
+  .da-active .da-panel-right { opacity: 0; visibility: hidden; }
+  .da-eyebrow { margin-bottom: 10px; }
+  .da-panel-title { font-size: 28px; }
+  .da-panel-text { margin: 10px 0 18px; font-size: 13.5px; }
+  .da-btn-ghost { height: 40px; padding: 0 28px; font-size: 13.5px; }
+  .da-form { padding: 30px 22px 32px; }
+  .da-title { font-size: 27px; }
+  .da-row { grid-template-columns: 1fr; gap: 14px; }
+}
+@keyframes da-fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .da-root *,
+  .da-root *::before,
+  .da-root *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0s !important;
+  }
+}
+  </style>
+
+  <div class="da-card">
+    <!-- ── SIGN IN ── -->
+    <div class="da-form-wrap da-signin" id="da-signin">
+      <form class="da-form" novalidate aria-labelledby="da-signin-title">
+        <h2 class="da-title" id="da-signin-title">Sign In</h2>
+        <p class="da-subtitle">Access your clinic dashboard.</p>
+
+        <div class="da-fields">
+          <div class="da-field">
+            <label class="da-label" for="da-si-email">Email address</label>
+            <div class="da-control">
+              <svg class="da-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <input class="da-input" id="da-si-email" name="email" type="email" autocomplete="email" placeholder="you@clinic.com" required data-label="Email" aria-describedby="da-si-email-err" />
+            </div>
+            <p class="da-error" id="da-si-email-err"></p>
+          </div>
+
+          <div class="da-field">
+            <label class="da-label" for="da-si-password">Password</label>
+            <div class="da-control da-has-eye">
+              <svg class="da-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input class="da-input" id="da-si-password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required data-label="Password" aria-describedby="da-si-password-err" />
+              <button type="button" class="da-eye" aria-controls="da-si-password" aria-pressed="false" aria-label="Show password">
+                <svg class="da-eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="da-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              </button>
+            </div>
+            <p class="da-error" id="da-si-password-err"></p>
+          </div>
+
+          <div class="da-options">
+            <label class="da-check-label">
+              <input class="da-checkbox" type="checkbox" name="remember" />
+              Remember me
+            </label>
+            <a class="da-link" href="/forgot-password">Forgot password?</a>
+          </div>
+        </div>
+
+        <button type="submit" class="da-btn da-btn-primary">
+          <span class="da-btn-label">Sign In</span>
+          <span class="da-spinner" aria-hidden="true"></span>
+        </button>
+
+        <div class="da-divider">Or continue with</div>
+        <button type="button" class="da-btn da-btn-google" data-da-google>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+          Continue with Google
+        </button>
+
+        <p class="da-switch">Don&rsquo;t have an account? <button type="button" class="da-link" data-da-toggle="signup" aria-controls="da-signup" aria-expanded="false">Sign Up</button></p>
+      </form>
+
+      <div class="da-success" role="status">
+        <svg class="da-checkmark" viewBox="0 0 52 52" aria-hidden="true"><circle class="da-checkmark-bg" cx="26" cy="26" r="24"/><circle class="da-checkmark-circle" cx="26" cy="26" r="24"/><path class="da-checkmark-tick" d="M15 27l7 7 15-15"/></svg>
+        <h3 class="da-success-title" tabindex="-1">Welcome back!</h3>
+        <p class="da-success-text">You&rsquo;re signed in. Taking you to your clinic dashboard&hellip;</p>
+        <button type="button" class="da-link" data-da-reset>Back to sign in</button>
+      </div>
+    </div>
+
+    <!-- ── SIGN UP ── -->
+    <div class="da-form-wrap da-signup" id="da-signup" inert>
+      <form class="da-form" novalidate aria-labelledby="da-signup-title">
+        <h2 class="da-title" id="da-signup-title">Create Account</h2>
+        <p class="da-subtitle">Set up your clinic in under a minute.</p>
+
+        <div class="da-fields">
+          <div class="da-row">
+            <div class="da-field">
+              <label class="da-label" for="da-su-name">Full name</label>
+              <div class="da-control">
+                <svg class="da-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input class="da-input" id="da-su-name" name="fullName" type="text" autocomplete="name" placeholder="Dr. Ayesha Khan" required data-label="Full name" aria-describedby="da-su-name-err" />
+              </div>
+              <p class="da-error" id="da-su-name-err"></p>
+            </div>
+            <div class="da-field">
+              <label class="da-label" for="da-su-clinic">Clinic name</label>
+              <div class="da-control">
+                <svg class="da-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></svg>
+                <input class="da-input" id="da-su-clinic" name="clinicName" type="text" autocomplete="organization" placeholder="Smile Dental Care" required data-label="Clinic name" aria-describedby="da-su-clinic-err" />
+              </div>
+              <p class="da-error" id="da-su-clinic-err"></p>
+            </div>
+          </div>
+
+          <div class="da-field">
+            <label class="da-label" for="da-su-email">Email address</label>
+            <div class="da-control">
+              <svg class="da-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+              <input class="da-input" id="da-su-email" name="email" type="email" autocomplete="email" placeholder="you@clinic.com" required data-label="Email" aria-describedby="da-su-email-err" />
+            </div>
+            <p class="da-error" id="da-su-email-err"></p>
+          </div>
+
+          <div class="da-field">
+            <label class="da-label" for="da-su-password">Password</label>
+            <div class="da-control da-has-eye">
+              <svg class="da-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input class="da-input" id="da-su-password" name="password" type="password" autocomplete="new-password" placeholder="At least 8 characters" required minlength="8" data-label="Password" aria-describedby="da-su-password-err" />
+              <button type="button" class="da-eye" aria-controls="da-su-password" aria-pressed="false" aria-label="Show password">
+                <svg class="da-eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="da-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              </button>
+            </div>
+            <p class="da-error" id="da-su-password-err"></p>
+          </div>
+
+          <div class="da-field">
+            <label class="da-label" for="da-su-confirm">Confirm password</label>
+            <div class="da-control da-has-eye">
+              <svg class="da-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <input class="da-input" id="da-su-confirm" name="confirmPassword" type="password" autocomplete="new-password" placeholder="Re-enter your password" required data-label="Confirm password" data-match="da-su-password" aria-describedby="da-su-confirm-err" />
+              <button type="button" class="da-eye" aria-controls="da-su-confirm" aria-pressed="false" aria-label="Show password">
+                <svg class="da-eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg class="da-eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+              </button>
+            </div>
+            <p class="da-error" id="da-su-confirm-err"></p>
+          </div>
+
+          <div class="da-field">
+            <label class="da-check-label">
+              <input class="da-checkbox" id="da-su-terms" type="checkbox" name="terms" required aria-describedby="da-su-terms-err" />
+              <span>I agree to the <a class="da-link" href="#">Terms of Service</a> and <a class="da-link" href="#">Privacy Policy</a></span>
+            </label>
+            <p class="da-error" id="da-su-terms-err"></p>
+          </div>
+        </div>
+
+        <button type="submit" class="da-btn da-btn-primary">
+          <span class="da-btn-label">Create Account</span>
+          <span class="da-spinner" aria-hidden="true"></span>
+        </button>
+
+        <div class="da-divider">Or continue with</div>
+        <button type="button" class="da-btn da-btn-google" data-da-google>
+          <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 13 4 4 13 4 24s9 20 20 20 20-9 20-20c0-1.3-.1-2.6-.4-3.9z"/><path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 8 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.6-.4-3.9z"/></svg>
+          Continue with Google
+        </button>
+
+        <p class="da-switch">Already have an account? <button type="button" class="da-link" data-da-toggle="signin" aria-controls="da-signin" aria-expanded="true">Sign In</button></p>
+      </form>
+
+      <div class="da-success" role="status">
+        <svg class="da-checkmark" viewBox="0 0 52 52" aria-hidden="true"><circle class="da-checkmark-bg" cx="26" cy="26" r="24"/><circle class="da-checkmark-circle" cx="26" cy="26" r="24"/><path class="da-checkmark-tick" d="M15 27l7 7 15-15"/></svg>
+        <h3 class="da-success-title" tabindex="-1">Account created!</h3>
+        <p class="da-success-text">Your clinic is ready. Check your inbox to verify your email.</p>
+        <button type="button" class="da-link" data-da-reset>Back to sign up</button>
+      </div>
+    </div>
+
+    <!-- ── DECORATIVE SLIDING PANEL ── -->
+    <div class="da-overlay-wrap">
+      <div class="da-overlay">
+        <div class="da-panel da-panel-left" inert>
+          <p class="da-eyebrow">DentEase</p>
+          <h2 class="da-panel-title">Join <em>DentEase</em></h2>
+          <p class="da-panel-text">Patients, appointments, lab records and revenue in one beautifully simple platform. Already registered?</p>
+          <button type="button" class="da-btn da-btn-ghost" data-da-toggle="signin" aria-controls="da-signin" aria-expanded="true">Sign In</button>
+        </div>
+        <div class="da-panel da-panel-right">
+          <p class="da-eyebrow">DentEase</p>
+          <h2 class="da-panel-title">WELCOME BACK!</h2>
+          <p class="da-panel-text">Good to see you again. New to DentEase? Set up your clinic in under a minute.</p>
+          <button type="button" class="da-btn da-btn-ghost" data-da-toggle="signup" aria-controls="da-signup" aria-expanded="false">Sign Up</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="da-sr-only" aria-live="polite" data-da-live></p>
+
+  <script>
+  (function () {
+    var root = document.querySelector("[data-da-auth]");
+    if (!root) return;
+    var card = root.querySelector(".da-card");
+    var wraps = { signin: root.querySelector("#da-signin"), signup: root.querySelector("#da-signup") };
+    var panelLeft = root.querySelector(".da-panel-left");
+    var panelRight = root.querySelector(".da-panel-right");
+    var live = root.querySelector("[data-da-live]");
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    // The only thing JS does for the slide is toggle .da-active — CSS handles all motion.
+    function setMode(mode, moveFocus) {
+      var signup = mode === "signup";
+      card.classList.toggle("da-active", signup);
+      wraps.signin.inert = signup;
+      wraps.signup.inert = !signup;
+      panelLeft.inert = !signup;
+      panelRight.inert = signup;
+      root.querySelectorAll("[data-da-toggle]").forEach(function (btn) {
+        btn.setAttribute("aria-expanded", String((btn.getAttribute("data-da-toggle") === "signup") === signup));
+      });
+      live.textContent = signup ? "Create account form shown" : "Sign in form shown";
+      if (moveFocus) {
+        var first = wraps[mode].querySelector(".da-input");
+        if (first) first.focus({ preventScroll: true });
+      }
+    }
+    root.querySelectorAll("[data-da-toggle]").forEach(function (btn) {
+      btn.addEventListener("click", function () { setMode(btn.getAttribute("data-da-toggle"), true); });
+    });
+
+    root.querySelectorAll(".da-eye").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var input = root.querySelector("#" + btn.getAttribute("aria-controls"));
+        var show = input.type === "password";
+        input.type = show ? "text" : "password";
+        btn.classList.toggle("da-is-visible", show);
+        btn.setAttribute("aria-pressed", String(show));
+        btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      });
+    });
+
+    function fieldError(input) {
+      if (input.type === "checkbox") return input.required && !input.checked ? "Please accept the terms to continue." : "";
+      var value = input.value.trim();
+      var label = input.getAttribute("data-label");
+      if (input.required && !value) return label + " is required.";
+      if (input.type === "email" && !EMAIL_RE.test(value)) return "Enter a valid email address.";
+      if (input.minLength > 0 && input.value.length < input.minLength) return label + " must be at least " + input.minLength + " characters.";
+      var matchId = input.getAttribute("data-match");
+      if (matchId && input.value !== root.querySelector("#" + matchId).value) return "Passwords do not match.";
+      return "";
+    }
+    function showError(input, msg) {
+      var field = input.closest(".da-field");
+      field.classList.toggle("da-is-invalid", !!msg);
+      field.querySelector(".da-error").textContent = msg;
+      input.setAttribute("aria-invalid", msg ? "true" : "false");
+    }
+    function validatedInputs(form) {
+      return form.querySelectorAll("input[required], input[data-match]");
+    }
+
+    root.querySelectorAll(".da-form").forEach(function (form) {
+      var wrap = form.closest(".da-form-wrap");
+      var submitBtn = form.querySelector(".da-btn-primary");
+
+      // Re-check a field as the user fixes it (only once it has been flagged)
+      form.addEventListener("input", function (e) {
+        var input = e.target;
+        var field = input.closest(".da-field");
+        if (field && field.classList.contains("da-is-invalid")) showError(input, fieldError(input));
+        var confirm = form.querySelector('[data-match="' + input.id + '"]');
+        if (confirm && confirm.closest(".da-field").classList.contains("da-is-invalid")) showError(confirm, fieldError(confirm));
+      });
+
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var firstInvalid = null;
+        validatedInputs(form).forEach(function (input) {
+          var msg = fieldError(input);
+          showError(input, msg);
+          if (msg && !firstInvalid) firstInvalid = input;
+        });
+        if (firstInvalid) {
+          form.classList.remove("da-shake");
+          void form.offsetWidth; // restart the shake keyframe
+          form.classList.add("da-shake");
+          firstInvalid.focus();
+          return;
+        }
+
+        submitBtn.classList.add("da-is-loading");
+        submitBtn.disabled = true;
+        submitBtn.setAttribute("aria-busy", "true");
+
+        // TODO: connect to Dentease auth API
+        // Sign in → supabase.auth.signInWithPassword({ email, password })
+        // Sign up → POST /api/register { clinicName, email, password }
+        // Show the API error under the form on failure instead of the success state.
+        setTimeout(function () {
+          submitBtn.classList.remove("da-is-loading");
+          submitBtn.disabled = false;
+          submitBtn.removeAttribute("aria-busy");
+          wrap.classList.add("da-is-success");
+          form.inert = true;
+          wrap.querySelector(".da-success-title").focus({ preventScroll: true });
+        }, 900);
+      });
+
+      form.addEventListener("animationend", function (e) {
+        if (e.target === form) form.classList.remove("da-shake");
+      });
+
+      wrap.querySelector("[data-da-reset]").addEventListener("click", function () {
+        form.reset();
+        validatedInputs(form).forEach(function (input) { showError(input, ""); });
+        form.querySelectorAll(".da-eye.da-is-visible").forEach(function (btn) { btn.click(); });
+        wrap.classList.remove("da-is-success");
+        form.inert = false;
+        form.querySelector(".da-input").focus({ preventScroll: true });
+      });
+    });
+
+    root.querySelectorAll("[data-da-google]").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        // TODO: connect to Dentease auth API
+        // supabase.auth.signInWithOAuth({ provider: "google" })
+      });
+    });
+
+    setMode("signin", false);
+  })();
+  </script>
+</section>
+<!-- ═══════════════ DENTEASE AUTH FORM — DROP-IN BLOCK END ═══════════════ -->
+
+</body>
+</html>
