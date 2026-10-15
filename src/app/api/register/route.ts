@@ -2,7 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  const { clinicName, email, password, phone, address } = await request.json();
+  const { clinicName, email, password, phone, address, name } = await request.json();
+  const staffName = typeof name === "string" && name.trim() ? name.trim() : clinicName;
 
   if (!clinicName || !email || !password)
     return NextResponse.json({ error: "Clinic name, email and password are required." }, { status: 400 });
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     email,
     password,
     email_confirm: true,
-    user_metadata: { name: clinicName },
+    user_metadata: { name: staffName },
   });
   if (authErr) return NextResponse.json({ error: authErr.message }, { status: 400 });
 
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
 
   // 3. Create admin staff record linking user to clinic
   const { error: staffErr } = await admin.from("staff").insert([{
-    name: clinicName,
+    name: staffName,
     email,
     role: "admin",
     status: "Active",
