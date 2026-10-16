@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -171,7 +173,7 @@ export default function PatientHistoryPage() {
         {tab === "invoices" && (
           <>
             {invoices.length === 0 ? (
-              <div className="text-center py-16 text-gray-400 text-sm">No invoices found for this patient</div>
+              <EmptyState icon={Receipt} title="No invoices yet" hint="Invoices you create for this patient will show here." />
             ) : (
               <>
                 {/* Mobile */}

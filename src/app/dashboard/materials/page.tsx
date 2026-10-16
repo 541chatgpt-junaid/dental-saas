@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Boxes } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -139,7 +141,7 @@ export default function Materials() {
         )}
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Material" : "New Material"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Material Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
@@ -166,7 +168,7 @@ export default function Materials() {
         <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
           <div className="md:hidden divide-y divide-brand-50">
             {materials.length === 0 ? (
-              <p className="text-center py-10 text-brand-400 text-sm">No materials added yet</p>
+              <EmptyState icon={Boxes} title="No materials yet" hint="Add items to keep track of your clinic's stock." />
             ) : (
               materials.map(m => (
                 <div key={m.id} className="p-4">
@@ -207,7 +209,7 @@ export default function Materials() {
               </thead>
               <tbody>
                 {materials.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-10 text-brand-400">No materials added yet</td></tr>
+                  <tr><td colSpan={7}><EmptyState icon={Boxes} title="No materials yet" hint="Add items to keep track of your clinic's stock." /></td></tr>
                 ) : (
                   materials.map(m => (
                     <tr key={m.id} className="border-t border-brand-50 hover:bg-brand-50">

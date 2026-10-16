@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { UserCog } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -193,7 +195,7 @@ export default function StaffPage() {
         )}
 
         {showForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">New Staff Member</h3>
 
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
@@ -248,7 +250,7 @@ export default function StaffPage() {
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-brand-50">
             {staff.length === 0 ? (
-              <p className="text-center py-10 text-brand-400 text-sm">No staff members yet</p>
+              <EmptyState icon={UserCog} title="No staff members yet" hint="Invite your team and choose what each person can access." />
             ) : (
               staff.map(s => (
                 <div key={s.id} className="p-4">
@@ -300,7 +302,7 @@ export default function StaffPage() {
               </thead>
               <tbody>
                 {staff.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-brand-400">No staff members added yet</td></tr>
+                  <tr><td colSpan={6}><EmptyState icon={UserCog} title="No staff members yet" hint="Invite your team and choose what each person can access." /></td></tr>
                 ) : (
                   staff.map(s => (
                     <tr key={s.id} className="border-t border-brand-50 hover:bg-brand-50">

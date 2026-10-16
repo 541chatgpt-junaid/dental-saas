@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { CalendarCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -190,7 +192,7 @@ export default function Appointments() {
         </div>
 
         {(showForm || !!editingId) && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">
               {editingId ? "Edit Appointment" : "New Appointment"}
             </h3>
@@ -231,7 +233,7 @@ export default function Appointments() {
           <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
             <div className="md:hidden divide-y divide-brand-50">
               {todayAppts.length === 0 ? (
-                <p className="text-center py-6 text-brand-400 text-sm">No appointments today</p>
+                <EmptyState icon={CalendarCheck} title="No appointments today" hint="Nothing is scheduled for today." compact />
               ) : (
                 todayAppts.map(a => <AppointmentCard key={a.id} a={a} />)
               )}
@@ -250,7 +252,7 @@ export default function Appointments() {
                 </thead>
                 <tbody>
                   {todayAppts.length === 0 ? (
-                    <tr><td colSpan={6} className="text-center py-6 text-brand-400">No appointments today</td></tr>
+                    <tr><td colSpan={6}><EmptyState icon={CalendarCheck} title="No appointments today" hint="Nothing is scheduled for today." compact /></td></tr>
                   ) : (
                     todayAppts.map(a => (
                       <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">
@@ -287,7 +289,7 @@ export default function Appointments() {
           <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
             <div className="md:hidden divide-y divide-brand-50">
               {appointments.length === 0 ? (
-                <p className="text-center py-10 text-brand-400 text-sm">No appointments yet</p>
+                <EmptyState icon={CalendarCheck} title="No appointments yet" hint="Book your first appointment with + Add." />
               ) : (
                 appointments.map(a => <AppointmentCard key={a.id} a={a} />)
               )}
@@ -307,7 +309,7 @@ export default function Appointments() {
                 </thead>
                 <tbody>
                   {appointments.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center py-10 text-brand-400">No appointments yet</td></tr>
+                    <tr><td colSpan={7}><EmptyState icon={CalendarCheck} title="No appointments yet" hint="Book your first appointment with + Add." /></td></tr>
                   ) : (
                     appointments.map(a => (
                       <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">

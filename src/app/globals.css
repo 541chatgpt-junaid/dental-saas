@@ -198,6 +198,32 @@
 .modal-backdrop { animation: var(--animate-fade-in); animation-duration: .35s; }
 .modal-backdrop > * { animation: var(--animate-scale-in); animation-duration: .5s; }
 
+/* Add/edit form panels: slide in, gold accent along the top */
+.de-app .form-panel {
+  position: relative;
+  overflow: hidden;
+  animation: var(--animate-fade-up);
+  animation-duration: .6s;
+  box-shadow: 0 18px 44px rgba(15, 29, 61, .08);
+}
+.de-app .form-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, #d4af37, #e8cf7a 50%, #d4af37);
+}
+
+/* Modal dialogs: deeper shadow and a gold top edge */
+.modal-backdrop > .bg-white {
+  box-shadow: 0 30px 80px rgba(15, 29, 61, .35);
+  border-top: 3px solid #d4af37;
+}
+
+@layer base {
+  .de-app ::placeholder { color: var(--color-brand-400); opacity: 1; }
+}
+
 /* Primary buttons get the gold sweep on hover */
 .de-app button.bg-brand-600,
 .de-app a.bg-brand-600 { position: relative; overflow: hidden; isolation: isolate; }
@@ -226,4 +252,53 @@
     animation-iteration-count: 1 !important;
     transition-duration: .01ms !important;
   }
+}
+
+/* ─── Dashboard dark mode ───
+   Toggled from the sidebar (data-theme="dark" on <html>, saved in localStorage).
+   Screen only, so printed invoices and receipts stay light. */
+@media screen {
+  :root[data-theme="dark"] .de-app {
+    color-scheme: dark;
+    color: #e6e9f2;
+    --color-brand-50: #0c1530;
+    --color-brand-100: #1b2749;
+    --color-brand-200: #26345a;
+    --color-brand-300: #4b587d;
+    --color-brand-400: #8a94b0;
+    --color-brand-500: #a6aec6;
+    --color-brand-600: #d4af37;
+    --color-brand-700: #e6e2d6;
+    --color-brand-800: #f1efe8;
+    --color-brand-900: #f7f5ef;
+    --color-gray-50: #101b38;
+    --color-gray-100: #1b2749;
+    --color-gray-200: #26345a;
+    --color-gray-300: #3a4770;
+    --color-gray-400: #8a94b0;
+    --color-gray-500: #a6aec6;
+    --color-gray-600: #c3c9d9;
+    --color-gray-700: #d7dbe6;
+    --color-gray-800: #eceef4;
+    --color-gray-900: #f5f6f9;
+    --color-red-50: rgba(239,68,68,.10); --color-red-100: rgba(239,68,68,.16); --color-red-200: rgba(239,68,68,.30); --color-red-700: #fca5a5; --color-red-800: #fecaca;
+    --color-orange-50: rgba(249,115,22,.10); --color-orange-100: rgba(249,115,22,.16); --color-orange-200: rgba(249,115,22,.30); --color-orange-700: #fdba74; --color-orange-800: #fed7aa;
+    --color-amber-50: rgba(245,158,11,.10); --color-amber-100: rgba(245,158,11,.16); --color-amber-200: rgba(245,158,11,.30); --color-amber-700: #fcd34d; --color-amber-800: #fde68a;
+    --color-yellow-50: rgba(234,179,8,.10); --color-yellow-100: rgba(234,179,8,.16); --color-yellow-200: rgba(234,179,8,.30); --color-yellow-700: #fde047; --color-yellow-800: #fef08a;
+    --color-green-50: rgba(34,197,94,.10); --color-green-100: rgba(34,197,94,.16); --color-green-200: rgba(34,197,94,.30); --color-green-700: #86efac; --color-green-800: #bbf7d0;
+    --color-emerald-50: rgba(16,185,129,.10); --color-emerald-100: rgba(16,185,129,.16); --color-emerald-200: rgba(16,185,129,.30); --color-emerald-700: #6ee7b7; --color-emerald-800: #a7f3d0;
+    --color-blue-50: rgba(59,130,246,.10); --color-blue-100: rgba(59,130,246,.16); --color-blue-200: rgba(59,130,246,.30); --color-blue-700: #93c5fd; --color-blue-800: #bfdbfe;
+    --color-sky-50: rgba(14,165,233,.10); --color-sky-100: rgba(14,165,233,.16); --color-sky-200: rgba(14,165,233,.30); --color-sky-700: #7dd3fc; --color-sky-800: #bae6fd;
+    --color-indigo-50: rgba(99,102,241,.10); --color-indigo-100: rgba(99,102,241,.16); --color-indigo-200: rgba(99,102,241,.30); --color-indigo-700: #a5b4fc; --color-indigo-800: #c7d2fe;
+    --color-purple-50: rgba(168,85,247,.10); --color-purple-100: rgba(168,85,247,.16); --color-purple-200: rgba(168,85,247,.30); --color-purple-700: #d8b4fe; --color-purple-800: #e9d5ff;
+  }
+  :root[data-theme="dark"] .de-app .bg-white { background-color: #131e3d; }
+  :root[data-theme="dark"] .de-app :is(.bg-brand-600, .bg-brand-700, .hover\:bg-brand-700:hover) { color: #0f1d3d; }
+  :root[data-theme="dark"] .de-app :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+    background-color: #0f1a36;
+    color: #eceef4;
+    border-color: #26345a;
+  }
+  :root[data-theme="dark"] .de-app .card-hover:hover { box-shadow: 0 16px 36px rgba(0, 0, 0, .35); }
+  :root[data-theme="dark"] .de-app .form-panel { box-shadow: 0 18px 44px rgba(0, 0, 0, .3); }
 }

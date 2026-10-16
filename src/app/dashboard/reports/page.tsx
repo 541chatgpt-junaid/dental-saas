@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useTheme } from "@/lib/useTheme";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -11,6 +12,10 @@ import {
 } from "recharts";
 
 export default function Reports() {
+  const { dark } = useTheme();
+  // Chart ink: navy on the light theme, cream on the dark theme
+  const INK = dark ? "#e6e2d6" : "#0f1d3d";
+  const GRID = dark ? "#26345a" : "#ede8db";
   const [filter, setFilter] = useState("month");
   const [chartRange, setChartRange] = useState("6");
   const [income, setIncome] = useState(0);
@@ -135,7 +140,7 @@ export default function Reports() {
   const totalExpenses = labCost + manualExpenses + materialCost;
   const profit = income - totalExpenses;
 
-  const PIE_COLORS = ["#0f1d3d", "#d4af37", "#3b82f6", "#ef4444", "#8b5cf6", "#10b981"];
+  const PIE_COLORS = [INK, "#d4af37", "#3b82f6", "#ef4444", "#8b5cf6", "#10b981"];
 
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
@@ -284,12 +289,12 @@ export default function Reports() {
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
                 <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="income" name="Income" fill="#0f1d3d" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" name="Income" fill={INK} radius={[4, 4, 0, 0]} />
                 <Bar dataKey="pending" name="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -302,11 +307,11 @@ export default function Reports() {
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
+                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
                 <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="patients" name="Patients" stroke="#0f1d3d" strokeWidth={2} dot={{ fill: "#0f1d3d", r: 4 }} />
+                <Line type="monotone" dataKey="patients" name="Patients" stroke={INK} strokeWidth={2} dot={{ fill: INK, r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -344,11 +349,11 @@ export default function Reports() {
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={treatmentData} layout="vertical" margin={{ top: 5, right: 10, left: 40, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
                     <XAxis type="number" tick={{ fontSize: 10 }} />
                     <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={65} />
                     <Tooltip />
-                    <Bar dataKey="count" name="Patients" fill="#0f1d3d" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" name="Patients" fill={INK} radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -367,12 +372,12 @@ export default function Reports() {
               <div className="h-56 mb-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={doctorData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
+                    <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="patients" name="Patients" fill="#0f1d3d" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="patients" name="Patients" fill={INK} radius={[4, 4, 0, 0]} />
                     <Bar dataKey="income" name="Income" fill="#d4af37" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>

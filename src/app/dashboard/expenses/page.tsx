@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -155,7 +157,7 @@ export default function Expenses() {
         </div>
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Expense" : "New Expense"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Expense Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
@@ -189,7 +191,7 @@ export default function Expenses() {
         <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
           <div className="md:hidden divide-y divide-brand-50">
             {filteredExpenses.length === 0 ? (
-              <p className="text-center py-10 text-brand-400 text-sm">No expenses added yet</p>
+              <EmptyState icon={Wallet} title="No expenses yet" hint="Add rent, salaries and other costs to see your true profit." />
             ) : (
               filteredExpenses.map(e => (
                 <div key={e.id} className="p-4">
@@ -225,7 +227,7 @@ export default function Expenses() {
               </thead>
               <tbody>
                 {filteredExpenses.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-brand-400">No expenses added yet</td></tr>
+                  <tr><td colSpan={6}><EmptyState icon={Wallet} title="No expenses yet" hint="Add rent, salaries and other costs to see your true profit." /></td></tr>
                 ) : (
                   filteredExpenses.map(e => (
                     <tr key={e.id} className="border-t border-brand-50 hover:bg-brand-50">

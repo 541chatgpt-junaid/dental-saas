@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { ClipboardList } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -314,7 +316,7 @@ export default function Settings() {
                 <span className="text-xs text-gray-400">{treatments.length} treatments</span>
               </div>
               {treatments.length === 0 ? (
-                <p className="text-sm text-gray-400 text-center py-10">No treatments added yet. Add your first one above.</p>
+                <EmptyState icon={ClipboardList} title="No treatments yet" hint="Add your first treatment above." />
               ) : (
                 <div className="divide-y divide-gray-50">
                   {treatments.map(t => (

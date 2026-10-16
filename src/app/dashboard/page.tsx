@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -137,7 +139,7 @@ export default function Dashboard() {
         <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-200 shadow-sm">
           <h3 className="text-sm font-semibold text-brand-800 mb-4">Recent Patients</h3>
           {recentPatients.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No patients added yet</p>
+            <EmptyState icon={Users} title="No patients yet" hint="New patients will appear here as you register them." />
           ) : (
             <>
               <div className="md:hidden flex flex-col gap-3">

@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
   BarChart3, Boxes, CalendarCheck, FlaskConical, LayoutDashboard, LogOut, Menu, Receipt, Settings,
-  ShoppingCart, Stethoscope, UserCog, Users, Wallet, X, type LucideIcon,
+  Moon, ShoppingCart, Stethoscope, Sun, UserCog, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { clearRememberMe } from "@/lib/rememberMe";
+import { useTheme } from "@/lib/useTheme";
 
 const navItems: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -71,6 +72,7 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const { dark, toggle } = useTheme();
 
   const handleLogout = async () => {
     const supabase = createClient();
@@ -88,13 +90,24 @@ export default function Sidebar() {
   );
 
   const signOut = (
-    <button
-      onClick={handleLogout}
-      className="mt-4 flex items-center gap-3 rounded-lg border-t border-white/10 px-3.5 pb-1 pt-4 text-left text-sm text-white/60 hover:text-gold"
-    >
-      <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} /> Sign Out
-    </button>
+    <div className="mt-4 flex flex-col gap-1 border-t border-white/10 pt-4">
+      <button
+        onClick={toggle}
+        aria-pressed={dark}
+        className="flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-sm text-white/60 hover:bg-white/5 hover:text-gold"
+      >
+        {dark ? <Sun className="h-[18px] w-[18px]" strokeWidth={1.8} /> : <Moon className="h-[18px] w-[18px]" strokeWidth={1.8} />}
+        {dark ? "Light mode" : "Dark mode"}
+      </button>
+      <button
+        onClick={handleLogout}
+        className="flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-sm text-white/60 hover:bg-white/5 hover:text-gold"
+      >
+        <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} /> Sign Out
+      </button>
+    </div>
   );
+
 
   return (
     <>
@@ -126,7 +139,7 @@ export default function Sidebar() {
 
       {/* Desktop sidebar */}
       <aside
-        className="relative hidden w-60 shrink-0 flex-col overflow-y-auto bg-navy p-5 text-white md:sticky md:top-0 md:flex md:h-screen"
+        className="relative hidden w-60 shrink-0 flex-col overflow-y-auto border-r border-white/5 bg-navy p-5 text-white md:sticky md:top-0 md:flex md:h-screen"
         style={{ backgroundImage: "radial-gradient(rgba(212,175,55,.10) 1px, transparent 1.4px)", backgroundSize: "22px 22px" }}
       >
         <div className="mb-8 animate-fade-in px-1.5">
