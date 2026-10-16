@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -10,19 +10,20 @@ import { createClient } from "@/lib/supabase";
 import { clearRememberMe } from "@/lib/rememberMe";
 import { useTheme } from "@/lib/useTheme";
 
-const navItems: { label: string; href: string; icon: LucideIcon }[] = [
+// `permission` matches the names the middleware checks (staff.permissions)
+const navItems: { label: string; href: string; icon: LucideIcon; permission?: string }[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { label: "Patients", href: "/dashboard/patients", icon: Users },
-  { label: "Appointments", href: "/dashboard/appointments", icon: CalendarCheck },
-  { label: "Doctors", href: "/dashboard/doctors", icon: Stethoscope },
-  { label: "Lab Records", href: "/dashboard/labs", icon: FlaskConical },
-  { label: "Advanced Billing", href: "/dashboard/billing", icon: Receipt },
-  { label: "Inventory", href: "/dashboard/materials", icon: Boxes },
-  { label: "Purchases", href: "/dashboard/purchases", icon: ShoppingCart },
-  { label: "Expenses", href: "/dashboard/expenses", icon: Wallet },
-  { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
-  { label: "Staff", href: "/dashboard/staff", icon: UserCog },
-  { label: "Settings", href: "/dashboard/settings", icon: Settings },
+  { label: "Patients", href: "/dashboard/patients", icon: Users, permission: "Patients" },
+  { label: "Appointments", href: "/dashboard/appointments", icon: CalendarCheck, permission: "Appointments" },
+  { label: "Doctors", href: "/dashboard/doctors", icon: Stethoscope, permission: "Doctors" },
+  { label: "Lab Records", href: "/dashboard/labs", icon: FlaskConical, permission: "Lab Records" },
+  { label: "Advanced Billing", href: "/dashboard/billing", icon: Receipt, permission: "Billing" },
+  { label: "Inventory", href: "/dashboard/materials", icon: Boxes, permission: "Materials" },
+  { label: "Purchases", href: "/dashboard/purchases", icon: ShoppingCart, permission: "Purchases" },
+  { label: "Expenses", href: "/dashboard/expenses", icon: Wallet, permission: "Expenses" },
+  { label: "Reports", href: "/dashboard/reports", icon: BarChart3, permission: "Reports" },
+  { label: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "Staff" },
+  { label: "Settings", href: "/dashboard/settings", icon: Settings, permission: "Settings" },
 ];
 
 function ToothMark({ className }: { className?: string }) {
@@ -72,6 +73,24 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  // null = everything (owners, or while loading); otherwise the staff member's permissions
+  const [allowed, setAllowed] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase.from("staff").select("role, permissions").eq("user_id", user.id).maybeSingle();
+      if (cancelled || !data) return;
+      const role = String(data.role || "").toLowerCase();
+      if (role === "admin" || role === "superadmin") return;
+      setAllowed(data.permissions ? String(data.permissions).split(",").map((p: string) => p.trim()) : []);
+    })();
+    return () => { cancelled = true; };
+  }, []);
+  const visibleItems = navItems.filter(item => !item.permission || !allowed || allowed.includes(item.permission));
   const { dark, toggle } = useTheme();
 
   const handleLogout = async () => {
@@ -83,7 +102,7 @@ export default function Sidebar() {
 
   const nav = (onClick?: () => void) => (
     <nav className="flex flex-1 flex-col gap-1" aria-label="Dashboard">
-      {navItems.map((item, i) => (
+      {visibleItems.map((item, i) => (
         <NavLink key={item.href} {...item} pathname={pathname} index={i} onClick={onClick} animate={!!onClick} />
       ))}
     </nav>

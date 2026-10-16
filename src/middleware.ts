@@ -51,7 +51,7 @@ export async function middleware(request: NextRequest) {
       // Staff table mein check karo
       const { data: staffRecord } = await supabase
         .from("staff")
-        .select("permissions, status")
+        .select("permissions, status, role")
         .eq("user_id", user.id)
         .single();
 
@@ -61,6 +61,11 @@ export async function middleware(request: NextRequest) {
         if (staffRecord.status === "Inactive") {
           return NextResponse.redirect(new URL("/unauthorized", request.url));
         }
+
+        // Clinic owners (role "admin") and super admins can open every page,
+        // whatever is stored in their permissions list
+        const role = String(staffRecord.role || "").toLowerCase();
+        if (role === "admin" || role === "superadmin") return response;
 
         // Permission check
         const permissions = staffRecord.permissions

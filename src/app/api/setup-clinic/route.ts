@@ -55,7 +55,7 @@ export async function POST(request: Request) {
     email: user.email,
     role: "admin",
     status: "Active",
-    permissions: "Dashboard,Patients,Appointments,Doctors,Lab Records,Billing,Materials,Expenses,Reports,Staff,Settings",
+    permissions: "Dashboard,Patients,Appointments,Doctors,Lab Records,Billing,Materials,Purchases,Expenses,Reports,Staff,Settings",
     user_id: user.id,
     clinic_id: clinic.id,
   }]);

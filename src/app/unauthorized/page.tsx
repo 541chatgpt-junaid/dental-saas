@@ -1,15 +1,20 @@
+import Link from "next/link";
+import { ShieldAlert } from "lucide-react";
+
 export default function Unauthorized() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-brand-50">
-      <div className="bg-white rounded-2xl p-8 border border-brand-100 text-center max-w-md">
-        <div className="text-6xl mb-4">🚫</div>
-        <h1 className="text-xl font-semibold text-brand-800 mb-2">Access Denied</h1>
-        <p className="text-sm text-brand-500 mb-6">
-          You do not have permission to access this page. Please contact your admin.
+    <div className="min-h-screen flex items-center justify-center bg-brand-50 p-4">
+      <div className="w-full max-w-md animate-scale-in rounded-2xl border border-brand-100 bg-white p-8 text-center shadow-[0_20px_50px_rgba(15,29,61,.08)]">
+        <span className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-50 text-gold ring-1 ring-brand-100">
+          <ShieldAlert className="h-7 w-7" strokeWidth={1.75} aria-hidden="true" />
+        </span>
+        <h1 className="mb-2 text-2xl font-semibold text-brand-800">Access denied</h1>
+        <p className="mb-6 text-sm text-brand-500">
+          Your account does not have permission to open this page. Ask your clinic admin to enable it for you in Staff settings.
         </p>
-        <a href="/dashboard" className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-lg text-sm font-medium">
+        <Link href="/dashboard" className="inline-block rounded-lg bg-brand-600 px-6 py-2.5 text-sm font-medium text-white hover:bg-brand-700">
           Go to Dashboard
-        </a>
+        </Link>
       </div>
     </div>
   );
