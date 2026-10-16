@@ -43,7 +43,10 @@ const PRINCIPLES = [
   { icon: Sparkles, title: "Simple", desc: "Designed around how dental teams actually work. New staff are confident within a day, with no lengthy training or IT setup." },
 ];
 
-const TESTIMONIALS = [
+type Testimonial = { name: string; clinic: string; rating: number; text: string };
+
+// Shown until approved reviews load from /api/reviews (or if there are none yet)
+const TESTIMONIALS: Testimonial[] = [
   { name: "Dr. Ahmed Raza", clinic: "Raza Dental Care, Lahore", rating: 5, text: "DentEase has completely transformed how we manage our clinic. Patient records and lab work tracking is now seamless." },
   { name: "Dr. Sarah Khan", clinic: "SmilePro Dental, Karachi", rating: 5, text: "The FDI tooth chart feature is brilliant! Our lab record management has never been this organized. Highly recommended." },
   { name: "Dr. Usman Ali", clinic: "Ali Dental Clinic, Islamabad", rating: 5, text: "Free software with this many features? Unbelievable. The reports section alone saves us hours every month." },
@@ -479,6 +482,19 @@ export default function LandingPage() {
   const [reviewWebsite, setReviewWebsite] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState("");
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(TESTIMONIALS);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/reviews")
+      .then(r => (r.ok ? r.json() : []))
+      .then((rows: { name: string; clinic: string | null; rating: number; review: string }[]) => {
+        if (cancelled || !Array.isArray(rows) || rows.length === 0) return;
+        setTestimonials(rows.map(r => ({ name: r.name, clinic: r.clinic ?? "", rating: r.rating, text: r.review })));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -720,8 +736,9 @@ export default function LandingPage() {
           </div>
           <div {...rv(200, "fade")} className="relative mt-16 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
             <div className="marquee-track flex w-max animate-marquee gap-6">
-              {[...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS, ...TESTIMONIALS].map((t, i) => (
-                <article key={i} aria-hidden={i >= TESTIMONIALS.length} className="w-[320px] shrink-0 rounded-2xl border border-navy/8 bg-white p-8 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:w-[380px]">
+              {/* Repeat an even number of times so the -50% marquee loop is seamless and the strip is never short */}
+              {Array.from({ length: 2 * Math.max(2, Math.ceil(6 / testimonials.length)) }, () => testimonials).flat().map((t, i) => (
+                <article key={i} aria-hidden={i >= testimonials.length} className="w-[320px] shrink-0 rounded-2xl border border-navy/8 bg-white p-8 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:w-[380px]">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-0.5" aria-label={`${t.rating} out of 5 stars`}>
                       {Array.from({ length: 5 }).map((_, s) => <Star key={s} className={`h-4 w-4 ${s < t.rating ? "fill-gold text-gold" : "text-navy/15"}`} />)}
@@ -731,7 +748,7 @@ export default function LandingPage() {
                   <p className="mt-5 text-[15px] leading-relaxed text-navy/80">&ldquo;{t.text}&rdquo;</p>
                   <div className="mt-6 flex items-center gap-3 border-t border-navy/8 pt-5">
                     <span className="flex h-10 w-10 items-center justify-center rounded-full bg-navy font-display text-sm font-semibold text-gold">
-                      {t.name.replace("Dr. ", "").split(" ").map(w => w[0]).join("")}
+                      {t.name.replace(/^Dr\.?\s*/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0].toUpperCase()).join("")}
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-navy">{t.name}</p>

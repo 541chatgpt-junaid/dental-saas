@@ -7,6 +7,7 @@ import {
   ShoppingCart, Stethoscope, UserCog, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { clearRememberMe } from "@/lib/rememberMe";
 
 const navItems: { label: string; href: string; icon: LucideIcon }[] = [
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -74,6 +75,7 @@ export default function Sidebar() {
   const handleLogout = async () => {
     const supabase = createClient();
     await supabase.auth.signOut();
+    clearRememberMe();
     router.push("/");
   };
 

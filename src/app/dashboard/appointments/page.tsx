@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
+import { waLink } from "@/lib/whatsapp";
 
 interface Appointment {
   id: number;
@@ -33,12 +34,30 @@ export default function Appointments() {
     time: "", treatment: "", status: "Scheduled", notes: "",
   });
   const router = useRouter();
-  const { clinicId } = useClinic();
+  const { clinicId, clinicName } = useClinic();
+  const [phones, setPhones] = useState<Record<string, string>>({});
 
   const fetchAppointments = async () => {
     const supabase = createClient();
     const { data } = await supabase.from("appointments").select("*").order("date", { ascending: true });
     if (data) setAppointments(data);
+  };
+
+  // Patient phone numbers by name, for WhatsApp reminders (appointments only store the name)
+  const fetchPhones = async () => {
+    const supabase = createClient();
+    const { data } = await supabase.from("patients").select("name, phone");
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach(p => { if (p.name && p.phone) map[p.name.trim().toLowerCase()] = p.phone; });
+      setPhones(map);
+    }
+  };
+
+  const reminderLink = (a: Appointment) => {
+    const when = new Date(`${a.date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    const text = `Assalam o Alaikum ${a.patient_name}, this is a reminder of your appointment${clinicName ? ` at ${clinicName}` : ""} on ${when}${a.time ? ` at ${a.time}` : ""}${a.doctor_name ? ` with Dr. ${a.doctor_name}` : ""}. Please reply to confirm. Thank you!`;
+    return waLink(phones[a.patient_name?.trim().toLowerCase()], text);
   };
 
   const fetchDoctors = async () => {
@@ -56,6 +75,7 @@ export default function Appointments() {
     checkUser();
     fetchAppointments();
     fetchDoctors();
+    fetchPhones();
   }, [router]);
 
   const handleAdd = async () => {
@@ -148,6 +168,7 @@ export default function Appointments() {
             <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
           </>
         )}
+        {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
         <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
         <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
       </div>
@@ -246,6 +267,7 @@ export default function Appointments() {
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
+                            {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>
@@ -303,6 +325,7 @@ export default function Appointments() {
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
+                            {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>
