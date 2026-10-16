@@ -19,7 +19,7 @@ interface Staff {
 
 const allPages = [
   "Dashboard", "Patients", "Appointments", "Doctors",
-  "Lab Records", "Materials", "Expenses", "Reports", "Staff", "Settings",
+  "Lab Records", "Billing", "Materials", "Purchases", "Expenses", "Reports", "Staff", "Settings",
 ];
 
 export default function StaffPage() {
