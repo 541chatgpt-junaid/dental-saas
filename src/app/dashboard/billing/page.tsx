@@ -78,17 +78,17 @@ export default function BillingPage() {
   });
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-gray-800">Billing & Invoices</h2>
+            <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Billing & Invoices</h2>
             <p className="text-sm text-gray-500 mt-1">Manage invoices and payments</p>
           </div>
           <Link
             href="/dashboard/billing/new"
-            className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium text-center shadow-sm"
+            className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium text-center shadow-sm"
           >
             + New Invoice
           </Link>
@@ -102,12 +102,12 @@ export default function BillingPage() {
         {/* Filters row */}
         <div className="flex flex-col gap-3 mb-5">
           <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex gap-1 bg-white border border-gray-200 shadow-sm rounded-xl p-1 overflow-x-auto">
+            <div className="flex gap-1 bg-white border border-brand-200 shadow-sm rounded-xl p-1 overflow-x-auto">
               {STATUS_TABS.map(t => (
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t ? "bg-teal-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
                 >
                   {t === "All" ? "All" : statusLabel(t)}
                 </button>
@@ -117,7 +117,7 @@ export default function BillingPage() {
               placeholder="Search invoice # or patient..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="flex-1 border border-gray-200 shadow-sm rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
+              className="flex-1 border border-brand-200 shadow-sm rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white"
             />
           </div>
           <div className="flex flex-col md:flex-row gap-3">
@@ -127,7 +127,7 @@ export default function BillingPage() {
                 type="date"
                 value={dateFrom}
                 onChange={e => setDateFrom(e.target.value)}
-                className="flex-1 border border-gray-200 shadow-sm rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
+                className="flex-1 border border-brand-200 shadow-sm rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white"
               />
             </div>
             <div className="flex items-center gap-2 flex-1">
@@ -136,7 +136,7 @@ export default function BillingPage() {
                 type="date"
                 value={dateTo}
                 onChange={e => setDateTo(e.target.value)}
-                className="flex-1 border border-gray-200 shadow-sm rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white"
+                className="flex-1 border border-brand-200 shadow-sm rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white"
               />
             </div>
             {(dateFrom || dateTo) && (
@@ -159,15 +159,15 @@ export default function BillingPage() {
             {/* Mobile */}
             <div className="md:hidden flex flex-col gap-3">
               {filtered.map(inv => (
-                <div key={inv.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                <div key={inv.id} className="bg-white rounded-xl border border-brand-200 shadow-sm p-4">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-semibold text-teal-800 text-sm">{inv.invoice_number}</p>
-                      <p className="text-xs text-teal-500">{inv.patients?.name || "—"}</p>
+                      <p className="font-semibold text-brand-800 text-sm">{inv.invoice_number}</p>
+                      <p className="text-xs text-brand-500">{inv.patients?.name || "—"}</p>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(effectiveStatus(inv))}`}>{statusLabel(effectiveStatus(inv))}</span>
                   </div>
-                  <div className="flex justify-between text-xs text-teal-600 mb-3">
+                  <div className="flex justify-between text-xs text-brand-600 mb-3">
                     <span>Total: {symbol} {inv.total.toLocaleString()}</span>
                     <span>Bal: {symbol} {inv.balance.toLocaleString()}</span>
                     <span>{formatDate(inv.created_at)}</span>
@@ -175,14 +175,14 @@ export default function BillingPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => router.push(`/dashboard/billing/${inv.id}`)}
-                      className="text-xs px-3 py-1.5 rounded-lg border border-teal-200 text-teal-700 font-medium"
+                      className="text-xs px-3 py-1.5 rounded-lg border border-brand-200 text-brand-700 font-medium"
                     >
                       View
                     </button>
                     {inv.status !== "paid" && inv.status !== "cancelled" && (
                       <button
                         onClick={() => router.push(`/dashboard/billing/${inv.id}?pay=1`)}
-                        className="text-xs px-3 py-1.5 rounded-lg bg-teal-600 text-white font-medium"
+                        className="text-xs px-3 py-1.5 rounded-lg bg-brand-600 text-white font-medium"
                       >
                         Record Payment
                       </button>
@@ -193,9 +193,9 @@ export default function BillingPage() {
             </div>
 
             {/* Desktop */}
-            <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
               <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-brand-50 border-b border-brand-200">
                   <tr>
                     <th className="text-left px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Invoice #</th>
                     <th className="text-left px-5 py-3 text-gray-600 font-semibold text-xs uppercase tracking-wide">Patient</th>
@@ -209,11 +209,11 @@ export default function BillingPage() {
                 </thead>
                 <tbody>
                   {filtered.map(inv => (
-                    <tr key={inv.id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-5 py-3 font-semibold text-teal-700">{inv.invoice_number}</td>
-                      <td className="px-5 py-3 font-medium text-gray-800">{inv.patients?.name || "—"}</td>
+                    <tr key={inv.id} className="border-t border-brand-100 hover:bg-brand-50">
+                      <td className="px-5 py-3 font-semibold text-brand-700">{inv.invoice_number}</td>
+                      <td className="px-5 py-3 font-medium text-brand-800">{inv.patients?.name || "—"}</td>
                       <td className="px-5 py-3 text-gray-500 text-xs">{formatDate(inv.created_at)}</td>
-                      <td className="px-5 py-3 text-right font-semibold text-gray-800">{symbol} {inv.total.toLocaleString()}</td>
+                      <td className="px-5 py-3 text-right font-semibold text-brand-800">{symbol} {inv.total.toLocaleString()}</td>
                       <td className="px-5 py-3 text-right text-emerald-600 font-medium">{symbol} {inv.amount_paid.toLocaleString()}</td>
                       <td className="px-5 py-3 text-right font-bold text-orange-600">{symbol} {inv.balance.toLocaleString()}</td>
                       <td className="px-5 py-3">
@@ -223,7 +223,7 @@ export default function BillingPage() {
                         <div className="flex gap-3">
                           <button
                             onClick={() => router.push(`/dashboard/billing/${inv.id}`)}
-                            className="text-teal-600 text-xs font-semibold hover:underline"
+                            className="text-brand-600 text-xs font-semibold hover:underline"
                           >
                             View
                           </button>

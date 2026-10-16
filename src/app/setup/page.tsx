@@ -49,15 +49,15 @@ export default function SetupClinicPage() {
 
   if (checking) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-teal-50">
-        <p className="text-teal-500 text-sm">Loading...</p>
+      <main className="min-h-screen flex items-center justify-center bg-brand-50">
+        <p className="text-brand-500 text-sm">Loading...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-teal-50 p-4">
-      <div className="bg-white rounded-2xl shadow-sm border border-teal-100 w-full max-w-md p-8">
+    <main className="min-h-screen flex items-center justify-center bg-brand-50 p-4">
+      <div className="bg-white rounded-2xl shadow-sm border border-brand-100 w-full max-w-md p-8">
         <div className="text-center mb-7">
           <div className="flex justify-center mb-3">
             <Image
@@ -69,8 +69,8 @@ export default function SetupClinicPage() {
               priority
             />
           </div>
-          <h1 className="text-2xl font-semibold text-teal-800">Set Up Your Clinic</h1>
-          <p className="text-sm text-teal-500 mt-1">Almost there — just tell us about your clinic</p>
+          <h1 className="text-2xl font-semibold text-brand-800">Set Up Your Clinic</h1>
+          <p className="text-sm text-brand-500 mt-1">Almost there — just tell us about your clinic</p>
         </div>
 
         <div className="space-y-3">
@@ -78,19 +78,19 @@ export default function SetupClinicPage() {
             placeholder="Clinic Name *"
             value={form.clinicName}
             onChange={e => setForm({ ...form, clinicName: e.target.value })}
-            className="w-full border border-teal-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="w-full border border-brand-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
           />
           <input
             placeholder="Phone Number"
             value={form.phone}
             onChange={e => setForm({ ...form, phone: e.target.value })}
-            className="w-full border border-teal-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="w-full border border-brand-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
           />
           <input
             placeholder="Clinic Address"
             value={form.address}
             onChange={e => setForm({ ...form, address: e.target.value })}
-            className="w-full border border-teal-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+            className="w-full border border-brand-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
           />
 
           {error && <p className="text-red-500 text-xs text-center">{error}</p>}
@@ -98,14 +98,14 @@ export default function SetupClinicPage() {
           <button
             onClick={handleSubmit}
             disabled={loading}
-            className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
+            className="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
           >
             {loading ? "Setting up your clinic..." : "Complete Setup"}
           </button>
         </div>
 
-        <div className="mt-5 pt-4 border-t border-teal-100 text-center">
-          <p className="text-xs text-teal-300">2026 DentEase. All rights reserved.</p>
+        <div className="mt-5 pt-4 border-t border-brand-100 text-center">
+          <p className="text-xs text-brand-300">2026 DentEase. All rights reserved.</p>
         </div>
       </div>
     </main>

@@ -255,13 +255,6 @@ export default function AuthForm({
 
   return (
     <div className={styles.page}>
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link
-        rel="stylesheet"
-        precedence="default"
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap"
-      />
-
       <div id="auth-card" className={cx(styles.container, isSignup && styles.active)}>
         {/* ── SIGN UP ── */}
         <div className={cx(styles.formPanel, styles.signUpPanel)} inert={!isSignup} aria-hidden={!isSignup}>

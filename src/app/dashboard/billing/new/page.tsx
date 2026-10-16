@@ -157,25 +157,25 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.push("/dashboard/billing")} className="text-teal-500 hover:text-teal-700 text-sm">← Back</button>
-          <h2 className="text-xl font-semibold text-gray-800">New Invoice</h2>
+          <button onClick={() => router.push("/dashboard/billing")} className="text-brand-500 hover:text-brand-700 text-sm">← Back</button>
+          <h2 className="text-xl font-semibold text-brand-800">New Invoice</h2>
         </div>
 
         <div className="max-w-3xl space-y-5">
           {/* Patient & Visit */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">Patient Details</h3>
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">Patient Details</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs text-teal-600 mb-1 block">Patient *</label>
+                <label className="text-xs text-brand-600 mb-1 block">Patient *</label>
                 <select
                   value={patientId}
                   onChange={e => handlePatientChange(e.target.value)}
-                  className="w-full border border-teal-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 >
                   <option value="">Select patient...</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -184,14 +184,14 @@ export default function NewInvoicePage() {
 
               {/* Patient info + billing summary — full width */}
               {selectedPatient && patientBilling && (
-                <div className="md:col-span-2 rounded-xl border border-teal-200 bg-teal-50 overflow-hidden">
-                  <div className="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-teal-200">
-                    <span className="font-semibold text-teal-800 text-sm">{selectedPatient.name}</span>
+                <div className="md:col-span-2 rounded-xl border border-brand-200 bg-brand-50 overflow-hidden">
+                  <div className="px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-brand-200">
+                    <span className="font-semibold text-brand-800 text-sm">{selectedPatient.name}</span>
                     {selectedPatient.phone && (
-                      <span className="text-teal-600 text-sm">{selectedPatient.phone}</span>
+                      <span className="text-brand-600 text-sm">{selectedPatient.phone}</span>
                     )}
                     {(selectedPatient.age || selectedPatient.gender) && (
-                      <span className="text-teal-500 text-xs">
+                      <span className="text-brand-500 text-xs">
                         {[selectedPatient.age ? `${selectedPatient.age} yrs` : null, selectedPatient.gender || null]
                           .filter(Boolean).join(" · ")}
                       </span>
@@ -199,16 +199,16 @@ export default function NewInvoicePage() {
                   </div>
                   <div className="px-4 py-3 grid grid-cols-3 gap-3 text-center">
                     <div>
-                      <p className="text-xs text-teal-500 mb-0.5">Total Billed</p>
-                      <p className="text-sm font-semibold text-teal-800">{symbol} {patientBilling.totalBilled.toLocaleString()}</p>
+                      <p className="text-xs text-brand-500 mb-0.5">Total Billed</p>
+                      <p className="text-sm font-semibold text-brand-800">{symbol} {patientBilling.totalBilled.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-teal-500 mb-0.5">Total Paid</p>
+                      <p className="text-xs text-brand-500 mb-0.5">Total Paid</p>
                       <p className="text-sm font-semibold text-green-700">{symbol} {patientBilling.totalPaid.toLocaleString()}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-teal-500 mb-0.5">Outstanding</p>
-                      <p className={`text-sm font-semibold ${patientBilling.outstanding > 0 ? "text-orange-600" : "text-teal-700"}`}>
+                      <p className="text-xs text-brand-500 mb-0.5">Outstanding</p>
+                      <p className={`text-sm font-semibold ${patientBilling.outstanding > 0 ? "text-orange-600" : "text-brand-700"}`}>
                         {symbol} {patientBilling.outstanding.toLocaleString()}
                       </p>
                     </div>
@@ -227,12 +227,12 @@ export default function NewInvoicePage() {
               )}
 
               <div>
-                <label className="text-xs text-teal-600 mb-1 block">Link to Visit (optional)</label>
+                <label className="text-xs text-brand-600 mb-1 block">Link to Visit (optional)</label>
                 <select
                   value={visitId}
                   onChange={e => setVisitId(e.target.value)}
                   disabled={!patientId}
-                  className="w-full border border-teal-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 disabled:opacity-50"
+                  className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold disabled:opacity-50"
                 >
                   <option value="">No visit</option>
                   {visits.map(v => (
@@ -241,27 +241,27 @@ export default function NewInvoicePage() {
                 </select>
               </div>
               <div>
-                <label className="text-xs text-teal-600 mb-1 block">Due Date (optional)</label>
+                <label className="text-xs text-brand-600 mb-1 block">Due Date (optional)</label>
                 <input
                   type="date"
                   value={dueDate}
                   onChange={e => setDueDate(e.target.value)}
-                  className="w-full border border-teal-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 />
               </div>
             </div>
           </div>
 
           {/* Quick Add */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-800">Quick Add Treatment</h3>
-              <a href="/dashboard/settings" className="text-xs text-teal-500 hover:underline">⚙ Manage Presets</a>
+              <h3 className="text-sm font-semibold text-brand-800">Quick Add Treatment</h3>
+              <a href="/dashboard/settings" className="text-xs text-brand-500 hover:underline">⚙ Manage Presets</a>
             </div>
             {treatmentPresets.length === 0 ? (
               <div className="text-center py-4 text-sm text-gray-400">
                 No treatment presets configured.{" "}
-                <a href="/dashboard/settings" className="text-teal-500 underline">Add in Settings → Treatment Presets</a>
+                <a href="/dashboard/settings" className="text-brand-500 underline">Add in Settings → Treatment Presets</a>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -269,11 +269,11 @@ export default function NewInvoicePage() {
                   <button
                     key={t.id}
                     onClick={() => quickAdd(t)}
-                    className="flex flex-col items-start px-3 py-2 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 hover:border-teal-400 transition-colors"
+                    className="flex flex-col items-start px-3 py-2 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 hover:border-brand-400 transition-colors"
                   >
                     <span className="text-xs font-medium">+ {t.name}</span>
                     {t.price > 0 && (
-                      <span className="text-xs text-teal-400 mt-0.5">{symbol} {t.price.toLocaleString()}</span>
+                      <span className="text-xs text-brand-400 mt-0.5">{symbol} {t.price.toLocaleString()}</span>
                     )}
                   </button>
                 ))}
@@ -282,9 +282,9 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Line Items */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">Invoice Items</h3>
-            <div className="hidden md:grid grid-cols-12 gap-2 mb-2 text-xs text-teal-500 font-medium px-1">
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">Invoice Items</h3>
+            <div className="hidden md:grid grid-cols-12 gap-2 mb-2 text-xs text-brand-500 font-medium px-1">
               <span className="col-span-6">Description</span>
               <span className="col-span-2 text-center">Qty</span>
               <span className="col-span-3">Unit Price</span>
@@ -297,19 +297,19 @@ export default function NewInvoicePage() {
                     placeholder="Description"
                     value={item.description}
                     onChange={e => updateItem(idx, "description", e.target.value)}
-                    className="col-span-6 border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    className="col-span-6 border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                   />
                   <input
                     type="number" placeholder="1" min="1"
                     value={item.quantity}
                     onChange={e => updateItem(idx, "quantity", Number(e.target.value))}
-                    className="col-span-2 border border-teal-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 text-center"
+                    className="col-span-2 border border-brand-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold text-center"
                   />
                   <input
                     type="number" placeholder="0" min="0"
                     value={item.unit_price}
                     onChange={e => updateItem(idx, "unit_price", Number(e.target.value))}
-                    className="col-span-3 border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    className="col-span-3 border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                   />
                   <button
                     onClick={() => removeItem(idx)}
@@ -320,26 +320,26 @@ export default function NewInvoicePage() {
                 </div>
               ))}
             </div>
-            <button onClick={addItem} className="mt-3 text-teal-600 text-sm hover:underline">+ Add Item</button>
+            <button onClick={addItem} className="mt-3 text-brand-600 text-sm hover:underline">+ Add Item</button>
           </div>
 
           {/* Totals */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
             <div className="max-w-xs ml-auto space-y-2.5">
-              <div className="flex justify-between text-sm text-teal-700">
+              <div className="flex justify-between text-sm text-brand-700">
                 <span>Subtotal</span>
                 <span>{symbol} {subtotal.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between items-center text-sm text-teal-700">
+              <div className="flex justify-between items-center text-sm text-brand-700">
                 <span>Discount</span>
                 <input
                   type="number" min="0"
                   value={discount}
                   onChange={e => setDiscount(Number(e.target.value))}
-                  className="w-32 border border-teal-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-32 border border-brand-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 />
               </div>
-              <div className="flex justify-between text-base font-semibold text-teal-800 pt-2 border-t border-teal-100">
+              <div className="flex justify-between text-base font-semibold text-brand-800 pt-2 border-t border-brand-100">
                 <span>Total</span>
                 <span>{symbol} {total.toLocaleString()}</span>
               </div>
@@ -347,16 +347,16 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Installment Plan */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-sm font-semibold text-gray-800">Installment Plan</h3>
+                <h3 className="text-sm font-semibold text-brand-800">Installment Plan</h3>
                 <p className="text-xs text-gray-400 mt-0.5">Split payment into scheduled installments</p>
               </div>
               <button
                 type="button"
                 onClick={() => setUseInstallments(!useInstallments)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useInstallments ? "bg-teal-600" : "bg-gray-200"}`}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${useInstallments ? "bg-brand-600" : "bg-gray-200"}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${useInstallments ? "translate-x-6" : "translate-x-1"}`} />
               </button>
@@ -369,19 +369,19 @@ export default function NewInvoicePage() {
                       placeholder={`Installment ${idx + 1}`}
                       value={inst.label}
                       onChange={e => setInstallments(installments.map((it, i) => i === idx ? { ...it, label: e.target.value } : it))}
-                      className="col-span-4 border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      className="col-span-4 border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                     />
                     <input
                       type="number" placeholder="Amount" min="0"
                       value={inst.amount || ""}
                       onChange={e => setInstallments(installments.map((it, i) => i === idx ? { ...it, amount: Number(e.target.value) } : it))}
-                      className="col-span-4 border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      className="col-span-4 border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                     />
                     <input
                       type="date"
                       value={inst.due_date}
                       onChange={e => setInstallments(installments.map((it, i) => i === idx ? { ...it, due_date: e.target.value } : it))}
-                      className="col-span-3 border border-teal-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                      className="col-span-3 border border-brand-200 rounded-lg px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                     />
                     <button
                       onClick={() => setInstallments(installments.filter((_, i) => i !== idx))}
@@ -392,7 +392,7 @@ export default function NewInvoicePage() {
                 <div className="flex items-center justify-between pt-1">
                   <button
                     onClick={() => setInstallments([...installments, { label: `Installment ${installments.length + 1}`, amount: 0, due_date: "" }])}
-                    className="text-teal-600 text-sm hover:underline"
+                    className="text-brand-600 text-sm hover:underline"
                   >+ Add Installment</button>
                   {installments.some(i => i.amount > 0) && (
                     <span className={`text-xs font-medium ${installments.reduce((s, i) => s + i.amount, 0) === total ? "text-green-600" : "text-orange-500"}`}>
@@ -405,14 +405,14 @@ export default function NewInvoicePage() {
           </div>
 
           {/* Notes */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-            <label className="text-xs text-teal-600 mb-1 block">Notes (optional)</label>
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
+            <label className="text-xs text-brand-600 mb-1 block">Notes (optional)</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={3}
               placeholder="Any additional notes..."
-              className="w-full border border-teal-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 resize-none"
+              className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold resize-none"
             />
           </div>
 
@@ -422,7 +422,7 @@ export default function NewInvoicePage() {
             <button
               onClick={() => handleSave(false)}
               disabled={loading}
-              className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
+              className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
             >
               {loading ? "Creating..." : "Create Invoice"}
             </button>
@@ -435,7 +435,7 @@ export default function NewInvoicePage() {
             </button>
             <button
               onClick={() => router.push("/dashboard/billing")}
-              className="border border-teal-200 text-teal-700 px-6 py-2.5 rounded-xl text-sm"
+              className="border border-brand-200 text-brand-700 px-6 py-2.5 rounded-xl text-sm"
             >
               Cancel
             </button>

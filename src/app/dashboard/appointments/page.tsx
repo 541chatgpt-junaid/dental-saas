@@ -135,12 +135,12 @@ export default function Appointments() {
   const AppointmentCard = ({ a }: { a: Appointment }) => (
     <div className="p-4">
       <div className="flex justify-between items-start mb-1">
-        <p className="font-medium text-teal-800 text-sm">{a.patient_name}</p>
+        <p className="font-medium text-brand-800 text-sm">{a.patient_name}</p>
         <StatusBadge status={a.status} />
       </div>
-      <p className="text-xs text-teal-600">{a.treatment} · Dr. {a.doctor_name}</p>
-      <p className="text-xs text-teal-400 mt-1">{a.date} · {a.time}</p>
-      {a.notes && <p className="text-xs text-teal-400">📝 {a.notes}</p>}
+      <p className="text-xs text-brand-600">{a.treatment} · Dr. {a.doctor_name}</p>
+      <p className="text-xs text-brand-400 mt-1">{a.date} · {a.time}</p>
+      {a.notes && <p className="text-xs text-brand-400">📝 {a.notes}</p>}
       <div className="flex gap-2 mt-2 flex-wrap">
         {a.status === "Scheduled" && (
           <>
@@ -148,95 +148,95 @@ export default function Appointments() {
             <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
           </>
         )}
-        <button onClick={() => openEdit(a)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+        <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
         <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Appointments</h2>
-            <p className="text-sm text-teal-600 mt-1">Total: {appointments.length} appointments</p>
+            <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Appointments</h2>
+            <p className="text-sm text-brand-600 mt-1">Total: {appointments.length} appointments</p>
           </div>
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
             + Add
           </button>
         </div>
 
         {(showForm || !!editingId) && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">
               {editingId ? "Edit Appointment" : "New Appointment"}
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+              <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option value="">Select Doctor</option>
                 {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
               </select>
               <div>
-                <label className="block text-xs text-teal-600 mb-1">Date</label>
-                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <label className="block text-xs text-brand-600 mb-1">Date</label>
+                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
               <div>
-                <label className="block text-xs text-teal-600 mb-1">Time</label>
-                <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <label className="block text-xs text-brand-600 mb-1">Time</label>
+                <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
-              <input placeholder="Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+              <input placeholder="Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option>Scheduled</option>
                 <option>Completed</option>
                 <option>Cancelled</option>
               </select>
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
             </div>
             <div className="flex gap-3 mt-4">
-              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : editingId ? "Update Appointment" : "Save Appointment"}
               </button>
-              <button onClick={() => { setShowForm(false); setEditingId(null); setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" }); }} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => { setShowForm(false); setEditingId(null); setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" }); }} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
 
         {/* Today's Appointments */}
         <div className="mb-6">
-          <h3 className="text-sm font-semibold text-teal-800 mb-3">Today's Appointments</h3>
-          <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-            <div className="md:hidden divide-y divide-teal-50">
+          <h3 className="text-sm font-semibold text-brand-800 mb-3">Today's Appointments</h3>
+          <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
+            <div className="md:hidden divide-y divide-brand-50">
               {todayAppts.length === 0 ? (
-                <p className="text-center py-6 text-teal-400 text-sm">No appointments today</p>
+                <p className="text-center py-6 text-brand-400 text-sm">No appointments today</p>
               ) : (
                 todayAppts.map(a => <AppointmentCard key={a.id} a={a} />)
               )}
             </div>
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-teal-50">
+                <thead className="bg-brand-50">
                   <tr>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Time</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Patient</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Doctor</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Time</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Treatment</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Status</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {todayAppts.length === 0 ? (
-                    <tr><td colSpan={6} className="text-center py-6 text-teal-400">No appointments today</td></tr>
+                    <tr><td colSpan={6} className="text-center py-6 text-brand-400">No appointments today</td></tr>
                   ) : (
                     todayAppts.map(a => (
-                      <tr key={a.id} className="border-t border-teal-50 hover:bg-teal-50">
-                        <td className="px-4 py-3 font-medium text-teal-800">{a.patient_name}</td>
-                        <td className="px-4 py-3 text-teal-700">{a.doctor_name}</td>
-                        <td className="px-4 py-3 text-teal-700">{a.time}</td>
-                        <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
+                      <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">
+                        <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}</td>
+                        <td className="px-4 py-3 text-brand-700">{a.doctor_name}</td>
+                        <td className="px-4 py-3 text-brand-700">{a.time}</td>
+                        <td className="px-4 py-3 text-brand-700">{a.treatment}</td>
                         <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2 flex-wrap">
@@ -246,7 +246,7 @@ export default function Appointments() {
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
-                            <button onClick={() => openEdit(a)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                            <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>
                         </td>
@@ -261,39 +261,39 @@ export default function Appointments() {
 
         {/* All Appointments */}
         <div>
-          <h3 className="text-sm font-semibold text-teal-800 mb-3">All Appointments</h3>
-          <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-            <div className="md:hidden divide-y divide-teal-50">
+          <h3 className="text-sm font-semibold text-brand-800 mb-3">All Appointments</h3>
+          <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
+            <div className="md:hidden divide-y divide-brand-50">
               {appointments.length === 0 ? (
-                <p className="text-center py-10 text-teal-400 text-sm">No appointments yet</p>
+                <p className="text-center py-10 text-brand-400 text-sm">No appointments yet</p>
               ) : (
                 appointments.map(a => <AppointmentCard key={a.id} a={a} />)
               )}
             </div>
             <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-teal-50">
+                <thead className="bg-brand-50">
                   <tr>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Patient</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Time</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
-                    <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Patient</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Doctor</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Date</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Time</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Treatment</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Status</th>
+                    <th className="text-left px-4 py-3 text-brand-700 font-medium">Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {appointments.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center py-10 text-teal-400">No appointments yet</td></tr>
+                    <tr><td colSpan={7} className="text-center py-10 text-brand-400">No appointments yet</td></tr>
                   ) : (
                     appointments.map(a => (
-                      <tr key={a.id} className="border-t border-teal-50 hover:bg-teal-50">
-                        <td className="px-4 py-3 font-medium text-teal-800">{a.patient_name}</td>
-                        <td className="px-4 py-3 text-teal-700">{a.doctor_name}</td>
-                        <td className="px-4 py-3 text-teal-700">{a.date}</td>
-                        <td className="px-4 py-3 text-teal-700">{a.time}</td>
-                        <td className="px-4 py-3 text-teal-700">{a.treatment}</td>
+                      <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">
+                        <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}</td>
+                        <td className="px-4 py-3 text-brand-700">{a.doctor_name}</td>
+                        <td className="px-4 py-3 text-brand-700">{a.date}</td>
+                        <td className="px-4 py-3 text-brand-700">{a.time}</td>
+                        <td className="px-4 py-3 text-brand-700">{a.treatment}</td>
                         <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2 flex-wrap">
@@ -303,7 +303,7 @@ export default function Appointments() {
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
-                            <button onClick={() => openEdit(a)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                            <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>
                         </td>

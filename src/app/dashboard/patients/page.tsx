@@ -590,33 +590,33 @@ export default function Patients() {
   const ToothBtn = ({ num, selected, onToggle }: { num: number; selected: number[]; onToggle: (n: number) => void }) => (
     <button type="button" onClick={() => onToggle(num)}
       className={`w-6 h-6 md:w-8 md:h-8 text-xs rounded border font-medium transition-colors ${
-        selected.includes(num) ? "bg-teal-600 text-white border-teal-600" : "bg-white text-teal-700 border-teal-200 hover:bg-teal-50"
+        selected.includes(num) ? "bg-brand-600 text-white border-brand-600" : "bg-white text-brand-700 border-brand-200 hover:bg-brand-50"
       }`}>
       {num}
     </button>
   );
 
   const ToothChart = ({ selected, onToggle }: { selected: number[]; onToggle: (n: number) => void }) => (
-    <div className="p-3 md:p-4 border border-teal-100 rounded-xl bg-teal-50 overflow-x-auto md:col-span-2">
-      <p className="text-xs font-semibold text-teal-700 mb-3">Select Tooth (FDI Numbering)</p>
+    <div className="p-3 md:p-4 border border-brand-100 rounded-xl bg-brand-50 overflow-x-auto md:col-span-2">
+      <p className="text-xs font-semibold text-brand-700 mb-3">Select Tooth (FDI Numbering)</p>
       <div className="flex flex-col items-center gap-1 min-w-max mx-auto">
         <div className="flex gap-0.5 md:gap-1 items-center">
-          <span className="text-xs text-teal-400 w-12 md:w-16 text-right">Upper R</span>
+          <span className="text-xs text-brand-400 w-12 md:w-16 text-right">Upper R</span>
           <div className="flex gap-0.5 md:gap-1">{upperRight.map(n => <ToothBtn key={n} num={n} selected={selected} onToggle={onToggle} />)}</div>
-          <div className="w-px h-6 md:h-8 bg-teal-300 mx-0.5 md:mx-1"></div>
+          <div className="w-px h-6 md:h-8 bg-brand-300 mx-0.5 md:mx-1"></div>
           <div className="flex gap-0.5 md:gap-1">{upperLeft.map(n => <ToothBtn key={n} num={n} selected={selected} onToggle={onToggle} />)}</div>
-          <span className="text-xs text-teal-400 w-12 md:w-16">Upper L</span>
+          <span className="text-xs text-brand-400 w-12 md:w-16">Upper L</span>
         </div>
-        <div className="w-full border-t border-teal-200 my-1"></div>
+        <div className="w-full border-t border-brand-200 my-1"></div>
         <div className="flex gap-0.5 md:gap-1 items-center">
-          <span className="text-xs text-teal-400 w-12 md:w-16 text-right">Lower R</span>
+          <span className="text-xs text-brand-400 w-12 md:w-16 text-right">Lower R</span>
           <div className="flex gap-0.5 md:gap-1">{lowerRight.map(n => <ToothBtn key={n} num={n} selected={selected} onToggle={onToggle} />)}</div>
-          <div className="w-px h-6 md:h-8 bg-teal-300 mx-0.5 md:mx-1"></div>
+          <div className="w-px h-6 md:h-8 bg-brand-300 mx-0.5 md:mx-1"></div>
           <div className="flex gap-0.5 md:gap-1">{lowerLeft.map(n => <ToothBtn key={n} num={n} selected={selected} onToggle={onToggle} />)}</div>
-          <span className="text-xs text-teal-400 w-12 md:w-16">Lower L</span>
+          <span className="text-xs text-brand-400 w-12 md:w-16">Lower L</span>
         </div>
       </div>
-      {selected.length > 0 && <p className="text-xs text-teal-600 mt-2 text-center">Selected: {selected.join(", ")}</p>}
+      {selected.length > 0 && <p className="text-xs text-brand-600 mt-2 text-center">Selected: {selected.join(", ")}</p>}
     </div>
   );
 
@@ -634,52 +634,52 @@ export default function Patients() {
   const showAnyForm = showForm || !!editingPatientId;
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         {showReceipt && receiptPatient && (
           <Receipt patient={receiptPatient} onClose={() => setShowReceipt(false)} />
         )}
 
         {selectedPatient ? (
           <div>
-            <button onClick={() => setSelectedPatient(null)} className="text-teal-600 text-sm mb-4 hover:underline">← Back to Patients</button>
+            <button onClick={() => setSelectedPatient(null)} className="text-brand-600 text-sm mb-4 hover:underline">← Back to Patients</button>
 
-            <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
+            <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-lg md:text-xl font-semibold text-teal-800">{selectedPatient.name}</h2>
-                    <span className="text-xs text-teal-400 bg-teal-50 px-2 py-0.5 rounded-full">#{getClinicPatientNumber(selectedPatient.id)}</span>
+                    <h2 className="text-lg md:text-xl font-semibold text-brand-800">{selectedPatient.name}</h2>
+                    <span className="text-xs text-brand-400 bg-brand-50 px-2 py-0.5 rounded-full">#{getClinicPatientNumber(selectedPatient.id)}</span>
                     <StatusBadge status={selectedPatient.status} />
                   </div>
-                  <p className="text-xs md:text-sm text-teal-500 mt-1">
+                  <p className="text-xs md:text-sm text-brand-500 mt-1">
                     {selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} yrs · {selectedPatient.address}
                   </p>
-                  <p className="text-xs text-teal-400 mt-0.5">
+                  <p className="text-xs text-brand-400 mt-0.5">
                     Registered: {formatDate(selectedPatient.created_at)}
                   </p>
                   {selectedPatient.treatment && (
-                    <p className="text-xs text-teal-400 mt-0.5">
+                    <p className="text-xs text-brand-400 mt-0.5">
                       Initial: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}
                     </p>
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-teal-300 text-teal-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-teal-50">🖨️ Receipt</button>
+                  <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-brand-300 text-brand-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-brand-50">🖨️ Receipt</button>
                   <button onClick={() => { setShowAppointmentForm(!showAppointmentForm); setShowVisitForm(false); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Appointment</button>
-                  <button onClick={() => { resetVisitForm(); setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-teal-600 hover:bg-teal-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Visit</button>
+                  <button onClick={() => { resetVisitForm(); setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-brand-600 hover:bg-brand-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Visit</button>
                 </div>
               </div>
 
               {(() => {
                 const inv = invSummary(selectedPatient.id);
                 return (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4">
-                    <div className="bg-teal-50 rounded-lg p-2 md:p-3">
-                      <p className="text-xs text-teal-600">Total Billed</p>
-                      <p className="text-base md:text-lg font-semibold text-teal-800">{symbol} {inv.totalBilled.toLocaleString()}</p>
-                      <p className="text-xs text-teal-400">{visits.length} visits</p>
+                  <div className="stagger grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mt-4">
+                    <div className="bg-brand-50 rounded-lg p-2 md:p-3">
+                      <p className="text-xs text-brand-600">Total Billed</p>
+                      <p className="text-base md:text-lg font-semibold text-brand-800">{symbol} {inv.totalBilled.toLocaleString()}</p>
+                      <p className="text-xs text-brand-400">{visits.length} visits</p>
                     </div>
                     <div className="bg-green-50 rounded-lg p-2 md:p-3">
                       <p className="text-xs text-green-600">Total Collected</p>
@@ -689,9 +689,9 @@ export default function Patients() {
                       <p className="text-xs text-orange-600">Still Pending</p>
                       <p className="text-base md:text-lg font-semibold text-orange-600">{symbol} {inv.outstanding.toLocaleString()}</p>
                     </div>
-                    <div className="bg-teal-50 rounded-lg p-2 md:p-3">
-                      <p className="text-xs text-teal-600">Last Visit</p>
-                      <p className="text-sm font-semibold text-teal-800">{visits[0]?.visit_date ? formatDate(visits[0].visit_date) : "—"}</p>
+                    <div className="bg-brand-50 rounded-lg p-2 md:p-3">
+                      <p className="text-xs text-brand-600">Last Visit</p>
+                      <p className="text-sm font-semibold text-brand-800">{visits[0]?.visit_date ? formatDate(visits[0].visit_date) : "—"}</p>
                     </div>
                   </div>
                 );
@@ -703,37 +703,37 @@ export default function Patients() {
                 <h3 className="text-sm font-semibold text-blue-800 mb-4">New Appointment — {selectedPatient.name}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="block text-xs text-teal-600 mb-1">Date</label>
-                    <input type="date" value={appointmentForm.date} onChange={e => setAppointmentForm({...appointmentForm, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    <label className="block text-xs text-brand-600 mb-1">Date</label>
+                    <input type="date" value={appointmentForm.date} onChange={e => setAppointmentForm({...appointmentForm, date: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   </div>
                   <div>
-                    <label className="block text-xs text-teal-600 mb-1">Time</label>
-                    <input type="time" value={appointmentForm.time} onChange={e => setAppointmentForm({...appointmentForm, time: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    <label className="block text-xs text-brand-600 mb-1">Time</label>
+                    <input type="time" value={appointmentForm.time} onChange={e => setAppointmentForm({...appointmentForm, time: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   </div>
-                  <input placeholder="Treatment" value={appointmentForm.treatment} onChange={e => setAppointmentForm({...appointmentForm, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Notes (optional)" value={appointmentForm.notes} onChange={e => setAppointmentForm({...appointmentForm, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Treatment" value={appointmentForm.treatment} onChange={e => setAppointmentForm({...appointmentForm, treatment: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Notes (optional)" value={appointmentForm.notes} onChange={e => setAppointmentForm({...appointmentForm, notes: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                 </div>
                 <div className="flex gap-3">
                   <button onClick={handleAddAppointment} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Book Appointment"}</button>
-                  <button onClick={() => setShowAppointmentForm(false)} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+                  <button onClick={() => setShowAppointmentForm(false)} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
             )}
 
             {showVisitForm && (
-              <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-                <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingVisitId ? "Edit Visit" : "New Visit"} — {selectedPatient.name}</h3>
+              <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+                <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingVisitId ? "Edit Visit" : "New Visit"} — {selectedPatient.name}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div>
-                    <label className="block text-xs text-teal-600 mb-1">Visit Date</label>
-                    <input type="date" value={visitForm.visit_date} onChange={e => setVisitForm({...visitForm, visit_date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    <label className="block text-xs text-brand-600 mb-1">Visit Date</label>
+                    <input type="date" value={visitForm.visit_date} onChange={e => setVisitForm({...visitForm, visit_date: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   </div>
-                  <select value={visitForm.doctor_name} onChange={e => setVisitForm({...visitForm, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                  <select value={visitForm.doctor_name} onChange={e => setVisitForm({...visitForm, doctor_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                     <option value="">Select Doctor</option>
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
                   <div>
-                    <input placeholder="Treatment done" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    <input placeholder="Treatment done" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                     {treatmentPresets.length > 0 && (
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {treatmentPresets.map(t => (
@@ -741,23 +741,23 @@ export default function Patients() {
                             key={t.id}
                             type="button"
                             onClick={() => setVisitForm(f => ({ ...f, treatment: t.name, fee: f.fee || String(t.price) }))}
-                            className="text-xs px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors"
+                            className="text-xs px-2.5 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 transition-colors"
                           >
-                            {t.name}{t.price > 0 && <span className="text-teal-400 ml-1">({symbol} {t.price.toLocaleString()})</span>}
+                            {t.name}{t.price > 0 && <span className="text-brand-400 ml-1">({symbol} {t.price.toLocaleString()})</span>}
                           </button>
                         ))}
                       </div>
                     )}
                   </div>
-                  <select value={visitForm.status} onChange={e => setVisitForm({...visitForm, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                  <select value={visitForm.status} onChange={e => setVisitForm({...visitForm, status: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                     <option>Pending</option>
                     <option>Partial</option>
                     <option>Paid</option>
                   </select>
-                  <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <div className="md:col-span-2">
-                    <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                    <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                     {prescriptionPresets.length > 0 && (() => {
                       const rxGroups = prescriptionPresets.reduce<Record<string, typeof prescriptionPresets>>((acc, rx) => {
                         const k = rx.group_name || "Other";
@@ -771,15 +771,15 @@ export default function Patients() {
                         setVisitForm(prev => ({ ...prev, notes: prev.notes ? `${prev.notes}\n${text}` : text }));
                       return (
                         <div className="mt-2 space-y-2">
-                          <p className="text-xs text-teal-500 font-medium">Quick Prescription Presets:</p>
+                          <p className="text-xs text-brand-500 font-medium">Quick Prescription Presets:</p>
                           {Object.entries(rxGroups).map(([groupName, meds]) => (
-                            <div key={groupName} className="border border-teal-100 rounded-xl overflow-hidden">
-                              <div className="flex items-center justify-between bg-teal-50 px-3 py-1.5">
-                                <span className="text-xs font-semibold text-teal-700">{groupName}</span>
+                            <div key={groupName} className="border border-brand-100 rounded-xl overflow-hidden">
+                              <div className="flex items-center justify-between bg-brand-50 px-3 py-1.5">
+                                <span className="text-xs font-semibold text-brand-700">{groupName}</span>
                                 <button
                                   type="button"
                                   onClick={() => appendNotes(meds.map(formatRx).join("\n"))}
-                                  className="text-xs bg-teal-600 text-white px-2.5 py-1 rounded-lg font-medium hover:bg-teal-700"
+                                  className="text-xs bg-brand-600 text-white px-2.5 py-1 rounded-lg font-medium hover:bg-brand-700"
                                 >
                                   Add All ({meds.length})
                                 </button>
@@ -790,10 +790,10 @@ export default function Patients() {
                                     key={rx.id}
                                     type="button"
                                     onClick={() => appendNotes(formatRx(rx))}
-                                    className="text-xs px-2.5 py-1 rounded-lg border border-teal-200 text-teal-700 hover:bg-teal-50 transition-colors"
+                                    className="text-xs px-2.5 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 transition-colors"
                                   >
                                     + {rx.medicine}
-                                    {rx.dosage && <span className="text-teal-400 ml-1">{rx.dosage}</span>}
+                                    {rx.dosage && <span className="text-brand-400 ml-1">{rx.dosage}</span>}
                                   </button>
                                 ))}
                               </div>
@@ -806,27 +806,27 @@ export default function Patients() {
                 </div>
                 <ToothChart selected={visitTeeth} onToggle={toggleVisitTooth} />
                 {visitForm.fee && visitForm.fee_paid && (
-                  <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between items-center">
-                    <span className="text-xs text-teal-600">This visit remaining:</span>
+                  <div className="mt-3 bg-brand-50 rounded-lg px-4 py-2 flex justify-between items-center">
+                    <span className="text-xs text-brand-600">This visit remaining:</span>
                     <span className="text-sm font-semibold text-orange-600">{symbol} {(parseInt(visitForm.fee) || 0) - (parseInt(visitForm.fee_paid) || 0)}</span>
                   </div>
                 )}
                 <div className="flex gap-3 mt-4">
-                  <button onClick={editingVisitId ? handleEditVisit : handleAddVisit} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingVisitId ? "Update Visit" : "Save Visit"}</button>
-                  <button onClick={resetVisitForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+                  <button onClick={editingVisitId ? handleEditVisit : handleAddVisit} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingVisitId ? "Update Visit" : "Save Visit"}</button>
+                  <button onClick={resetVisitForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
             )}
 
-            <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-              <div className="flex border-b border-teal-100 overflow-x-auto">
-                <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "visits" ? "bg-teal-50 text-teal-800 border-b-2 border-teal-600" : "text-teal-500"}`}>
+            <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
+              <div className="flex border-b border-brand-100 overflow-x-auto">
+                <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "visits" ? "bg-brand-50 text-brand-800 border-b-2 border-brand-600" : "text-brand-500"}`}>
                   Visits ({visits.length})
                 </button>
-                <button onClick={() => setActiveTab("appointments")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "appointments" ? "bg-blue-50 text-blue-800 border-b-2 border-blue-600" : "text-teal-500"}`}>
+                <button onClick={() => setActiveTab("appointments")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "appointments" ? "bg-blue-50 text-blue-800 border-b-2 border-blue-600" : "text-brand-500"}`}>
                   Appointments ({appointments.length})
                 </button>
-                <button onClick={() => setActiveTab("medical")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "medical" ? "bg-red-50 text-red-800 border-b-2 border-red-400" : "text-teal-500"}`}>
+                <button onClick={() => setActiveTab("medical")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "medical" ? "bg-red-50 text-red-800 border-b-2 border-red-400" : "text-brand-500"}`}>
                   Medical
                 </button>
               </div>
@@ -835,36 +835,36 @@ export default function Patients() {
                 <div>
                   {visits.length === 0 ? (
                     <div className="text-center py-10">
-                      <p className="text-teal-400 text-sm mb-1">No visits recorded yet</p>
-                      <p className="text-teal-300 text-xs">Click "+ Visit" to add first visit</p>
+                      <p className="text-brand-400 text-sm mb-1">No visits recorded yet</p>
+                      <p className="text-brand-300 text-xs">Click "+ Visit" to add first visit</p>
                     </div>
                   ) : (
                     visits.map((v, i) => (
-                      <div key={v.id} className="px-4 md:px-5 py-4 border-b border-teal-50 hover:bg-teal-50">
+                      <div key={v.id} className="px-4 md:px-5 py-4 border-b border-brand-50 hover:bg-brand-50">
                         <div className="flex justify-between items-start gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                              <p className="text-sm font-semibold text-teal-800">Visit {visits.length - i}</p>
+                              <p className="text-sm font-semibold text-brand-800">Visit {visits.length - i}</p>
                               <StatusBadge status={v.status || "Pending"} />
-                              <span className="text-xs text-teal-400 bg-teal-50 px-2 py-0.5 rounded-full">
+                              <span className="text-xs text-brand-400 bg-brand-50 px-2 py-0.5 rounded-full">
                                 📅 {formatDate(v.visit_date)}
                               </span>
                             </div>
-                            <p className="text-sm text-teal-700">{v.treatment}</p>
-                            <p className="text-xs text-teal-500 mt-0.5">
+                            <p className="text-sm text-brand-700">{v.treatment}</p>
+                            <p className="text-xs text-brand-500 mt-0.5">
                               Dr. {v.doctor_name || "—"} {v.tooth_number ? `· Tooth: ${v.tooth_number}` : ""}
                             </p>
-                            {v.notes && <p className="text-xs text-teal-400 mt-1 italic">{v.notes}</p>}
+                            {v.notes && <p className="text-xs text-brand-400 mt-1 italic">{v.notes}</p>}
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-semibold text-teal-800">{symbol} {v.fee}</p>
+                            <p className="text-sm font-semibold text-brand-800">{symbol} {v.fee}</p>
                             <p className="text-xs text-green-600">Paid: {symbol} {v.fee_paid}</p>
                             <p className="text-xs text-orange-500">Due: {symbol} {v.fee - v.fee_paid}</p>
                             <div className="flex gap-2 mt-1 justify-end">
                               {v.fee_paid < v.fee && (
-                                <button onClick={() => handleVisitPayment(v)} className="text-teal-600 text-xs font-medium hover:underline">Pay</button>
+                                <button onClick={() => handleVisitPayment(v)} className="text-brand-600 text-xs font-medium hover:underline">Pay</button>
                               )}
-                              <button onClick={() => openEditVisit(v)} className="text-teal-600 text-xs font-medium">✏️</button>
+                              <button onClick={() => openEditVisit(v)} className="text-brand-600 text-xs font-medium">✏️</button>
                               <button onClick={() => handleDeleteVisit(v)} className="text-red-400 text-xs font-medium">🗑️</button>
                             </div>
                           </div>
@@ -873,10 +873,10 @@ export default function Patients() {
                     ))
                   )}
                   {visits.length > 0 && (
-                    <div className="px-4 py-3 bg-teal-50 flex flex-wrap justify-between items-center gap-2">
-                      <span className="text-xs font-semibold text-teal-700">All visits total</span>
+                    <div className="px-4 py-3 bg-brand-50 flex flex-wrap justify-between items-center gap-2">
+                      <span className="text-xs font-semibold text-brand-700">All visits total</span>
                       <div className="flex gap-4 flex-wrap">
-                        <span className="text-xs text-teal-700">Billed: <strong>{symbol} {visitTotalFee}</strong></span>
+                        <span className="text-xs text-brand-700">Billed: <strong>{symbol} {visitTotalFee}</strong></span>
                         <span className="text-xs text-green-700">Paid: <strong>{symbol} {visitTotalPaid}</strong></span>
                         <span className="text-xs text-orange-600">Pending: <strong>{symbol} {visitTotalPending}</strong></span>
                       </div>
@@ -891,12 +891,12 @@ export default function Patients() {
                     <p className="text-center py-8 text-blue-400 text-sm">No appointments booked yet</p>
                   ) : (
                     appointments.map((a, i) => (
-                      <div key={a.id} className="px-4 md:px-5 py-4 border-b border-teal-50 hover:bg-blue-50">
+                      <div key={a.id} className="px-4 md:px-5 py-4 border-b border-brand-50 hover:bg-blue-50">
                         <div className="flex justify-between items-start gap-2">
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-teal-800">Appointment {i + 1} — {a.treatment || "General"}</p>
-                            <p className="text-xs text-teal-500 mt-0.5">📅 {formatDate(a.date)} · ⏰ {a.time}</p>
-                            {a.notes && <p className="text-xs text-teal-400 mt-1">{a.notes}</p>}
+                            <p className="text-sm font-medium text-brand-800">Appointment {i + 1} — {a.treatment || "General"}</p>
+                            <p className="text-xs text-brand-500 mt-0.5">📅 {formatDate(a.date)} · ⏰ {a.time}</p>
+                            {a.notes && <p className="text-xs text-brand-400 mt-1">{a.notes}</p>}
                           </div>
                           <div className="text-right shrink-0 flex flex-col items-end gap-1">
                             <StatusBadge status={a.status} />
@@ -917,7 +917,7 @@ export default function Patients() {
               {activeTab === "medical" && (
                 <div className="p-4 md:p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="text-sm font-semibold text-teal-800">Medical History</h3>
+                    <h3 className="text-sm font-semibold text-brand-800">Medical History</h3>
                     <button onClick={() => setShowMedicalForm(!showMedicalForm)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
                       {medicalHistory ? "✏️ Edit" : "+ Add"}
                     </button>
@@ -970,9 +970,9 @@ export default function Patients() {
                         <p className="text-xs font-semibold text-orange-700 mb-1">Allergies</p>
                         <p className="text-sm text-orange-800">{medicalHistory.allergies || "None recorded"}</p>
                       </div>
-                      <div className="bg-teal-50 rounded-lg p-3 border border-teal-100">
-                        <p className="text-xs font-semibold text-teal-700 mb-1">Medical Conditions</p>
-                        <p className="text-sm text-teal-800">{medicalHistory.medical_conditions || "None recorded"}</p>
+                      <div className="bg-brand-50 rounded-lg p-3 border border-brand-100">
+                        <p className="text-xs font-semibold text-brand-700 mb-1">Medical Conditions</p>
+                        <p className="text-sm text-brand-800">{medicalHistory.medical_conditions || "None recorded"}</p>
                       </div>
                       <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
                         <p className="text-xs font-semibold text-blue-700 mb-1">Current Medications</p>
@@ -983,15 +983,15 @@ export default function Patients() {
                         <p className="text-sm text-purple-800">{medicalHistory.previous_surgeries || "None recorded"}</p>
                       </div>
                       {medicalHistory.notes && (
-                        <div className="bg-gray-50 rounded-lg p-3 border border-gray-100">
+                        <div className="bg-brand-50 rounded-lg p-3 border border-brand-100">
                           <p className="text-xs font-semibold text-gray-700 mb-1">Additional Notes</p>
-                          <p className="text-sm text-gray-800">{medicalHistory.notes}</p>
+                          <p className="text-sm text-brand-800">{medicalHistory.notes}</p>
                         </div>
                       )}
                     </div>
                   ) : (
                     <div className="text-center py-8">
-                      <p className="text-teal-400 text-sm mb-3">No medical history recorded yet</p>
+                      <p className="text-brand-400 text-sm mb-3">No medical history recorded yet</p>
                       <button onClick={() => setShowMedicalForm(true)} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium">+ Add Medical History</button>
                     </div>
                   )}
@@ -1004,76 +1004,76 @@ export default function Patients() {
           <div>
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Patients</h2>
-                <p className="text-sm text-teal-600 mt-1">Total: {patients.length} patients</p>
+                <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Patients</h2>
+                <p className="text-sm text-brand-600 mt-1">Total: {patients.length} patients</p>
               </div>
-              <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add Patient</button>
+              <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add Patient</button>
             </div>
 
             <div className="mb-5">
-              <input placeholder="Search by name or patient number..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-teal-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
+              <input placeholder="Search by name or patient number..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-brand-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
             </div>
 
             {showAnyForm && (
-              <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-                <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingPatientId ? "Edit Patient" : "New Patient"}</h3>
+              <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+                <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingPatientId ? "Edit Patient" : "New Patient"}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
-                  <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Age" type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                  <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Age" type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                     <option>Male</option><option>Female</option>
                   </select>
-                  <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                  <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                     <option value="">Select Doctor</option>
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
-                  <input placeholder="Initial Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+                  <input placeholder="Initial Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
                 </div>
                 <ToothChart selected={selectedTeeth} onToggle={toggleTooth} />
                 <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4">
-                  <input placeholder="Initial Fee" type="number" value={form.fee_total} onChange={e => setForm({...form, fee_total: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                  <input placeholder="Fee Paid" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                  <input placeholder="Initial Fee" type="number" value={form.fee_total} onChange={e => setForm({...form, fee_total: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Fee Paid" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                 </div>
                 <div className="flex gap-3 mt-4">
-                  <button onClick={editingPatientId ? handleEditPatient : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingPatientId ? "Update Patient" : "Save Patient"}</button>
-                  <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+                  <button onClick={editingPatientId ? handleEditPatient : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingPatientId ? "Update Patient" : "Save Patient"}</button>
+                  <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
             )}
 
-            <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
+            <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
               {/* Mobile */}
-              <div className="md:hidden divide-y divide-teal-50">
+              <div className="md:hidden divide-y divide-brand-50">
                 {filteredPatients.length === 0 ? (
-                  <p className="text-center py-10 text-teal-400 text-sm">No patients found</p>
+                  <p className="text-center py-10 text-brand-400 text-sm">No patients found</p>
                 ) : (
                   filteredPatients.map(p => (
                     <div key={p.id} className="p-4">
                       <div className="flex justify-between items-start mb-1" onClick={() => openPatient(p)}>
                         <div>
                           <div className="flex items-center gap-1">
-                            <p className="font-medium text-teal-800 text-sm">{p.name}</p>
-                            <span className="text-xs text-teal-300">#{getClinicPatientNumber(p.id)}</span>
+                            <p className="font-medium text-brand-800 text-sm">{p.name}</p>
+                            <span className="text-xs text-brand-300">#{getClinicPatientNumber(p.id)}</span>
                           </div>
-                          <p className="text-xs text-teal-400">{p.phone} · {p.gender} · {p.age}y</p>
-                          <p className="text-xs text-teal-300">{formatDate(p.created_at)}</p>
+                          <p className="text-xs text-brand-400">{p.phone} · {p.gender} · {p.age}y</p>
+                          <p className="text-xs text-brand-300">{formatDate(p.created_at)}</p>
                         </div>
                         <StatusBadge status={p.status} />
                       </div>
-                      <p className="text-xs text-teal-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· Dr. ${p.doctor_name}` : ""}</p>
+                      <p className="text-xs text-brand-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· Dr. ${p.doctor_name}` : ""}</p>
                       <div className="flex justify-between items-center">
-                        <p className="text-xs text-teal-500">
+                        <p className="text-xs text-brand-500">
                           Billed: {symbol} {invSummary(p.id).totalBilled.toLocaleString()} · Paid: {symbol} {invSummary(p.id).totalPaid.toLocaleString()}
                           {invSummary(p.id).outstanding > 0 && <span className="text-orange-500"> · Due: {symbol} {invSummary(p.id).outstanding.toLocaleString()}</span>}
                         </p>
                         <div className="flex gap-2">
-                          <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs">🖨️</button>
-                          <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
+                          <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-brand-600 text-xs">🖨️</button>
+                          <button onClick={() => openEditPatient(p)} className="text-brand-600 text-xs font-medium">✏️</button>
                           <button onClick={() => router.push(`/dashboard/patients/${p.id}`)} className="text-purple-600 text-xs font-medium">History</button>
                           {invSummary(p.id).outstanding > 0 && (
-                            <button onClick={() => openPayModal(p)} className="text-white bg-teal-600 hover:bg-teal-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
+                            <button onClick={() => openPayModal(p)} className="text-white bg-brand-600 hover:bg-brand-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
                           )}
                         </div>
                       </div>
@@ -1085,47 +1085,47 @@ export default function Patients() {
               {/* Desktop */}
               <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-teal-50">
+                  <thead className="bg-brand-50">
                     <tr>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">#</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Name</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Registered</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Doctor</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Treatment</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Total Fee</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Paid</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Remaining</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
-                      <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">#</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Name</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Registered</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Doctor</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Treatment</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Total Fee</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Paid</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Remaining</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Status</th>
+                      <th className="text-left px-4 py-3 text-brand-700 font-medium">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredPatients.length === 0 ? (
-                      <tr><td colSpan={10} className="text-center py-10 text-teal-400">No patients found</td></tr>
+                      <tr><td colSpan={10} className="text-center py-10 text-brand-400">No patients found</td></tr>
                     ) : (
                       filteredPatients.map(p => (
-                        <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
-                          <td className="px-4 py-3 text-teal-400 text-xs cursor-pointer" onClick={() => openPatient(p)}>#{getClinicPatientNumber(p.id)}</td>
+                        <tr key={p.id} className="border-t border-brand-50 hover:bg-brand-50">
+                          <td className="px-4 py-3 text-brand-400 text-xs cursor-pointer" onClick={() => openPatient(p)}>#{getClinicPatientNumber(p.id)}</td>
                           <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}>
-                            <p className="font-medium text-teal-800">{p.name}</p>
-                            <p className="text-xs text-teal-400">{p.phone} · {p.gender} · {p.age}y</p>
+                            <p className="font-medium text-brand-800">{p.name}</p>
+                            <p className="text-xs text-brand-400">{p.phone} · {p.gender} · {p.age}y</p>
                           </td>
-                          <td className="px-4 py-3 text-teal-500 text-xs cursor-pointer" onClick={() => openPatient(p)}>
+                          <td className="px-4 py-3 text-brand-500 text-xs cursor-pointer" onClick={() => openPatient(p)}>
                             {formatDate(p.created_at)}
                           </td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.doctor_name || "-"}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{p.treatment}</td>
-                          <td className="px-4 py-3 text-teal-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalBilled.toLocaleString()}</td>
+                          <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{p.doctor_name || "-"}</td>
+                          <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{p.treatment}</td>
+                          <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalBilled.toLocaleString()}</td>
                           <td className="px-4 py-3 text-green-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalPaid.toLocaleString()}</td>
                           <td className="px-4 py-3 text-orange-600 cursor-pointer font-medium" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).outstanding.toLocaleString()}</td>
                           <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}><StatusBadge status={p.status} /></td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
-                              <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-teal-600 text-xs font-medium">🖨️</button>
-                              <button onClick={() => openEditPatient(p)} className="text-teal-600 text-xs font-medium">✏️</button>
+                              <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-brand-600 text-xs font-medium">🖨️</button>
+                              <button onClick={() => openEditPatient(p)} className="text-brand-600 text-xs font-medium">✏️</button>
                               <button onClick={() => router.push(`/dashboard/patients/${p.id}`)} className="text-purple-600 text-xs font-semibold hover:underline">History</button>
                               {invSummary(p.id).outstanding > 0 && (
-                                <button onClick={() => openPayModal(p)} className="text-white bg-teal-600 hover:bg-teal-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
+                                <button onClick={() => openPayModal(p)} className="text-white bg-brand-600 hover:bg-brand-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
                               )}
                             </div>
                           </td>
@@ -1142,37 +1142,37 @@ export default function Patients() {
 
       {/* Quick Pay Modal */}
       {payingPatient && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 modal-backdrop bg-navy/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
-            <h3 className="text-base font-semibold text-teal-800 mb-1">Record Payment</h3>
-            <p className="text-xs text-teal-500 mb-4">{payingPatient.name} · Balance: {symbol} {invSummary(payingPatient.id).outstanding.toLocaleString()}</p>
+            <h3 className="text-base font-semibold text-brand-800 mb-1">Record Payment</h3>
+            <p className="text-xs text-brand-500 mb-4">{payingPatient.name} · Balance: {symbol} {invSummary(payingPatient.id).outstanding.toLocaleString()}</p>
             <div className="space-y-3">
               <div>
-                <label className="text-xs text-teal-600 mb-1 block">Amount *</label>
+                <label className="text-xs text-brand-600 mb-1 block">Amount *</label>
                 <input
                   type="number" min="0" step="0.01"
                   value={payForm.amount}
                   onChange={e => setPayForm({ ...payForm, amount: e.target.value })}
-                  className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 />
               </div>
               <div>
-                <label className="text-xs text-teal-600 mb-1 block">Payment Method</label>
+                <label className="text-xs text-brand-600 mb-1 block">Payment Method</label>
                 <select
                   value={payForm.method}
                   onChange={e => setPayForm({ ...payForm, method: e.target.value })}
-                  className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 >
                   {["Cash", "Card", "Bank Transfer", "Other"].map(m => <option key={m}>{m}</option>)}
                 </select>
               </div>
               <div>
-                <label className="text-xs text-teal-600 mb-1 block">Notes (optional)</label>
+                <label className="text-xs text-brand-600 mb-1 block">Notes (optional)</label>
                 <input
                   value={payForm.notes}
                   onChange={e => setPayForm({ ...payForm, notes: e.target.value })}
                   placeholder="Any notes..."
-                  className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 />
               </div>
               {payError && <p className="text-red-500 text-xs">{payError}</p>}
@@ -1180,13 +1180,13 @@ export default function Patients() {
                 <button
                   onClick={handleQuickPayment}
                   disabled={payLoading}
-                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
+                  className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
                 >
                   {payLoading ? "Saving..." : "Confirm Payment"}
                 </button>
                 <button
                   onClick={() => setPayingPatient(null)}
-                  className="flex-1 border border-teal-200 text-teal-700 py-2.5 rounded-xl text-sm"
+                  className="flex-1 border border-brand-200 text-brand-700 py-2.5 rounded-xl text-sm"
                 >
                   Cancel
                 </button>

@@ -120,32 +120,32 @@ export default function Expenses() {
   const showAnyForm = showForm || !!editingId;
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Expenses</h2>
-            <p className="text-sm text-teal-600 mt-1">Track all clinic expenses</p>
+            <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Expenses</h2>
+            <p className="text-sm text-brand-600 mt-1">Track all clinic expenses</p>
           </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">LAB COSTS</p>
-            <p className="text-lg md:text-2xl font-semibold text-teal-800">{symbol} {labCost.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">From Lab Records</p>
+        <div className="stagger grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">LAB COSTS</p>
+            <p className="text-lg md:text-2xl font-semibold text-brand-800">{symbol} {labCost.toLocaleString()}</p>
+            <p className="text-xs text-brand-400 mt-1">From Lab Records</p>
           </div>
-          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">MATERIALS</p>
-            <p className="text-lg md:text-2xl font-semibold text-teal-800">{symbol} {materialCost.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">From Materials</p>
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">MATERIALS</p>
+            <p className="text-lg md:text-2xl font-semibold text-brand-800">{symbol} {materialCost.toLocaleString()}</p>
+            <p className="text-xs text-brand-400 mt-1">From Materials</p>
           </div>
-          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">OTHER</p>
-            <p className="text-lg md:text-2xl font-semibold text-teal-800">{symbol} {manualTotal.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">Rent, Salary etc</p>
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">OTHER</p>
+            <p className="text-lg md:text-2xl font-semibold text-brand-800">{symbol} {manualTotal.toLocaleString()}</p>
+            <p className="text-xs text-brand-400 mt-1">Rent, Salary etc</p>
           </div>
           <div className="bg-red-50 rounded-xl p-3 md:p-4 border border-red-100">
             <p className="text-xs font-medium text-red-600 mb-1">TOTAL</p>
@@ -155,55 +155,55 @@ export default function Expenses() {
         </div>
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingId ? "Edit Expense" : "New Expense"}</h3>
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Expense" : "New Expense"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Expense Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+              <input placeholder="Expense Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option>Rent</option><option>Electricity</option><option>Salary</option><option>Internet</option><option>Maintenance</option><option>Other</option>
               </select>
-              <input placeholder={`Amount (${symbol})`} type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder={`Amount (${symbol})`} type="number" value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <div>
-                <label className="block text-xs text-teal-600 mb-1">Date</label>
-                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <label className="block text-xs text-brand-600 mb-1">Date</label>
+                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 md:col-span-2" />
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
             </div>
             <div className="flex gap-3 mt-4">
-              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : editingId ? "Update Expense" : "Save Expense"}
               </button>
-              <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+              <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
 
         <div className="flex gap-2 mb-4">
           {["all", "today", "month"].map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${filter === f ? "bg-brand-600 text-white" : "bg-white text-brand-700 border border-brand-200"}`}>
               {f === "all" ? "All" : f === "today" ? "Today" : "Month"}
             </button>
           ))}
         </div>
 
-        <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          <div className="md:hidden divide-y divide-teal-50">
+        <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
+          <div className="md:hidden divide-y divide-brand-50">
             {filteredExpenses.length === 0 ? (
-              <p className="text-center py-10 text-teal-400 text-sm">No expenses added yet</p>
+              <p className="text-center py-10 text-brand-400 text-sm">No expenses added yet</p>
             ) : (
               filteredExpenses.map(e => (
                 <div key={e.id} className="p-4">
                   <div className="flex justify-between items-start mb-1">
                     <div>
-                      <p className="font-medium text-teal-800 text-sm">{e.title}</p>
-                      <span className="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded-full">{e.category}</span>
+                      <p className="font-medium text-brand-800 text-sm">{e.title}</p>
+                      <span className="bg-brand-100 text-brand-700 text-xs px-2 py-0.5 rounded-full">{e.category}</span>
                     </div>
                     <p className="text-red-600 font-medium text-sm">{symbol} {e.amount?.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between mt-2">
-                    <p className="text-xs text-teal-400">{e.notes} · {e.date}</p>
+                    <p className="text-xs text-brand-400">{e.notes} · {e.date}</p>
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(e)} className="text-teal-600 text-xs font-medium">✏️</button>
+                      <button onClick={() => openEdit(e)} className="text-brand-600 text-xs font-medium">✏️</button>
                       <button onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                     </div>
                   </div>
@@ -213,30 +213,30 @@ export default function Expenses() {
           </div>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-teal-50">
+              <thead className="bg-brand-50">
                 <tr>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Title</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Amount</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Notes</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Title</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Category</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Amount</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Date</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Notes</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredExpenses.length === 0 ? (
-                  <tr><td colSpan={6} className="text-center py-10 text-teal-400">No expenses added yet</td></tr>
+                  <tr><td colSpan={6} className="text-center py-10 text-brand-400">No expenses added yet</td></tr>
                 ) : (
                   filteredExpenses.map(e => (
-                    <tr key={e.id} className="border-t border-teal-50 hover:bg-teal-50">
-                      <td className="px-4 py-3 font-medium text-teal-800">{e.title}</td>
-                      <td className="px-4 py-3"><span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{e.category}</span></td>
+                    <tr key={e.id} className="border-t border-brand-50 hover:bg-brand-50">
+                      <td className="px-4 py-3 font-medium text-brand-800">{e.title}</td>
+                      <td className="px-4 py-3"><span className="bg-brand-100 text-brand-700 text-xs px-2 py-1 rounded-full">{e.category}</span></td>
                       <td className="px-4 py-3 text-red-600 font-medium">{symbol} {e.amount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-teal-700">{e.date}</td>
-                      <td className="px-4 py-3 text-teal-400">{e.notes}</td>
+                      <td className="px-4 py-3 text-brand-700">{e.date}</td>
+                      <td className="px-4 py-3 text-brand-400">{e.notes}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => openEdit(e)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => openEdit(e)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                           <button onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                         </div>
                       </td>

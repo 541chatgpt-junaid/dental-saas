@@ -182,14 +182,14 @@ export default function InvoiceDetailPage() {
   };
 
   if (loading) return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
       <div className="flex-1 flex items-center justify-center text-gray-400 text-sm mt-14 md:mt-0">Loading invoice...</div>
     </div>
   );
 
   if (!invoice) return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
       <div className="flex-1 flex items-center justify-center text-red-400 text-sm mt-14 md:mt-0">Invoice not found.</div>
     </div>
@@ -199,7 +199,7 @@ export default function InvoiceDetailPage() {
   const isFullyPaid = invoice.balance <= 0;
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
 
       {/* Print styles */}
@@ -211,13 +211,13 @@ export default function InvoiceDetailPage() {
         }
       `}</style>
 
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
 
         {/* Screen-only action bar */}
         <div className="print-hide flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={() => router.push("/dashboard/billing")} className="text-teal-500 hover:text-teal-700 text-sm">← Back</button>
-            <h2 className="text-xl font-semibold text-teal-800">{invoice.invoice_number}</h2>
+            <button onClick={() => router.push("/dashboard/billing")} className="text-brand-500 hover:text-brand-700 text-sm">← Back</button>
+            <h2 className="text-xl font-semibold text-brand-800">{invoice.invoice_number}</h2>
             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(effStatus)}`}>{statusLabel(effStatus)}</span>
           </div>
           <div className="flex gap-2 flex-wrap">
@@ -243,12 +243,12 @@ export default function InvoiceDetailPage() {
               </a>
             )}
             <button onClick={() => window.print()}
-              className="border border-teal-200 text-teal-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-teal-50">
+              className="border border-brand-200 text-brand-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-50">
               🖨️ Print
             </button>
             {invoice.status !== "paid" && invoice.status !== "cancelled" && (
               <button onClick={() => { setShowPayModal(true); setPayError(""); }}
-                className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-xl text-sm font-medium">
+                className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium">
                 Record Payment
               </button>
             )}
@@ -256,34 +256,34 @@ export default function InvoiceDetailPage() {
         </div>
 
         {/* ── INVOICE DOCUMENT ── */}
-        <div className="print-invoice max-w-3xl bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
+        <div className="print-invoice max-w-3xl bg-white rounded-2xl border border-brand-200 shadow-sm overflow-hidden mb-6">
 
           {/* Clinic Header */}
-          <div className="bg-teal-600 px-6 py-5 flex items-center justify-between">
+          <div className="bg-brand-600 px-6 py-5 flex items-center justify-between">
             <div>
               <h1 className="text-white text-2xl font-black tracking-wide uppercase">
                 {clinicName || "Clinic"}
               </h1>
-              <p className="text-teal-200 text-xs mt-0.5 tracking-wider uppercase">Dental Care</p>
+              <p className="text-brand-200 text-xs mt-0.5 tracking-wider uppercase">Dental Care</p>
             </div>
             <div className="text-right">
-              <p className="text-teal-100 text-xs uppercase tracking-widest font-semibold">Invoice</p>
+              <p className="text-brand-100 text-xs uppercase tracking-widest font-semibold">Invoice</p>
               <p className="text-white text-xl font-bold">{invoice.invoice_number}</p>
               <span className={`inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                 effStatus === "paid" ? "bg-green-400 text-green-900" :
                 effStatus === "partial" ? "bg-yellow-400 text-yellow-900" :
                 effStatus === "overdue" ? "bg-red-400 text-white" :
                 effStatus === "draft" ? "bg-purple-300 text-purple-900" :
-                "bg-white text-teal-700"
+                "bg-white text-brand-700"
               }`}>{statusLabel(effStatus)}</span>
             </div>
           </div>
 
           {/* Bill To / Invoice Info */}
-          <div className="px-6 py-5 border-b border-gray-100 grid grid-cols-2 gap-6">
+          <div className="px-6 py-5 border-b border-brand-100 grid grid-cols-2 gap-6">
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-2">Bill To</p>
-              <p className="font-bold text-gray-800 text-base">{invoice.patients?.name || "—"}</p>
+              <p className="font-bold text-brand-800 text-base">{invoice.patients?.name || "—"}</p>
               {invoice.patients?.phone && (
                 <p className="text-sm text-gray-500 mt-0.5">{invoice.patients.phone}</p>
               )}
@@ -308,7 +308,7 @@ export default function InvoiceDetailPage() {
           <div className="overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b border-gray-200">
+                <tr className="bg-brand-50 border-b border-brand-200">
                   <th className="text-left px-6 py-3 text-xs font-bold text-gray-500 uppercase tracking-widest w-8">#</th>
                   <th className="text-left px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-widest">Treatment / Description</th>
                   <th className="text-center px-3 py-3 text-xs font-bold text-gray-500 uppercase tracking-widest">Qty</th>
@@ -318,12 +318,12 @@ export default function InvoiceDetailPage() {
               </thead>
               <tbody>
                 {items.map((item, idx) => (
-                  <tr key={item.id} className={`border-b border-gray-50 ${idx % 2 === 0 ? "bg-white" : "bg-gray-50/40"}`}>
+                  <tr key={item.id} className={`border-b border-gray-50 ${idx % 2 === 0 ? "bg-white" : "bg-brand-50/40"}`}>
                     <td className="px-6 py-3.5 text-gray-400 text-xs font-medium">{idx + 1}</td>
-                    <td className="px-3 py-3.5 font-semibold text-gray-800">{item.description}</td>
+                    <td className="px-3 py-3.5 font-semibold text-brand-800">{item.description}</td>
                     <td className="px-3 py-3.5 text-center text-gray-500">{item.quantity}</td>
                     <td className="px-4 py-3.5 text-right text-gray-500">{symbol} {item.unit_price.toLocaleString()}</td>
-                    <td className="px-6 py-3.5 text-right font-bold text-gray-800">{symbol} {item.total.toLocaleString()}</td>
+                    <td className="px-6 py-3.5 text-right font-bold text-brand-800">{symbol} {item.total.toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -331,7 +331,7 @@ export default function InvoiceDetailPage() {
           </div>
 
           {/* Totals */}
-          <div className="px-6 py-5 bg-gray-50 border-t border-gray-200">
+          <div className="px-6 py-5 bg-brand-50 border-t border-brand-200">
             <div className="flex flex-col items-end gap-2">
               <div className="w-full max-w-xs space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
@@ -344,7 +344,7 @@ export default function InvoiceDetailPage() {
                     <span>− {symbol} {invoice.discount.toLocaleString()}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-base font-bold text-gray-900 pt-2 border-t border-gray-200">
+                <div className="flex justify-between text-base font-bold text-brand-900 pt-2 border-t border-brand-200">
                   <span>Total</span>
                   <span>{symbol} {invoice.total.toLocaleString()}</span>
                 </div>
@@ -381,24 +381,24 @@ export default function InvoiceDetailPage() {
 
           {/* Notes */}
           {invoice.notes && (
-            <div className="px-6 py-4 border-t border-gray-100">
+            <div className="px-6 py-4 border-t border-brand-100">
               <p className="text-xs text-gray-400 font-semibold uppercase tracking-widest mb-1.5">Notes</p>
               <p className="text-sm text-gray-600 whitespace-pre-line">{invoice.notes}</p>
             </div>
           )}
 
           {/* Footer */}
-          <div className="px-6 py-4 bg-teal-50 border-t border-teal-100 flex items-center justify-between">
-            <p className="text-xs text-teal-600 font-medium">
+          <div className="px-6 py-4 bg-brand-50 border-t border-brand-100 flex items-center justify-between">
+            <p className="text-xs text-brand-600 font-medium">
               Thank you for choosing {clinicName || "our clinic"}!
             </p>
-            <p className="text-xs text-teal-400">Generated by DentEase</p>
+            <p className="text-xs text-brand-400">Generated by DentEase</p>
           </div>
         </div>
 
         {/* Payment History — screen only */}
-        <div className="print-hide max-w-3xl bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden mb-6">
-          <div className="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+        <div className="print-hide max-w-3xl bg-white rounded-2xl border border-brand-200 shadow-sm overflow-hidden mb-6">
+          <div className="px-6 py-4 border-b border-brand-100 bg-brand-50 flex items-center justify-between">
             <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Payment History</h3>
             {payments.length > 0 && (
               <span className="text-xs font-semibold text-emerald-600">{payments.length} payment{payments.length !== 1 ? "s" : ""}</span>
@@ -408,7 +408,7 @@ export default function InvoiceDetailPage() {
             <p className="text-sm text-gray-400 text-center py-8">No payments recorded yet</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100 text-xs text-gray-500 font-semibold uppercase tracking-wide">
+              <thead className="bg-brand-50 border-b border-brand-100 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                 <tr>
                   <th className="text-left px-6 py-3">Date</th>
                   <th className="text-left px-5 py-3">Method</th>
@@ -418,7 +418,7 @@ export default function InvoiceDetailPage() {
               </thead>
               <tbody>
                 {payments.map(pay => (
-                  <tr key={pay.id} className="border-t border-gray-50 hover:bg-gray-50">
+                  <tr key={pay.id} className="border-t border-gray-50 hover:bg-brand-50">
                     <td className="px-6 py-3 text-gray-600 text-xs">{formatDate(pay.payment_date)}</td>
                     <td className="px-5 py-3">
                       <span className="bg-gray-100 text-gray-700 text-xs font-medium px-2.5 py-1 rounded-full">{pay.payment_method}</span>
@@ -434,44 +434,44 @@ export default function InvoiceDetailPage() {
 
         {/* Record Payment Modal */}
         {showPayModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 print-hide">
+          <div className="fixed inset-0 modal-backdrop bg-navy/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 print-hide">
             <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-              <h3 className="text-base font-bold text-teal-800 mb-4">Record Payment</h3>
+              <h3 className="text-base font-bold text-brand-800 mb-4">Record Payment</h3>
               <div className="space-y-3">
                 <div>
-                  <label className="text-xs text-teal-600 mb-1 block font-medium">Amount *</label>
+                  <label className="text-xs text-brand-600 mb-1 block font-medium">Amount *</label>
                   <input
                     type="number" min="0" step="0.01"
                     value={payAmount}
                     onChange={e => setPayAmount(e.target.value)}
                     placeholder={`Balance: ${symbol} ${invoice.balance.toLocaleString()}`}
-                    className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                   />
                 </div>
                 <div>
-                  <label className="text-xs text-teal-600 mb-1 block font-medium">Payment Method</label>
+                  <label className="text-xs text-brand-600 mb-1 block font-medium">Payment Method</label>
                   <select value={payMethod} onChange={e => setPayMethod(e.target.value)}
-                    className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                    className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                     {["Cash", "Card", "Bank Transfer", "JazzCash", "EasyPaisa", "Benefit", "Other"].map(m => (
                       <option key={m}>{m}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs text-teal-600 mb-1 block font-medium">Notes (optional)</label>
+                  <label className="text-xs text-brand-600 mb-1 block font-medium">Notes (optional)</label>
                   <input value={payNotes} onChange={e => setPayNotes(e.target.value)}
                     placeholder="Any notes..."
-                    className="w-full border border-teal-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                   />
                 </div>
                 {payError && <p className="text-red-500 text-xs">{payError}</p>}
                 <div className="flex gap-3 pt-1">
                   <button onClick={handleRecordPayment} disabled={payLoading}
-                    className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
+                    className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
                     {payLoading ? "Recording..." : "Record Payment"}
                   </button>
                   <button onClick={() => setShowPayModal(false)}
-                    className="flex-1 border border-teal-200 text-teal-700 py-2.5 rounded-xl text-sm">
+                    className="flex-1 border border-brand-200 text-brand-700 py-2.5 rounded-xl text-sm">
                     Cancel
                   </button>
                 </div>
