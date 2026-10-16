@@ -202,19 +202,19 @@ export default function Settings() {
   ] as const;
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="mb-6">
-          <h2 className="text-xl md:text-2xl font-semibold text-gray-800">Settings</h2>
+          <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Settings</h2>
           <p className="text-sm text-gray-500 mt-1">Manage clinic settings and presets</p>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white border border-gray-200 shadow-sm rounded-xl p-1 mb-6 w-fit overflow-x-auto">
+        <div className="flex gap-1 bg-white border border-brand-200 shadow-sm rounded-xl p-1 mb-6 w-fit overflow-x-auto">
           {TABS.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
-              className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t.key ? "bg-teal-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
+              className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t.key ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
               {t.label}
             </button>
           ))}
@@ -222,24 +222,24 @@ export default function Settings() {
 
         {/* ── GENERAL TAB ── */}
         {tab === "general" && (
-          <div className="bg-white rounded-xl p-5 border border-gray-200 shadow-sm w-full md:max-w-2xl">
-            <h3 className="text-sm font-semibold text-gray-800 mb-5">Clinic Information</h3>
+          <div className="bg-white rounded-xl p-5 border border-brand-200 shadow-sm w-full md:max-w-2xl">
+            <h3 className="text-sm font-semibold text-brand-800 mb-5">Clinic Information</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Clinic Name</label>
-                <input placeholder="e.g. Dr. Ahmed Dental Care" value={form.clinic_name} onChange={e => setForm({ ...form, clinic_name: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <input placeholder="e.g. Dr. Ahmed Dental Care" value={form.clinic_name} onChange={e => setForm({ ...form, clinic_name: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Clinic Address</label>
-                <input placeholder="e.g. Shop 5, Main Market, Lahore" value={form.clinic_address} onChange={e => setForm({ ...form, clinic_address: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <input placeholder="e.g. Shop 5, Main Market, Lahore" value={form.clinic_address} onChange={e => setForm({ ...form, clinic_address: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Phone Number</label>
-                <input placeholder="e.g. 0300-1234567" value={form.clinic_phone} onChange={e => setForm({ ...form, clinic_phone: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <input placeholder="e.g. 0300-1234567" value={form.clinic_phone} onChange={e => setForm({ ...form, clinic_phone: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
-                <input placeholder="e.g. clinic@email.com" value={form.clinic_email} onChange={e => setForm({ ...form, clinic_email: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <input placeholder="e.g. clinic@email.com" value={form.clinic_email} onChange={e => setForm({ ...form, clinic_email: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
@@ -249,19 +249,19 @@ export default function Settings() {
                     <button onClick={() => setForm({ ...form, currency: autoDetected })} className="text-xs text-blue-600 font-medium hover:underline">Use This</button>
                   </div>
                 )}
-                <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                <select value={form.currency} onChange={e => setForm({ ...form, currency: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                   {currencies.map(c => <option key={c.code} value={c.code}>{c.symbol} — {c.name} ({c.code})</option>)}
                 </select>
                 {selectedCurrency && (
-                  <div className="mt-2 bg-teal-50 rounded-xl px-4 py-2 flex items-center gap-2">
-                    <span className="text-lg font-bold text-teal-700">{selectedCurrency.symbol}</span>
-                    <span className="text-sm text-teal-600">{selectedCurrency.name} — {selectedCurrency.code}</span>
+                  <div className="mt-2 bg-brand-50 rounded-xl px-4 py-2 flex items-center gap-2">
+                    <span className="text-lg font-bold text-brand-700">{selectedCurrency.symbol}</span>
+                    <span className="text-sm text-brand-600">{selectedCurrency.name} — {selectedCurrency.code}</span>
                   </div>
                 )}
               </div>
             </div>
             <div className="mt-6 flex items-center gap-4">
-              <button onClick={handleSave} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
+              <button onClick={handleSave} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Settings"}
               </button>
               {saved && <span className="text-green-600 text-sm font-medium">✅ Saved!</span>}
@@ -277,8 +277,8 @@ export default function Settings() {
             </div>
 
             {/* Add form */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Add Treatment</h3>
+            <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
+              <h3 className="text-sm font-semibold text-brand-800 mb-4">Add Treatment</h3>
               <div className="flex gap-2 items-end">
                 <div className="flex-1">
                   <label className="text-xs text-gray-500 mb-1 block">Treatment Name *</label>
@@ -287,7 +287,7 @@ export default function Settings() {
                     value={tForm.name}
                     onChange={e => setTForm({ ...tForm, name: e.target.value })}
                     onKeyDown={e => e.key === "Enter" && addTreatment()}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                   />
                 </div>
                 <div className="w-36">
@@ -297,19 +297,19 @@ export default function Settings() {
                     value={tForm.price}
                     onChange={e => setTForm({ ...tForm, price: e.target.value })}
                     onKeyDown={e => e.key === "Enter" && addTreatment()}
-                    className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                    className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                   />
                 </div>
                 <button onClick={addTreatment} disabled={tLoading || !tForm.name.trim()}
-                  className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 whitespace-nowrap">
+                  className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50 whitespace-nowrap">
                   {tLoading ? "..." : "+ Add"}
                 </button>
               </div>
             </div>
 
             {/* List */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="px-5 py-3 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+            <div className="bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
+              <div className="px-5 py-3 border-b border-brand-100 bg-brand-50 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-gray-700">Your Treatment Presets</h3>
                 <span className="text-xs text-gray-400">{treatments.length} treatments</span>
               </div>
@@ -324,26 +324,26 @@ export default function Settings() {
                           <input
                             value={tEditForm.name}
                             onChange={e => setTEditForm({ ...tEditForm, name: e.target.value })}
-                            className="flex-1 border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                            className="flex-1 border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                           />
                           <input
                             type="number" min="0"
                             value={tEditForm.price}
                             onChange={e => setTEditForm({ ...tEditForm, price: e.target.value })}
-                            className="w-28 border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                            className="w-28 border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                           />
-                          <button onClick={() => saveTreatmentEdit(t.id)} className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg font-medium">Save</button>
+                          <button onClick={() => saveTreatmentEdit(t.id)} className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg font-medium">Save</button>
                           <button onClick={() => setTEditId(null)} className="text-xs text-gray-500 hover:text-gray-700 px-2">✕</button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between">
                           <div>
-                            <span className="text-sm font-medium text-gray-800">{t.name}</span>
-                            <span className="ml-3 text-xs text-teal-600 font-semibold">{symbol} {t.price.toLocaleString()}</span>
+                            <span className="text-sm font-medium text-brand-800">{t.name}</span>
+                            <span className="ml-3 text-xs text-brand-600 font-semibold">{symbol} {t.price.toLocaleString()}</span>
                           </div>
                           <div className="flex gap-3">
                             <button onClick={() => { setTEditId(t.id); setTEditForm({ name: t.name, price: String(t.price) }); }}
-                              className="text-xs text-teal-600 font-medium hover:underline">Edit</button>
+                              className="text-xs text-brand-600 font-medium hover:underline">Edit</button>
                             <button onClick={() => deleteTreatment(t.id)} className="text-xs text-red-400 font-medium hover:underline">Delete</button>
                           </div>
                         </div>
@@ -364,8 +364,8 @@ export default function Settings() {
             </div>
 
             {/* Add form */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
-              <h3 className="text-sm font-semibold text-gray-800 mb-4">Add Prescription Group</h3>
+            <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
+              <h3 className="text-sm font-semibold text-brand-800 mb-4">Add Prescription Group</h3>
 
               {/* Group name */}
               <div className="mb-4">
@@ -375,7 +375,7 @@ export default function Settings() {
                   placeholder="e.g. Root Canal Treatment, Extraction, Filling..."
                   value={pGroupName}
                   onChange={e => setPGroupName(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                  className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 />
                 <datalist id="group-list">
                   {existingGroups.map(g => <option key={g} value={g} />)}
@@ -386,7 +386,7 @@ export default function Settings() {
               {/* Medicine rows */}
               <div className="space-y-3">
                 {medicineRows.map((row, idx) => (
-                  <div key={idx} className="border border-gray-100 rounded-xl p-3 bg-gray-50">
+                  <div key={idx} className="border border-brand-100 rounded-xl p-3 bg-brand-50">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-medium text-gray-600">Medicine {idx + 1}</span>
                       {medicineRows.length > 1 && (
@@ -403,32 +403,32 @@ export default function Settings() {
                           placeholder="Medicine Name * (e.g. Augmentin 625mg)"
                           value={row.medicine}
                           onChange={e => updateMedicineRow(idx, "medicine", e.target.value)}
-                          className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                          className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                         />
                       </div>
                       <input
                         placeholder="Dosage (e.g. 1 tab, 2 tabs, 500mg)"
                         value={row.dosage}
                         onChange={e => updateMedicineRow(idx, "dosage", e.target.value)}
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                        className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                       />
                       <input
                         placeholder="Frequency (e.g. 2x daily)"
                         value={row.frequency}
                         onChange={e => updateMedicineRow(idx, "frequency", e.target.value)}
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                        className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                       />
                       <input
                         placeholder="Duration (e.g. 5 days)"
                         value={row.duration}
                         onChange={e => updateMedicineRow(idx, "duration", e.target.value)}
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                        className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                       />
                       <input
                         placeholder="Instructions (e.g. After meals)"
                         value={row.notes}
                         onChange={e => updateMedicineRow(idx, "notes", e.target.value)}
-                        className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                        className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                       />
                     </div>
                   </div>
@@ -439,14 +439,14 @@ export default function Settings() {
                 <button
                   type="button"
                   onClick={() => setMedicineRows(rows => [...rows, { medicine: "", dosage: "", frequency: "", duration: "", notes: "" }])}
-                  className="text-teal-600 text-sm hover:underline"
+                  className="text-brand-600 text-sm hover:underline"
                 >
                   + Add Another Medicine
                 </button>
                 <button
                   onClick={addPrescription}
                   disabled={pLoading || !pGroupName.trim() || !medicineRows.some(r => r.medicine.trim())}
-                  className="ml-auto bg-teal-600 hover:bg-teal-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
+                  className="ml-auto bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
                 >
                   {pLoading ? "Saving..." : `Save Group (${medicineRows.filter(r => r.medicine.trim()).length} medicine${medicineRows.filter(r => r.medicine.trim()).length !== 1 ? "s" : ""})`}
                 </button>
@@ -455,18 +455,18 @@ export default function Settings() {
 
             {/* Grouped List */}
             {prescriptions.length === 0 ? (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-10 text-center text-sm text-gray-400">
+              <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-10 text-center text-sm text-gray-400">
                 No prescription presets yet. Add your first medicine above.
               </div>
             ) : (
               <div className="space-y-4">
                 {Object.entries(grouped).map(([groupName, meds]) => (
-                  <div key={groupName} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                  <div key={groupName} className="bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
                     {/* Group header */}
-                    <div className="px-5 py-3 bg-teal-50 border-b border-teal-100 flex items-center justify-between">
+                    <div className="px-5 py-3 bg-brand-50 border-b border-brand-100 flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-bold text-teal-800">{groupName}</span>
-                        <span className="text-xs bg-teal-100 text-teal-600 px-2 py-0.5 rounded-full font-medium">{meds.length} medicine{meds.length !== 1 ? "s" : ""}</span>
+                        <span className="text-sm font-bold text-brand-800">{groupName}</span>
+                        <span className="text-xs bg-brand-100 text-brand-600 px-2 py-0.5 rounded-full font-medium">{meds.length} medicine{meds.length !== 1 ? "s" : ""}</span>
                       </div>
                     </div>
                     {/* Medicines */}
@@ -481,36 +481,36 @@ export default function Settings() {
                                   value={pEditForm.group_name}
                                   onChange={e => setPEditForm({ ...pEditForm, group_name: e.target.value })}
                                   placeholder="Group Name"
-                                  className="col-span-2 border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400"
+                                  className="col-span-2 border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                                 />
                                 <datalist id="group-list-edit">
                                   {existingGroups.map(g => <option key={g} value={g} />)}
                                 </datalist>
-                                <input value={pEditForm.medicine} onChange={e => setPEditForm({ ...pEditForm, medicine: e.target.value })} placeholder="Medicine" className="col-span-2 border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                                <input value={pEditForm.dosage} onChange={e => setPEditForm({ ...pEditForm, dosage: e.target.value })} placeholder="Dosage" className="border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                                <input value={pEditForm.frequency} onChange={e => setPEditForm({ ...pEditForm, frequency: e.target.value })} placeholder="Frequency" className="border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                                <input value={pEditForm.duration} onChange={e => setPEditForm({ ...pEditForm, duration: e.target.value })} placeholder="Duration" className="border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-                                <input value={pEditForm.notes} onChange={e => setPEditForm({ ...pEditForm, notes: e.target.value })} placeholder="Instructions" className="border border-teal-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                                <input value={pEditForm.medicine} onChange={e => setPEditForm({ ...pEditForm, medicine: e.target.value })} placeholder="Medicine" className="col-span-2 border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                                <input value={pEditForm.dosage} onChange={e => setPEditForm({ ...pEditForm, dosage: e.target.value })} placeholder="Dosage" className="border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                                <input value={pEditForm.frequency} onChange={e => setPEditForm({ ...pEditForm, frequency: e.target.value })} placeholder="Frequency" className="border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                                <input value={pEditForm.duration} onChange={e => setPEditForm({ ...pEditForm, duration: e.target.value })} placeholder="Duration" className="border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                                <input value={pEditForm.notes} onChange={e => setPEditForm({ ...pEditForm, notes: e.target.value })} placeholder="Instructions" className="border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                               </div>
                               <div className="flex gap-2">
-                                <button onClick={() => savePrescriptionEdit(rx.id)} className="text-xs bg-teal-600 text-white px-3 py-1.5 rounded-lg font-medium">Save</button>
+                                <button onClick={() => savePrescriptionEdit(rx.id)} className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg font-medium">Save</button>
                                 <button onClick={() => setPEditId(null)} className="text-xs text-gray-500 hover:text-gray-700 px-2">Cancel</button>
                               </div>
                             </div>
                           ) : (
                             <div className="flex items-start justify-between gap-3">
                               <div>
-                                <span className="text-sm font-semibold text-gray-800">{rx.medicine}</span>
+                                <span className="text-sm font-semibold text-brand-800">{rx.medicine}</span>
                                 <div className="flex flex-wrap gap-1.5 mt-1">
                                   {rx.dosage && <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{rx.dosage}</span>}
-                                  {rx.frequency && <span className="text-xs bg-teal-50 text-teal-600 px-2 py-0.5 rounded-full">{rx.frequency}</span>}
+                                  {rx.frequency && <span className="text-xs bg-brand-50 text-brand-600 px-2 py-0.5 rounded-full">{rx.frequency}</span>}
                                   {rx.duration && <span className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{rx.duration}</span>}
                                   {rx.notes && <span className="text-xs text-gray-400 italic">{rx.notes}</span>}
                                 </div>
                               </div>
                               <div className="flex gap-3 shrink-0">
                                 <button onClick={() => { setPEditId(rx.id); setPEditForm({ group_name: rx.group_name, medicine: rx.medicine, dosage: rx.dosage, frequency: rx.frequency, duration: rx.duration, notes: rx.notes }); }}
-                                  className="text-xs text-teal-600 font-medium hover:underline">Edit</button>
+                                  className="text-xs text-brand-600 font-medium hover:underline">Edit</button>
                                 <button onClick={() => deletePrescription(rx.id)} className="text-xs text-red-400 font-medium hover:underline">Delete</button>
                               </div>
                             </div>

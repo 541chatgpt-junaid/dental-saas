@@ -92,34 +92,34 @@ export default function PatientHistoryPage() {
   const outstanding = invoices.filter(i => i.status !== "cancelled" && i.status !== "draft").reduce((s, i) => s + i.balance, 0);
 
   if (loading) return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
       <div className="flex-1 flex items-center justify-center text-gray-400 text-sm mt-14 md:mt-0">Loading...</div>
     </div>
   );
 
   if (!patient) return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
       <div className="flex-1 flex items-center justify-center text-red-400 text-sm mt-14 md:mt-0">Patient not found.</div>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.push("/dashboard/patients")} className="text-teal-500 hover:text-teal-700 text-sm">← Back</button>
+          <button onClick={() => router.push("/dashboard/patients")} className="text-brand-500 hover:text-brand-700 text-sm">← Back</button>
           <div>
-            <h2 className="text-xl font-semibold text-gray-800">{patient.name}</h2>
+            <h2 className="text-xl font-semibold text-brand-800">{patient.name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">Financial History</p>
           </div>
         </div>
 
         {/* Patient Info Bar */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 mb-5">
+        <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 mb-5">
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
             {patient.phone && <span className="text-gray-600">📞 {patient.phone}</span>}
             {patient.age && <span className="text-gray-500">{patient.age} yrs</span>}
@@ -131,11 +131,11 @@ export default function PatientHistoryPage() {
 
         {/* Summary Cards */}
         <div className="grid grid-cols-3 gap-3 md:gap-4 mb-5">
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 text-center">
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Total Billed</p>
-            <p className="text-lg font-bold text-gray-800">{symbol} {totalBilled.toLocaleString()}</p>
+            <p className="text-lg font-bold text-brand-800">{symbol} {totalBilled.toLocaleString()}</p>
           </div>
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 text-center">
+          <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 text-center">
             <p className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Total Paid</p>
             <p className="text-lg font-bold text-emerald-600">{symbol} {totalPaid.toLocaleString()}</p>
           </div>
@@ -156,12 +156,12 @@ export default function PatientHistoryPage() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white border border-gray-200 shadow-sm rounded-xl p-1 mb-5 w-fit">
+        <div className="flex gap-1 bg-white border border-brand-200 shadow-sm rounded-xl p-1 mb-5 w-fit">
           {(["invoices", "payments"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${tab === t ? "bg-teal-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
+              className={`px-4 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${tab === t ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
             >
               {t} ({t === "invoices" ? invoices.length : payments.length})
             </button>
@@ -177,9 +177,9 @@ export default function PatientHistoryPage() {
                 {/* Mobile */}
                 <div className="md:hidden flex flex-col gap-3">
                   {invoices.map(inv => (
-                    <div key={inv.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <div key={inv.id} className="bg-white rounded-xl border border-brand-200 shadow-sm p-4">
                       <div className="flex justify-between items-start mb-2">
-                        <p className="font-semibold text-teal-700 text-sm">{inv.invoice_number}</p>
+                        <p className="font-semibold text-brand-700 text-sm">{inv.invoice_number}</p>
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
                       </div>
                       <div className="flex justify-between text-xs text-gray-500 mb-2">
@@ -191,14 +191,14 @@ export default function PatientHistoryPage() {
                         <span className="text-emerald-600">Paid: {symbol} {inv.amount_paid.toLocaleString()}</span>
                         {inv.balance > 0 && <span className="text-orange-600 font-semibold">Bal: {symbol} {inv.balance.toLocaleString()}</span>}
                       </div>
-                      <button onClick={() => router.push(`/dashboard/billing/${inv.id}`)} className="mt-2 text-xs text-teal-600 font-semibold hover:underline">View Invoice →</button>
+                      <button onClick={() => router.push(`/dashboard/billing/${inv.id}`)} className="mt-2 text-xs text-brand-600 font-semibold hover:underline">View Invoice →</button>
                     </div>
                   ))}
                 </div>
                 {/* Desktop */}
-                <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                    <thead className="bg-brand-50 border-b border-brand-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                       <tr>
                         <th className="text-left px-5 py-3">Invoice #</th>
                         <th className="text-left px-5 py-3">Date</th>
@@ -212,18 +212,18 @@ export default function PatientHistoryPage() {
                     </thead>
                     <tbody>
                       {invoices.map(inv => (
-                        <tr key={inv.id} className="border-t border-gray-100 hover:bg-gray-50">
-                          <td className="px-5 py-3 font-semibold text-teal-700">{inv.invoice_number}</td>
+                        <tr key={inv.id} className="border-t border-brand-100 hover:bg-brand-50">
+                          <td className="px-5 py-3 font-semibold text-brand-700">{inv.invoice_number}</td>
                           <td className="px-5 py-3 text-gray-500 text-xs">{formatDate(inv.created_at)}</td>
                           <td className="px-5 py-3 text-gray-500 text-xs">{inv.due_date ? formatDate(inv.due_date) : "—"}</td>
-                          <td className="px-5 py-3 text-right font-semibold text-gray-800">{symbol} {inv.total.toLocaleString()}</td>
+                          <td className="px-5 py-3 text-right font-semibold text-brand-800">{symbol} {inv.total.toLocaleString()}</td>
                           <td className="px-5 py-3 text-right text-emerald-600 font-medium">{symbol} {inv.amount_paid.toLocaleString()}</td>
                           <td className="px-5 py-3 text-right font-bold text-orange-600">{symbol} {inv.balance.toLocaleString()}</td>
                           <td className="px-5 py-3">
                             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(inv.status)}`}>{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
                           </td>
                           <td className="px-5 py-3">
-                            <button onClick={() => router.push(`/dashboard/billing/${inv.id}`)} className="text-teal-600 text-xs font-semibold hover:underline">View</button>
+                            <button onClick={() => router.push(`/dashboard/billing/${inv.id}`)} className="text-brand-600 text-xs font-semibold hover:underline">View</button>
                           </td>
                         </tr>
                       ))}
@@ -244,23 +244,23 @@ export default function PatientHistoryPage() {
                 {/* Mobile */}
                 <div className="md:hidden flex flex-col gap-3">
                   {payments.map(pay => (
-                    <div key={pay.id} className="bg-white rounded-xl border border-gray-200 shadow-sm p-4">
+                    <div key={pay.id} className="bg-white rounded-xl border border-brand-200 shadow-sm p-4">
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-emerald-600 font-bold text-sm">+ {symbol} {pay.amount.toLocaleString()}</span>
                         <span className="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full">{pay.payment_method}</span>
                       </div>
                       <p className="text-xs text-gray-500">{formatDate(pay.payment_date)}</p>
                       {pay.invoices?.invoice_number && (
-                        <p className="text-xs text-teal-600 mt-0.5">{pay.invoices.invoice_number}</p>
+                        <p className="text-xs text-brand-600 mt-0.5">{pay.invoices.invoice_number}</p>
                       )}
                       {pay.notes && <p className="text-xs text-gray-400 mt-0.5">{pay.notes}</p>}
                     </div>
                   ))}
                 </div>
                 {/* Desktop */}
-                <div className="hidden md:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
                   <table className="w-full text-sm">
-                    <thead className="bg-gray-50 border-b border-gray-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
+                    <thead className="bg-brand-50 border-b border-brand-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                       <tr>
                         <th className="text-left px-5 py-3">Date</th>
                         <th className="text-left px-5 py-3">Invoice</th>
@@ -271,9 +271,9 @@ export default function PatientHistoryPage() {
                     </thead>
                     <tbody>
                       {payments.map(pay => (
-                        <tr key={pay.id} className="border-t border-gray-100 hover:bg-gray-50">
+                        <tr key={pay.id} className="border-t border-brand-100 hover:bg-brand-50">
                           <td className="px-5 py-3 text-gray-500 text-xs">{formatDate(pay.payment_date)}</td>
-                          <td className="px-5 py-3 text-teal-600 text-xs font-medium">{pay.invoices?.invoice_number || "—"}</td>
+                          <td className="px-5 py-3 text-brand-600 text-xs font-medium">{pay.invoices?.invoice_number || "—"}</td>
                           <td className="px-5 py-3">
                             <span className="bg-gray-100 text-gray-700 text-xs font-medium px-2 py-0.5 rounded-full">{pay.payment_method}</span>
                           </td>

@@ -128,99 +128,99 @@ export default function Purchases() {
   const showAnyForm = showForm || !!editingId;
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Purchases</h2>
-            <p className="text-sm text-teal-600 mt-1">Track all inventory purchases</p>
+            <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Purchases</h2>
+            <p className="text-sm text-brand-600 mt-1">Track all inventory purchases</p>
           </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 md:gap-4 mb-6">
-          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">TOTAL</p>
-            <p className="text-xl md:text-2xl font-semibold text-teal-800">{filteredPurchases.length}</p>
-            <p className="text-xs text-teal-400 mt-1">Items</p>
+        <div className="stagger grid grid-cols-3 gap-3 md:gap-4 mb-6">
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">TOTAL</p>
+            <p className="text-xl md:text-2xl font-semibold text-brand-800">{filteredPurchases.length}</p>
+            <p className="text-xs text-brand-400 mt-1">Items</p>
           </div>
-          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">SPENT</p>
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">SPENT</p>
             <p className="text-lg md:text-2xl font-semibold text-red-600">{symbol} {totalSpent.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">Combined</p>
+            <p className="text-xs text-brand-400 mt-1">Combined</p>
           </div>
-          <div className="bg-white rounded-xl p-3 md:p-4 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">SUPPLIERS</p>
-            <p className="text-xl md:text-2xl font-semibold text-teal-800">{new Set(filteredPurchases.map(p => p.supplier)).size}</p>
-            <p className="text-xs text-teal-400 mt-1">Unique</p>
+          <div className="bg-white rounded-xl p-3 md:p-4 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">SUPPLIERS</p>
+            <p className="text-xl md:text-2xl font-semibold text-brand-800">{new Set(filteredPurchases.map(p => p.supplier)).size}</p>
+            <p className="text-xs text-brand-400 mt-1">Unique</p>
           </div>
         </div>
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingId ? "Edit Purchase" : "New Purchase"}</h3>
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Purchase" : "New Purchase"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+              <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option>Consumable</option><option>Instrument</option><option>Medicine</option><option>PPE</option><option>Other</option>
               </select>
-              <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+              <input placeholder="Quantity" type="number" value={form.quantity} onChange={e => setForm({...form, quantity: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <select value={form.unit} onChange={e => setForm({...form, unit: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option>Box</option><option>Piece</option><option>Pack</option><option>Bottle</option><option>Tube</option><option>Roll</option>
               </select>
-              <input placeholder={`Price Per Unit (${symbol})`} type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder={`Price Per Unit (${symbol})`} type="number" value={form.price_per_unit} onChange={e => setForm({...form, price_per_unit: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <div>
-                <label className="block text-xs text-teal-600 mb-1">Purchase Date</label>
-                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+                <label className="block text-xs text-brand-600 mb-1">Purchase Date</label>
+                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
-              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
+              <input placeholder="Notes (optional)" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
             </div>
             {form.quantity && form.price_per_unit && (
-              <div className="mt-3 bg-teal-50 rounded-lg px-4 py-2 flex justify-between">
-                <span className="text-sm text-teal-600">Total:</span>
-                <span className="text-sm font-bold text-teal-800">{symbol} {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}</span>
+              <div className="mt-3 bg-brand-50 rounded-lg px-4 py-2 flex justify-between">
+                <span className="text-sm text-brand-600">Total:</span>
+                <span className="text-sm font-bold text-brand-800">{symbol} {(parseInt(form.quantity) * parseInt(form.price_per_unit)).toLocaleString()}</span>
               </div>
             )}
             <div className="flex gap-3 mt-4">
-              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : editingId ? "Update Purchase" : "Save Purchase"}
               </button>
-              <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+              <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
 
         <div className="flex flex-col md:flex-row gap-3 mb-4">
-          <input placeholder="Search item or supplier..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border border-teal-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
+          <input placeholder="Search item or supplier..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border border-brand-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
           <div className="flex gap-2">
             {["all", "today", "month"].map(f => (
-              <button key={f} onClick={() => setFilter(f)} className={`flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+              <button key={f} onClick={() => setFilter(f)} className={`flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-medium ${filter === f ? "bg-brand-600 text-white" : "bg-white text-brand-700 border border-brand-200"}`}>
                 {f === "all" ? "All" : f === "today" ? "Today" : "Month"}
               </button>
             ))}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
-          <div className="md:hidden divide-y divide-teal-50">
+        <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
+          <div className="md:hidden divide-y divide-brand-50">
             {filteredPurchases.length === 0 ? (
-              <p className="text-center py-10 text-teal-400 text-sm">No purchases found</p>
+              <p className="text-center py-10 text-brand-400 text-sm">No purchases found</p>
             ) : (
               filteredPurchases.map(p => (
                 <div key={p.id} className="p-4">
                   <div className="flex justify-between items-start mb-1">
                     <div>
-                      <p className="font-medium text-teal-800 text-sm">{p.item_name}</p>
-                      <p className="text-xs text-teal-500">{p.category} · {p.supplier}</p>
+                      <p className="font-medium text-brand-800 text-sm">{p.item_name}</p>
+                      <p className="text-xs text-brand-500">{p.category} · {p.supplier}</p>
                     </div>
                     <p className="font-semibold text-red-600 text-sm">{symbol} {p.total_price?.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between mt-1">
-                    <p className="text-xs text-teal-400">{p.quantity} {p.unit} · {p.date}</p>
+                    <p className="text-xs text-brand-400">{p.quantity} {p.unit} · {p.date}</p>
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(p)} className="text-teal-600 text-xs font-medium">✏️</button>
+                      <button onClick={() => openEdit(p)} className="text-brand-600 text-xs font-medium">✏️</button>
                       <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                     </div>
                   </div>
@@ -230,37 +230,37 @@ export default function Purchases() {
           </div>
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-teal-50">
+              <thead className="bg-brand-50">
                 <tr>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Item</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Category</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Qty</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Price/Unit</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Total</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Supplier</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Date</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Item</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Category</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Qty</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Price/Unit</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Total</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Supplier</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Date</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredPurchases.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center py-10 text-teal-400">No purchases found</td></tr>
+                  <tr><td colSpan={8} className="text-center py-10 text-brand-400">No purchases found</td></tr>
                 ) : (
                   filteredPurchases.map(p => (
-                    <tr key={p.id} className="border-t border-teal-50 hover:bg-teal-50">
+                    <tr key={p.id} className="border-t border-brand-50 hover:bg-brand-50">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-teal-800">{p.item_name}</p>
-                        {p.notes && <p className="text-xs text-teal-400">{p.notes}</p>}
+                        <p className="font-medium text-brand-800">{p.item_name}</p>
+                        {p.notes && <p className="text-xs text-brand-400">{p.notes}</p>}
                       </td>
-                      <td className="px-4 py-3"><span className="bg-teal-100 text-teal-700 text-xs px-2 py-1 rounded-full">{p.category}</span></td>
-                      <td className="px-4 py-3 text-teal-700">{p.quantity} {p.unit}</td>
-                      <td className="px-4 py-3 text-teal-700">{symbol} {p.price_per_unit?.toLocaleString()}</td>
+                      <td className="px-4 py-3"><span className="bg-brand-100 text-brand-700 text-xs px-2 py-1 rounded-full">{p.category}</span></td>
+                      <td className="px-4 py-3 text-brand-700">{p.quantity} {p.unit}</td>
+                      <td className="px-4 py-3 text-brand-700">{symbol} {p.price_per_unit?.toLocaleString()}</td>
                       <td className="px-4 py-3 font-semibold text-red-600">{symbol} {p.total_price?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-teal-700">{p.supplier}</td>
-                      <td className="px-4 py-3 text-teal-700">{p.date}</td>
+                      <td className="px-4 py-3 text-brand-700">{p.supplier}</td>
+                      <td className="px-4 py-3 text-brand-700">{p.date}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => openEdit(p)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => openEdit(p)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                           <button onClick={() => handleDelete(p.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                         </div>
                       </td>

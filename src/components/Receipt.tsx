@@ -55,15 +55,15 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
   const handlePrint = () => window.print();
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div className="fixed inset-0 modal-backdrop bg-navy/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 overflow-y-auto">
       <div className="bg-white rounded-2xl w-full max-w-xs shadow-2xl my-auto">
 
         {/* Action Buttons */}
-        <div className="flex gap-2 p-3 bg-gray-50 border-b rounded-t-2xl print:hidden">
-          <button onClick={handlePrint} className="flex-1 bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-xl text-xs font-medium">
+        <div className="flex gap-2 p-3 bg-brand-50 border-b rounded-t-2xl print:hidden">
+          <button onClick={handlePrint} className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2 rounded-xl text-xs font-medium">
             🖨️ Print
           </button>
-          <button onClick={onClose} className="flex-1 border border-gray-200 text-gray-600 hover:bg-gray-100 py-2 rounded-xl text-xs font-medium">
+          <button onClick={onClose} className="flex-1 border border-brand-200 text-gray-600 hover:bg-gray-100 py-2 rounded-xl text-xs font-medium">
             Close
           </button>
         </div>
@@ -73,7 +73,7 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
 
           {/* Header */}
           <div className="text-center mb-4">
-            <h1 className="text-lg font-bold text-teal-700">{settings.clinic_name}</h1>
+            <h1 className="text-lg font-bold text-brand-700">{settings.clinic_name}</h1>
             {settings.clinic_address && <p className="text-xs text-gray-400">{settings.clinic_address}</p>}
             {settings.clinic_phone && <p className="text-xs text-gray-400">{settings.clinic_phone}</p>}
             {settings.clinic_email && <p className="text-xs text-gray-400">{settings.clinic_email}</p>}
@@ -81,9 +81,9 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
 
           {/* Divider */}
           <div className="flex items-center gap-2 mb-3">
-            <div className="flex-1 border-t-2 border-dashed border-gray-200"></div>
+            <div className="flex-1 border-t-2 border-dashed border-brand-200"></div>
             <span className="text-xs text-gray-400 font-medium">RECEIPT</span>
-            <div className="flex-1 border-t-2 border-dashed border-gray-200"></div>
+            <div className="flex-1 border-t-2 border-dashed border-brand-200"></div>
           </div>
 
           {/* Receipt Info */}
@@ -93,8 +93,8 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
           </div>
 
           {/* Patient Info */}
-          <div className="bg-teal-50 rounded-xl p-3 mb-3">
-            <p className="text-xs font-semibold text-teal-600 mb-1.5">PATIENT DETAILS</p>
+          <div className="bg-brand-50 rounded-xl p-3 mb-3">
+            <p className="text-xs font-semibold text-brand-600 mb-1.5">PATIENT DETAILS</p>
             <div className="space-y-1">
               <div className="flex justify-between">
                 <span className="text-xs text-gray-500">Name</span>
@@ -118,7 +118,7 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
           {/* Treatment */}
           <div className="mb-3">
             <p className="text-xs font-semibold text-gray-500 mb-1.5">TREATMENT</p>
-            <div className="flex justify-between items-center py-1.5 border-b border-dashed border-gray-100">
+            <div className="flex justify-between items-center py-1.5 border-b border-dashed border-brand-100">
               <div>
                 <p className="text-xs font-medium text-gray-700">{patient.treatment || "General Checkup"}</p>
                 {patient.tooth_number && <p className="text-xs text-gray-400">Tooth: {patient.tooth_number}</p>}
@@ -153,9 +153,9 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
           </div>
 
           {/* Footer */}
-          <div className="text-center border-t border-dashed border-gray-200 pt-3">
+          <div className="text-center border-t border-dashed border-brand-200 pt-3">
             <p className="text-xs text-gray-400">Thank you for visiting</p>
-            <p className="text-xs font-semibold text-teal-600">{settings.clinic_name}</p>
+            <p className="text-xs font-semibold text-brand-600">{settings.clinic_name}</p>
           </div>
 
         </div>

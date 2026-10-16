@@ -526,16 +526,6 @@ export default function LandingPage() {
 
   return (
     <div className="de-landing overflow-x-hidden">
-      <link rel="preconnect" href="https://fonts.googleapis.com" />
-      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-      {/* Fonts are only needed on the landing page, so they load here instead of the root layout */}
-      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link
-        rel="stylesheet"
-        precedence="default"
-        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap"
-      />
-
       {/* THANK YOU POPUP */}
       {showThankyou && (
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-[1000] flex items-center justify-center bg-navy/70 p-4 backdrop-blur-sm animate-fade-in">

@@ -127,55 +127,55 @@ export default function Doctors() {
   const showAnyForm = showForm || !!editingId;
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Doctors</h2>
-            <p className="text-sm text-teal-600 mt-1">Total: {doctors.length} doctors</p>
+            <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Doctors</h2>
+            <p className="text-sm text-brand-600 mt-1">Total: {doctors.length} doctors</p>
           </div>
-          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+          <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
             + Add Doctor
           </button>
         </div>
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-teal-100 mb-6">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">{editingId ? "Edit Doctor" : "New Doctor"}</h3>
+          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Doctor" : "New Doctor"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <input placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400" />
-              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+              <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Email Address" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option>Active</option>
                 <option>Inactive</option>
               </select>
             </div>
 
             {/* Timing Section */}
-            <div className="mt-4 p-4 bg-teal-50 rounded-xl border border-teal-100">
-              <p className="text-sm font-semibold text-teal-800 mb-3">⏰ Timing & Schedule</p>
+            <div className="mt-4 p-4 bg-brand-50 rounded-xl border border-brand-100">
+              <p className="text-sm font-semibold text-brand-800 mb-3">⏰ Timing & Schedule</p>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
-                  <label className="block text-xs text-teal-600 mb-1">Start Time</label>
-                  <input type="time" value={form.timing_start} onChange={e => setForm({...form, timing_start: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
+                  <label className="block text-xs text-brand-600 mb-1">Start Time</label>
+                  <input type="time" value={form.timing_start} onChange={e => setForm({...form, timing_start: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
                 </div>
                 <div>
-                  <label className="block text-xs text-teal-600 mb-1">End Time</label>
-                  <input type="time" value={form.timing_end} onChange={e => setForm({...form, timing_end: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
+                  <label className="block text-xs text-brand-600 mb-1">End Time</label>
+                  <input type="time" value={form.timing_end} onChange={e => setForm({...form, timing_end: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
                 </div>
               </div>
               <div className="mb-3">
-                <label className="block text-xs text-teal-600 mb-2">Working Days</label>
+                <label className="block text-xs text-brand-600 mb-2">Working Days</label>
                 <div className="flex flex-wrap gap-2">
                   {days.map(day => (
                     <button key={day} type="button" onClick={() => toggleDay(day)}
                       className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                         selectedWorkingDays.includes(day)
-                          ? "bg-teal-600 text-white"
-                          : "bg-white text-teal-600 border border-teal-200 hover:bg-teal-50"
+                          ? "bg-brand-600 text-white"
+                          : "bg-white text-brand-600 border border-brand-200 hover:bg-brand-50"
                       }`}>
                       {day.slice(0, 3)}
                     </button>
@@ -183,47 +183,47 @@ export default function Doctors() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs text-teal-600 mb-1">Off Days / Leave Notes (optional)</label>
-                <input placeholder="e.g. Every 2nd Saturday, Public holidays" value={form.off_days} onChange={e => setForm({...form, off_days: e.target.value})} className="w-full border border-teal-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400 bg-white" />
+                <label className="block text-xs text-brand-600 mb-1">Off Days / Leave Notes (optional)</label>
+                <input placeholder="e.g. Every 2nd Saturday, Public holidays" value={form.off_days} onChange={e => setForm({...form, off_days: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
               </div>
             </div>
 
             <div className="flex gap-3 mt-4">
-              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-teal-600 hover:bg-teal-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : editingId ? "Update Doctor" : "Save Doctor"}
               </button>
-              <button onClick={resetForm} className="border border-teal-200 text-teal-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+              <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-teal-100 overflow-hidden">
+        <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
           {/* Mobile Cards */}
-          <div className="md:hidden divide-y divide-teal-50">
+          <div className="md:hidden divide-y divide-brand-50">
             {doctors.length === 0 ? (
-              <p className="text-center py-10 text-teal-400 text-sm">No doctors added yet</p>
+              <p className="text-center py-10 text-brand-400 text-sm">No doctors added yet</p>
             ) : (
               doctors.map(d => (
                 <div key={d.id} className="p-4">
                   <div className="flex justify-between items-start mb-1">
                     <div>
-                      <p className="font-medium text-teal-800 text-sm">{d.name}</p>
-                      <p className="text-xs text-teal-500">{d.specialization}</p>
+                      <p className="font-medium text-brand-800 text-sm">{d.name}</p>
+                      <p className="text-xs text-brand-500">{d.specialization}</p>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${d.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
                       {d.status}
                     </span>
                   </div>
-                  <p className="text-xs text-teal-400 mt-1">{d.phone} · {d.email}</p>
+                  <p className="text-xs text-brand-400 mt-1">{d.phone} · {d.email}</p>
                   {(d.timing_start || d.timing_end) && (
-                    <p className="text-xs text-teal-500 mt-1">⏰ {d.timing_start} — {d.timing_end}</p>
+                    <p className="text-xs text-brand-500 mt-1">⏰ {d.timing_start} — {d.timing_end}</p>
                   )}
                   {d.working_days && (
-                    <p className="text-xs text-teal-500 mt-0.5">📅 {d.working_days}</p>
+                    <p className="text-xs text-brand-500 mt-0.5">📅 {d.working_days}</p>
                   )}
                   <div className="flex gap-3 mt-2">
-                    <button onClick={() => openEdit(d)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
-                    <button onClick={() => toggleStatus(d)} className="text-teal-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
+                    <button onClick={() => openEdit(d)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
+                    <button onClick={() => toggleStatus(d)} className="text-brand-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
                     <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
                   </div>
                 </div>
@@ -233,43 +233,43 @@ export default function Doctors() {
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-sm">
-              <thead className="bg-teal-50">
+              <thead className="bg-brand-50">
                 <tr>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Name</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Specialization</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Phone</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Timing</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Working Days</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Status</th>
-                  <th className="text-left px-4 py-3 text-teal-700 font-medium">Action</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Name</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Specialization</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Phone</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Timing</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Working Days</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Status</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {doctors.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-10 text-teal-400">No doctors added yet</td></tr>
+                  <tr><td colSpan={7} className="text-center py-10 text-brand-400">No doctors added yet</td></tr>
                 ) : (
                   doctors.map(d => (
-                    <tr key={d.id} className="border-t border-teal-50 hover:bg-teal-50">
+                    <tr key={d.id} className="border-t border-brand-50 hover:bg-brand-50">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-teal-800">{d.name}</p>
-                        <p className="text-xs text-teal-400">{d.email}</p>
+                        <p className="font-medium text-brand-800">{d.name}</p>
+                        <p className="text-xs text-brand-400">{d.email}</p>
                       </td>
-                      <td className="px-4 py-3 text-teal-700">{d.specialization}</td>
-                      <td className="px-4 py-3 text-teal-700">{d.phone}</td>
-                      <td className="px-4 py-3 text-teal-700">
+                      <td className="px-4 py-3 text-brand-700">{d.specialization}</td>
+                      <td className="px-4 py-3 text-brand-700">{d.phone}</td>
+                      <td className="px-4 py-3 text-brand-700">
                         {d.timing_start && d.timing_end ? (
                           <p className="text-sm">⏰ {d.timing_start} — {d.timing_end}</p>
-                        ) : <p className="text-teal-300 text-xs">Not set</p>}
-                        {d.off_days && <p className="text-xs text-teal-400 mt-0.5">Off: {d.off_days}</p>}
+                        ) : <p className="text-brand-300 text-xs">Not set</p>}
+                        {d.off_days && <p className="text-xs text-brand-400 mt-0.5">Off: {d.off_days}</p>}
                       </td>
-                      <td className="px-4 py-3 text-teal-700">
+                      <td className="px-4 py-3 text-brand-700">
                         {d.working_days ? (
                           <div className="flex flex-wrap gap-1">
                             {d.working_days.split(", ").map(day => (
-                              <span key={day} className="bg-teal-100 text-teal-700 text-xs px-2 py-0.5 rounded-full">{day.slice(0,3)}</span>
+                              <span key={day} className="bg-brand-100 text-brand-700 text-xs px-2 py-0.5 rounded-full">{day.slice(0,3)}</span>
                             ))}
                           </div>
-                        ) : <p className="text-teal-300 text-xs">Not set</p>}
+                        ) : <p className="text-brand-300 text-xs">Not set</p>}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${d.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
@@ -278,8 +278,8 @@ export default function Doctors() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => openEdit(d)} className="text-teal-600 text-xs font-medium">✏️ Edit</button>
-                          <button onClick={() => toggleStatus(d)} className="text-teal-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
+                          <button onClick={() => openEdit(d)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => toggleStatus(d)} className="text-brand-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
                           <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                         </div>
                       </td>

@@ -13,6 +13,20 @@
   --color-ink: #141932;
 
   --font-display: "Playfair Display", "Cormorant Garamond", serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+
+  /* App brand scale (replaces the old teal): cream surfaces, navy ink */
+  --color-brand-50: #f6f4ee;
+  --color-brand-100: #ede8db;
+  --color-brand-200: #e0d9c6;
+  --color-brand-300: #b3b9c9;
+  --color-brand-400: #8890a8;
+  --color-brand-500: #5a6482;
+  --color-brand-600: #1c2b50;
+  --color-brand-700: #0f1d3d;
+  --color-brand-800: #0f1d3d;
+  --color-brand-900: #0a1530;
+  --color-brand-950: #070f24;
 
   --ease-out-expo: cubic-bezier(.16, 1, .3, 1);
 
@@ -26,6 +40,7 @@
   --animate-crown-draw: crown-draw 2.4s var(--ease-out-expo) .3s both;
   --animate-accordion-down: accordion-down .45s var(--ease-out-expo) both;
   --animate-accordion-up: accordion-up .35s var(--ease-out-expo) both;
+  --animate-drawer-in: drawer-in .5s var(--ease-out-expo) both;
 
   @keyframes ken-burns {
     from { transform: scale(1.05); }
@@ -67,6 +82,10 @@
   @keyframes accordion-down {
     from { height: 0; opacity: 0; }
     to { height: var(--accordion-height); opacity: 1; }
+  }
+  @keyframes drawer-in {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
   }
   @keyframes accordion-up {
     from { height: var(--accordion-height); opacity: 1; }
@@ -136,5 +155,75 @@
   .de-landing *::after {
     animation-duration: .01ms !important;
     animation-iteration-count: 1 !important;
+  }
+}
+
+/* ─── App-wide typography ─── */
+@layer base {
+  h1, h2 { font-family: var(--font-display); letter-spacing: -0.01em; }
+}
+
+/* ─── Dashboard app motion ─── */
+@layer base {
+  .de-app button,
+  .de-app a,
+  .de-app input,
+  .de-app select,
+  .de-app textarea {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: .35s;
+    transition-timing-function: var(--ease-out-expo);
+  }
+}
+
+/* Page content: each top-level block fades up in sequence */
+.de-app .animate-page > * { animation: var(--animate-fade-up); }
+.de-app .animate-page > *:nth-child(2) { animation-delay: 70ms; }
+.de-app .animate-page > *:nth-child(3) { animation-delay: 140ms; }
+.de-app .animate-page > *:nth-child(4) { animation-delay: 210ms; }
+.de-app .animate-page > *:nth-child(n+5) { animation-delay: 280ms; }
+
+/* Grids of cards: children scale in one after another */
+.de-app .stagger > * { animation: var(--animate-scale-in); }
+.de-app .stagger > *:nth-child(2) { animation-delay: 60ms; }
+.de-app .stagger > *:nth-child(3) { animation-delay: 120ms; }
+.de-app .stagger > *:nth-child(4) { animation-delay: 180ms; }
+.de-app .stagger > *:nth-child(n+5) { animation-delay: 240ms; }
+
+/* Cards lift slightly on hover */
+.de-app .card-hover { transition: transform .5s var(--ease-out-expo), box-shadow .5s var(--ease-out-expo); }
+.de-app .card-hover:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(15, 29, 61, .10); }
+
+/* Modals: backdrop fades, dialog scales in */
+.modal-backdrop { animation: var(--animate-fade-in); animation-duration: .35s; }
+.modal-backdrop > * { animation: var(--animate-scale-in); animation-duration: .5s; }
+
+/* Primary buttons get the gold sweep on hover */
+.de-app button.bg-brand-600,
+.de-app a.bg-brand-600 { position: relative; overflow: hidden; isolation: isolate; }
+.de-app button.bg-brand-600::after,
+.de-app a.bg-brand-600::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 45%;
+  z-index: -1;
+  background: linear-gradient(90deg, transparent, rgba(212, 175, 55, .55), transparent);
+  transform: translateX(-120%) skewX(-20deg);
+  opacity: 0;
+  pointer-events: none;
+}
+.de-app button.bg-brand-600:hover::after,
+.de-app a.bg-brand-600:hover::after { animation: gold-sweep 1.2s var(--ease-out-expo); }
+
+@media (prefers-reduced-motion: reduce) {
+  .de-app *,
+  .de-app *::before,
+  .de-app *::after,
+  .modal-backdrop,
+  .modal-backdrop > * {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
   }
 }

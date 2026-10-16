@@ -135,7 +135,7 @@ export default function Reports() {
   const totalExpenses = labCost + manualExpenses + materialCost;
   const profit = income - totalExpenses;
 
-  const PIE_COLORS = ["#0d9488", "#f59e0b", "#3b82f6", "#ef4444", "#8b5cf6", "#10b981"];
+  const PIE_COLORS = ["#0f1d3d", "#d4af37", "#3b82f6", "#ef4444", "#8b5cf6", "#10b981"];
 
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
@@ -174,8 +174,8 @@ export default function Reports() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white border border-teal-100 rounded-lg p-3 shadow-lg">
-          <p className="text-xs font-semibold text-teal-800 mb-1">{label}</p>
+        <div className="bg-white border border-brand-100 rounded-lg p-3 shadow-lg">
+          <p className="text-xs font-semibold text-brand-800 mb-1">{label}</p>
           {payload.map((entry: any, i: number) => (
             <p key={i} className="text-xs" style={{ color: entry.color }}>
               {entry.name}: {entry.name === "Patients" ? entry.value : `${symbol} ${entry.value?.toLocaleString()}`}
@@ -188,13 +188,13 @@ export default function Reports() {
   };
 
   return (
-    <div className="min-h-screen flex bg-teal-50">
+    <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 p-4 md:p-8 mt-14 md:mt-0">
+      <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-xl md:text-2xl font-semibold text-teal-800">Reports</h2>
-            <p className="text-sm text-teal-600 mt-1">Profit & Loss Summary</p>
+            <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Reports</h2>
+            <p className="text-sm text-brand-600 mt-1">Profit & Loss Summary</p>
           </div>
           <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
             📊 Export
@@ -204,23 +204,23 @@ export default function Reports() {
         {/* Summary Filter */}
         <div className="flex gap-2 mb-6">
           {["today", "month", "all"].map(f => (
-            <button key={f} onClick={() => setFilter(f)} className={`px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-medium ${filter === f ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+            <button key={f} onClick={() => setFilter(f)} className={`px-3 md:px-5 py-2 rounded-lg text-xs md:text-sm font-medium ${filter === f ? "bg-brand-600 text-white" : "bg-white text-brand-700 border border-brand-200"}`}>
               {f === "today" ? "Today" : f === "month" ? "Month" : "All Time"}
             </button>
           ))}
         </div>
 
         {/* Top Stats */}
-        <div className="grid grid-cols-3 gap-3 md:gap-5 mb-6">
-          <div className="bg-white rounded-xl p-3 md:p-5 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">PATIENTS</p>
-            <p className="text-2xl md:text-3xl font-semibold text-teal-800">{patientCount}</p>
-            <p className="text-xs text-teal-400 mt-1">Treated</p>
+        <div className="stagger grid grid-cols-3 gap-3 md:gap-5 mb-6">
+          <div className="bg-white rounded-xl p-3 md:p-5 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">PATIENTS</p>
+            <p className="text-2xl md:text-3xl font-semibold text-brand-800">{patientCount}</p>
+            <p className="text-xs text-brand-400 mt-1">Treated</p>
           </div>
-          <div className="bg-white rounded-xl p-3 md:p-5 border border-teal-100">
-            <p className="text-xs font-medium text-teal-600 mb-1">PENDING</p>
+          <div className="bg-white rounded-xl p-3 md:p-5 border border-brand-100">
+            <p className="text-xs font-medium text-brand-600 mb-1">PENDING</p>
             <p className="text-lg md:text-3xl font-semibold text-orange-500">{symbol} {pendingFees.toLocaleString()}</p>
-            <p className="text-xs text-teal-400 mt-1">To collect</p>
+            <p className="text-xs text-brand-400 mt-1">To collect</p>
           </div>
           <div className={`rounded-xl p-3 md:p-5 border ${profit >= 0 ? "bg-green-50 border-green-100" : "bg-red-50 border-red-100"}`}>
             <p className={`text-xs font-medium mb-1 ${profit >= 0 ? "text-green-600" : "text-red-600"}`}>PROFIT</p>
@@ -231,36 +231,36 @@ export default function Reports() {
 
         {/* Income & Expense Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">💰 Income</h3>
+          <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">💰 Income</h3>
             <div className="space-y-2">
-              <div className="flex justify-between py-2 border-b border-teal-50">
-                <span className="text-sm text-teal-700">Patient Fees</span>
+              <div className="flex justify-between py-2 border-b border-brand-50">
+                <span className="text-sm text-brand-700">Patient Fees</span>
                 <span className="text-sm font-semibold text-green-600">{symbol} {income.toLocaleString()}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-sm font-semibold text-teal-800">Total</span>
+                <span className="text-sm font-semibold text-brand-800">Total</span>
                 <span className="text-sm font-bold text-green-700">{symbol} {income.toLocaleString()}</span>
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">💸 Expenses</h3>
+          <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">💸 Expenses</h3>
             <div className="space-y-2">
-              <div className="flex justify-between py-2 border-b border-teal-50">
-                <span className="text-sm text-teal-700">Lab Costs</span>
+              <div className="flex justify-between py-2 border-b border-brand-50">
+                <span className="text-sm text-brand-700">Lab Costs</span>
                 <span className="text-sm font-semibold text-red-500">{symbol} {labCost.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-teal-50">
-                <span className="text-sm text-teal-700">Material Costs</span>
+              <div className="flex justify-between py-2 border-b border-brand-50">
+                <span className="text-sm text-brand-700">Material Costs</span>
                 <span className="text-sm font-semibold text-red-500">{symbol} {materialCost.toLocaleString()}</span>
               </div>
-              <div className="flex justify-between py-2 border-b border-teal-50">
-                <span className="text-sm text-teal-700">Rent / Salary / Other</span>
+              <div className="flex justify-between py-2 border-b border-brand-50">
+                <span className="text-sm text-brand-700">Rent / Salary / Other</span>
                 <span className="text-sm font-semibold text-red-500">{symbol} {manualExpenses.toLocaleString()}</span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="text-sm font-semibold text-teal-800">Total</span>
+                <span className="text-sm font-semibold text-brand-800">Total</span>
                 <span className="text-sm font-bold text-red-600">{symbol} {totalExpenses.toLocaleString()}</span>
               </div>
             </div>
@@ -269,27 +269,27 @@ export default function Reports() {
 
         {/* Chart Range Filter */}
         <div className="flex items-center gap-2 mb-4">
-          <p className="text-sm font-medium text-teal-700">Chart Range:</p>
+          <p className="text-sm font-medium text-brand-700">Chart Range:</p>
           {[{ label: "3 Months", value: "3" }, { label: "6 Months", value: "6" }, { label: "12 Months", value: "12" }].map(r => (
             <button key={r.value} onClick={() => setChartRange(r.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${chartRange === r.value ? "bg-teal-600 text-white" : "bg-white text-teal-700 border border-teal-200"}`}>
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium ${chartRange === r.value ? "bg-brand-600 text-white" : "bg-white text-brand-700 border border-brand-200"}`}>
               {r.label}
             </button>
           ))}
         </div>
 
         {/* Chart 1 — Monthly Income */}
-        <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 mb-6">
-          <h3 className="text-sm font-semibold text-teal-800 mb-4">📈 Monthly Income — Last {chartRange} Months</h3>
+        <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100 mb-6">
+          <h3 className="text-sm font-semibold text-brand-800 mb-4">📈 Monthly Income — Last {chartRange} Months</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
                 <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar dataKey="income" name="Income" fill="#0d9488" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="income" name="Income" fill="#0f1d3d" radius={[4, 4, 0, 0]} />
                 <Bar dataKey="pending" name="Pending" fill="#f59e0b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -297,16 +297,16 @@ export default function Reports() {
         </div>
 
         {/* Chart 2 — Monthly Patients */}
-        <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 mb-6">
-          <h3 className="text-sm font-semibold text-teal-800 mb-4">👥 Monthly Patients — Last {chartRange} Months</h3>
+        <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100 mb-6">
+          <h3 className="text-sm font-semibold text-brand-800 mb-4">👥 Monthly Patients — Last {chartRange} Months</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
+                <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
                 <XAxis dataKey="month" tick={{ fontSize: 10 }} />
                 <YAxis tick={{ fontSize: 10 }} />
                 <Tooltip content={<CustomTooltip />} />
-                <Line type="monotone" dataKey="patients" name="Patients" stroke="#0d9488" strokeWidth={2} dot={{ fill: "#0d9488", r: 4 }} />
+                <Line type="monotone" dataKey="patients" name="Patients" stroke="#0f1d3d" strokeWidth={2} dot={{ fill: "#0f1d3d", r: 4 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -314,10 +314,10 @@ export default function Reports() {
 
         {/* Chart 3 & 4 — Pie + Treatments */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">🥧 Expense Breakdown</h3>
+          <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">🥧 Expense Breakdown</h3>
             {expensePieData.length === 0 ? (
-              <p className="text-center text-teal-400 text-sm py-8">No expense data</p>
+              <p className="text-center text-brand-400 text-sm py-8">No expense data</p>
             ) : (
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
@@ -336,19 +336,19 @@ export default function Reports() {
             )}
           </div>
 
-          <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100">
-            <h3 className="text-sm font-semibold text-teal-800 mb-4">🦷 Top Treatments</h3>
+          <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
+            <h3 className="text-sm font-semibold text-brand-800 mb-4">🦷 Top Treatments</h3>
             {treatmentData.length === 0 ? (
-              <p className="text-center text-teal-400 text-sm py-8">No treatment data</p>
+              <p className="text-center text-brand-400 text-sm py-8">No treatment data</p>
             ) : (
               <div className="h-56">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={treatmentData} layout="vertical" margin={{ top: 5, right: 10, left: 40, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
                     <XAxis type="number" tick={{ fontSize: 10 }} />
                     <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={65} />
                     <Tooltip />
-                    <Bar dataKey="count" name="Patients" fill="#0d9488" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="count" name="Patients" fill="#0f1d3d" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -357,43 +357,43 @@ export default function Reports() {
         </div>
 
         {/* Doctor Performance */}
-        <div className="bg-white rounded-xl p-4 md:p-5 border border-teal-100 mb-6">
-          <h3 className="text-sm font-semibold text-teal-800 mb-4">👨‍⚕️ Doctor Performance</h3>
+        <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100 mb-6">
+          <h3 className="text-sm font-semibold text-brand-800 mb-4">👨‍⚕️ Doctor Performance</h3>
           {doctorData.length === 0 ? (
-            <p className="text-center text-teal-400 text-sm py-8">No doctor data</p>
+            <p className="text-center text-brand-400 text-sm py-8">No doctor data</p>
           ) : (
             <>
               {/* Chart */}
               <div className="h-56 mb-4">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={doctorData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f0fdfa" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#ede8db" />
                     <XAxis dataKey="name" tick={{ fontSize: 10 }} />
                     <YAxis tick={{ fontSize: 10 }} />
                     <Tooltip content={<CustomTooltip />} />
                     <Legend wrapperStyle={{ fontSize: 11 }} />
-                    <Bar dataKey="patients" name="Patients" fill="#0d9488" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="income" name="Income" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="patients" name="Patients" fill="#0f1d3d" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="income" name="Income" fill="#d4af37" radius={[4, 4, 0, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               {/* Table */}
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-teal-50">
+                  <thead className="bg-brand-50">
                     <tr>
-                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Doctor</th>
-                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Patients</th>
-                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Income</th>
-                      <th className="text-left px-4 py-2 text-teal-700 font-medium text-xs">Pending</th>
+                      <th className="text-left px-4 py-2 text-brand-700 font-medium text-xs">Doctor</th>
+                      <th className="text-left px-4 py-2 text-brand-700 font-medium text-xs">Patients</th>
+                      <th className="text-left px-4 py-2 text-brand-700 font-medium text-xs">Income</th>
+                      <th className="text-left px-4 py-2 text-brand-700 font-medium text-xs">Pending</th>
                     </tr>
                   </thead>
                   <tbody>
                     {doctorData.map((d, i) => (
-                      <tr key={i} className="border-t border-teal-50 hover:bg-teal-50">
-                        <td className="px-4 py-2 font-medium text-teal-800 text-xs">👨‍⚕️ {d.name}</td>
+                      <tr key={i} className="border-t border-brand-50 hover:bg-brand-50">
+                        <td className="px-4 py-2 font-medium text-brand-800 text-xs">👨‍⚕️ {d.name}</td>
                         <td className="px-4 py-2 text-xs">
-                          <span className="bg-teal-100 text-teal-700 px-2 py-0.5 rounded-full font-medium">{d.patients}</span>
+                          <span className="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">{d.patients}</span>
                         </td>
                         <td className="px-4 py-2 text-green-600 font-medium text-xs">{symbol} {d.income.toLocaleString()}</td>
                         <td className="px-4 py-2 text-orange-500 font-medium text-xs">{symbol} {d.pending.toLocaleString()}</td>

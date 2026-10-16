@@ -1,30 +1,65 @@
 "use client";
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import {
+  BarChart3, Boxes, CalendarCheck, FlaskConical, LayoutDashboard, LogOut, Menu, Receipt, Settings,
+  ShoppingCart, Stethoscope, UserCog, Users, Wallet, X, type LucideIcon,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase";
 
-const navItems = [
-  { label: "Dashboard", href: "/dashboard" },
-  { label: "Patients", href: "/dashboard/patients" },
-  { label: "Appointments", href: "/dashboard/appointments" },
-  { label: "Doctors", href: "/dashboard/doctors" },
-  { label: "Lab Records", href: "/dashboard/labs" },
-  { label: "Advanced Billing", href: "/dashboard/billing" },
-  { label: "Inventory", href: "/dashboard/materials" },
-  { label: "Purchases", href: "/dashboard/purchases" },
-  { label: "Expenses", href: "/dashboard/expenses" },
-  { label: "Reports", href: "/dashboard/reports" },
-  { label: "Staff", href: "/dashboard/staff" },
-  { label: "Settings", href: "/dashboard/settings" },
+const navItems: { label: string; href: string; icon: LucideIcon }[] = [
+  { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Patients", href: "/dashboard/patients", icon: Users },
+  { label: "Appointments", href: "/dashboard/appointments", icon: CalendarCheck },
+  { label: "Doctors", href: "/dashboard/doctors", icon: Stethoscope },
+  { label: "Lab Records", href: "/dashboard/labs", icon: FlaskConical },
+  { label: "Advanced Billing", href: "/dashboard/billing", icon: Receipt },
+  { label: "Inventory", href: "/dashboard/materials", icon: Boxes },
+  { label: "Purchases", href: "/dashboard/purchases", icon: ShoppingCart },
+  { label: "Expenses", href: "/dashboard/expenses", icon: Wallet },
+  { label: "Reports", href: "/dashboard/reports", icon: BarChart3 },
+  { label: "Staff", href: "/dashboard/staff", icon: UserCog },
+  { label: "Settings", href: "/dashboard/settings", icon: Settings },
 ];
 
-function NavLink({ href, label, pathname, onClick }: { href: string; label: string; pathname: string; onClick?: () => void }) {
-  const isActive = pathname === href;
-  const cls = isActive
-    ? "px-4 py-2.5 rounded-lg text-sm bg-teal-600 text-white font-medium block"
-    : "px-4 py-2.5 rounded-lg text-sm text-teal-200 hover:bg-teal-700 block";
+function ToothMark({ className }: { className?: string }) {
   return (
-    <a href={href} className={cls} onClick={onClick}>
+    <svg viewBox="0 0 48 48" fill="none" className={className} aria-hidden="true">
+      <path stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        d="M15 6c-5.5 0-9.5 4.2-9.5 10.2 0 5.6 2.2 8.6 3.2 13.6 1.2 6 2 12.2 6.2 12.2 3.2 0 3.4-5.2 4.4-9 .8-3 2-5 4.7-5s3.9 2 4.7 5c1 3.8 1.2 9 4.4 9 4.2 0 5-6.2 6.2-12.2 1-5 3.2-8 3.2-13.6C42.5 10.2 38.5 6 33 6c-4 0-5.8 2-9 2s-5-2-9-2z" />
+      <path stroke="#d4af37" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" d="M9 21h7.5l2.2-4.5 3.2 9 2.4-4.5H32" />
+    </svg>
+  );
+}
+
+function Wordmark({ size = "text-xl" }: { size?: string }) {
+  return (
+    <a href="/dashboard" className={`flex items-center gap-2 font-display font-semibold tracking-tight text-white ${size}`}>
+      <ToothMark className="h-7 w-7" />
+      <span>Dent<span className="text-gold">Ease</span></span>
+    </a>
+  );
+}
+
+function NavLink({ href, label, icon: Icon, pathname, index, onClick, animate }: {
+  href: string; label: string; icon: LucideIcon; pathname: string; index: number; onClick?: () => void; animate?: boolean;
+}) {
+  const isActive = href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  return (
+    <a
+      href={href}
+      onClick={onClick}
+      aria-current={isActive ? "page" : undefined}
+      style={animate ? { animationDelay: `${80 + index * 35}ms` } : undefined}
+      className={`group relative flex ${animate ? "animate-fade-up" : ""} items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm transition-all duration-500 ${
+        isActive ? "bg-white/10 font-medium text-white" : "text-white/65 hover:translate-x-1 hover:bg-white/5 hover:text-white"
+      }`}
+    >
+      <span
+        className={`absolute inset-y-2 left-0 w-[3px] origin-center rounded-full bg-gold transition-transform duration-500 ${isActive ? "scale-y-100" : "scale-y-0"}`}
+        aria-hidden="true"
+      />
+      <Icon className={`h-[18px] w-[18px] shrink-0 transition-colors duration-500 ${isActive ? "text-gold" : "text-white/50 group-hover:text-gold"}`} strokeWidth={1.8} />
       {label}
     </a>
   );
@@ -41,74 +76,62 @@ export default function Sidebar() {
     router.push("/");
   };
 
+  const nav = (onClick?: () => void) => (
+    <nav className="flex flex-1 flex-col gap-1" aria-label="Dashboard">
+      {navItems.map((item, i) => (
+        <NavLink key={item.href} {...item} pathname={pathname} index={i} onClick={onClick} animate={!!onClick} />
+      ))}
+    </nav>
+  );
+
+  const signOut = (
+    <button
+      onClick={handleLogout}
+      className="mt-4 flex items-center gap-3 rounded-lg border-t border-white/10 px-3.5 pb-1 pt-4 text-left text-sm text-white/60 hover:text-gold"
+    >
+      <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} /> Sign Out
+    </button>
+  );
+
   return (
     <>
-      <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-teal-800 text-white flex items-center justify-between px-4 py-3 shadow-lg">
-        <h1 className="text-lg font-semibold">
-          Dent<span className="text-teal-300">Ease</span>
-        </h1>
+      {/* Mobile top bar */}
+      <div className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between bg-navy px-4 py-3 text-white shadow-[0_8px_24px_rgba(15,29,61,.25)] md:hidden">
+        <Wordmark size="text-lg" />
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-white text-xl font-bold w-8 h-8 flex items-center justify-center rounded bg-teal-700"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-expanded={menuOpen}
+          className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/10 text-white hover:bg-white/15"
         >
-          {menuOpen ? "X" : "M"}
+          {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
       </div>
 
+      {/* Mobile drawer */}
       {menuOpen && (
-        <div
-          className="md:hidden fixed inset-0 z-40 bg-black bg-opacity-50"
-          onClick={() => setMenuOpen(false)}
-        >
+        <div className="fixed inset-0 z-40 animate-fade-in bg-navy/60 backdrop-blur-sm md:hidden" onClick={() => setMenuOpen(false)}>
           <div
-            className="bg-teal-800 w-64 h-full flex flex-col p-5 overflow-y-auto"
+            className="flex h-full w-72 animate-drawer-in flex-col overflow-y-auto bg-navy p-5 pt-20 shadow-2xl"
             onClick={e => e.stopPropagation()}
           >
-            <h1 className="text-xl font-semibold mb-6 text-white tracking-tight">
-              Dent<span className="text-teal-300">Ease</span>
-            </h1>
-            <nav className="flex flex-col gap-1 flex-1">
-              {navItems.map((item) => (
-                <NavLink
-                  key={item.href}
-                  href={item.href}
-                  label={item.label}
-                  pathname={pathname}
-                  onClick={() => setMenuOpen(false)}
-                />
-              ))}
-            </nav>
-            <button
-              onClick={handleLogout}
-              className="text-teal-300 hover:text-white text-sm text-left px-4 py-2.5 mt-4"
-            >
-              Sign Out
-            </button>
+            {nav(() => setMenuOpen(false))}
+            {signOut}
           </div>
         </div>
       )}
 
-      <div className="hidden md:flex w-56 bg-teal-800 text-white flex-col p-5 min-h-screen">
-        <h1 className="text-xl font-semibold mb-8 tracking-tight">
-          Dent<span className="text-teal-300">Ease</span>
-        </h1>
-        <nav className="flex flex-col gap-1 flex-1">
-          {navItems.map((item) => (
-            <NavLink
-              key={item.href}
-              href={item.href}
-              label={item.label}
-              pathname={pathname}
-            />
-          ))}
-        </nav>
-        <button
-          onClick={handleLogout}
-          className="text-teal-300 hover:text-white text-sm text-left px-4 py-2.5"
-        >
-          Sign Out
-        </button>
-      </div>
+      {/* Desktop sidebar */}
+      <aside
+        className="relative hidden w-60 shrink-0 flex-col overflow-y-auto bg-navy p-5 text-white md:sticky md:top-0 md:flex md:h-screen"
+        style={{ backgroundImage: "radial-gradient(rgba(212,175,55,.10) 1px, transparent 1.4px)", backgroundSize: "22px 22px" }}
+      >
+        <div className="mb-8 animate-fade-in px-1.5">
+          <Wordmark />
+        </div>
+        {nav()}
+        {signOut}
+      </aside>
     </>
   );
 }
