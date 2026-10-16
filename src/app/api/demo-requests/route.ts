@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
+import { isRateLimited, TOO_MANY } from "@/lib/rateLimit";
 import { clean } from "@/lib/formInput";
 
 const PLANS = ["Start free", "Guided demo", "Multi-branch"];
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
+  if (await isRateLimited(admin, request, "demo-requests", { limit: 5, windowMs: 60 * 60 * 1000 }))
+    return NextResponse.json(TOO_MANY, { status: 429 });
   const { error } = await admin.from("demo_requests").insert([{
     name, phone, clinic: clinic || null, plan, clinic_size: clinicSize, features,
   }]);

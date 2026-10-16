@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
   BarChart3, Boxes, CalendarCheck, FlaskConical, LayoutDashboard, LogOut, Menu, Receipt, Settings,
@@ -34,10 +35,10 @@ function ToothMark({ className }: { className?: string }) {
 
 function Wordmark({ size = "text-xl" }: { size?: string }) {
   return (
-    <a href="/dashboard" className={`flex items-center gap-2 font-display font-semibold tracking-tight text-white ${size}`}>
+    <Link href="/dashboard" className={`flex items-center gap-2 font-display font-semibold tracking-tight text-white ${size}`}>
       <ToothMark className="h-7 w-7" />
       <span>Dent<span className="text-gold">Ease</span></span>
-    </a>
+    </Link>
   );
 }
 
@@ -46,7 +47,7 @@ function NavLink({ href, label, icon: Icon, pathname, index, onClick, animate }:
 }) {
   const isActive = href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
   return (
-    <a
+    <Link
       href={href}
       onClick={onClick}
       aria-current={isActive ? "page" : undefined}
@@ -61,7 +62,7 @@ function NavLink({ href, label, icon: Icon, pathname, index, onClick, animate }:
       />
       <Icon className={`h-[18px] w-[18px] shrink-0 transition-colors duration-500 ${isActive ? "text-gold" : "text-white/50 group-hover:text-gold"}`} strokeWidth={1.8} />
       {label}
-    </a>
+    </Link>
   );
 }
 
