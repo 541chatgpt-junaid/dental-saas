@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -153,7 +155,7 @@ export default function BillingPage() {
         {loading ? (
           <div className="text-center py-20 text-gray-400 text-sm">Loading invoices...</div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-20 text-gray-400 text-sm">No invoices found</div>
+          <EmptyState icon={Receipt} title="No invoices yet" hint="Create an invoice to start billing patients." />
         ) : (
           <>
             {/* Mobile */}

@@ -36,8 +36,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Apply the saved dashboard theme before first paint to avoid a flash */}
+        <script dangerouslySetInnerHTML={{ __html: "try{if(localStorage.getItem('de-theme')==='dark')document.documentElement.dataset.theme='dark'}catch(e){}" }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* eslint-disable-next-line @next/next/no-page-custom-font */}

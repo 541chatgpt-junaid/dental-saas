@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { ShoppingCart } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -158,7 +160,7 @@ export default function Purchases() {
         </div>
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Purchase" : "New Purchase"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
@@ -206,7 +208,7 @@ export default function Purchases() {
         <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
           <div className="md:hidden divide-y divide-brand-50">
             {filteredPurchases.length === 0 ? (
-              <p className="text-center py-10 text-brand-400 text-sm">No purchases found</p>
+              <EmptyState icon={ShoppingCart} title="No purchases yet" hint="Record supplier purchases to keep inventory up to date." />
             ) : (
               filteredPurchases.map(p => (
                 <div key={p.id} className="p-4">
@@ -244,7 +246,7 @@ export default function Purchases() {
               </thead>
               <tbody>
                 {filteredPurchases.length === 0 ? (
-                  <tr><td colSpan={8} className="text-center py-10 text-brand-400">No purchases found</td></tr>
+                  <tr><td colSpan={8}><EmptyState icon={ShoppingCart} title="No purchases yet" hint="Record supplier purchases to keep inventory up to date." /></td></tr>
                 ) : (
                   filteredPurchases.map(p => (
                     <tr key={p.id} className="border-t border-brand-50 hover:bg-brand-50">

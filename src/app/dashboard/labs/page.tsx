@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { FlaskConical } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -393,7 +395,7 @@ export default function Labs() {
         </div>
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Lab Record" : "New Lab Record"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
 
@@ -466,7 +468,7 @@ export default function Labs() {
         <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
           <div className="md:hidden divide-y divide-brand-50">
             {labs.length === 0 ? (
-              <p className="text-center py-10 text-brand-400 text-sm">No lab records yet</p>
+              <EmptyState icon={FlaskConical} title="No lab records yet" hint="Track crowns, bridges and other lab work here." />
             ) : (
               labs.map(l => (
                 <div key={l.id} className="p-4">
@@ -516,7 +518,7 @@ export default function Labs() {
               </thead>
               <tbody>
                 {labs.length === 0 ? (
-                  <tr><td colSpan={9} className="text-center py-10 text-brand-400">No lab records yet</td></tr>
+                  <tr><td colSpan={9}><EmptyState icon={FlaskConical} title="No lab records yet" hint="Track crowns, bridges and other lab work here." /></td></tr>
                 ) : (
                   labs.map(l => (
                     <tr key={l.id} className="border-t border-brand-50 hover:bg-brand-50">

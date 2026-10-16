@@ -1,9 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { CalendarCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
+import { waLink } from "@/lib/whatsapp";
 
 interface Appointment {
   id: number;
@@ -33,12 +36,30 @@ export default function Appointments() {
     time: "", treatment: "", status: "Scheduled", notes: "",
   });
   const router = useRouter();
-  const { clinicId } = useClinic();
+  const { clinicId, clinicName } = useClinic();
+  const [phones, setPhones] = useState<Record<string, string>>({});
 
   const fetchAppointments = async () => {
     const supabase = createClient();
     const { data } = await supabase.from("appointments").select("*").order("date", { ascending: true });
     if (data) setAppointments(data);
+  };
+
+  // Patient phone numbers by name, for WhatsApp reminders (appointments only store the name)
+  const fetchPhones = async () => {
+    const supabase = createClient();
+    const { data } = await supabase.from("patients").select("name, phone");
+    if (data) {
+      const map: Record<string, string> = {};
+      data.forEach(p => { if (p.name && p.phone) map[p.name.trim().toLowerCase()] = p.phone; });
+      setPhones(map);
+    }
+  };
+
+  const reminderLink = (a: Appointment) => {
+    const when = new Date(`${a.date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    const text = `Assalam o Alaikum ${a.patient_name}, this is a reminder of your appointment${clinicName ? ` at ${clinicName}` : ""} on ${when}${a.time ? ` at ${a.time}` : ""}${a.doctor_name ? ` with Dr. ${a.doctor_name}` : ""}. Please reply to confirm. Thank you!`;
+    return waLink(phones[a.patient_name?.trim().toLowerCase()], text);
   };
 
   const fetchDoctors = async () => {
@@ -56,6 +77,7 @@ export default function Appointments() {
     checkUser();
     fetchAppointments();
     fetchDoctors();
+    fetchPhones();
   }, [router]);
 
   const handleAdd = async () => {
@@ -148,6 +170,7 @@ export default function Appointments() {
             <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
           </>
         )}
+        {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
         <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
         <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
       </div>
@@ -169,7 +192,7 @@ export default function Appointments() {
         </div>
 
         {(showForm || !!editingId) && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">
               {editingId ? "Edit Appointment" : "New Appointment"}
             </h3>
@@ -210,7 +233,7 @@ export default function Appointments() {
           <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
             <div className="md:hidden divide-y divide-brand-50">
               {todayAppts.length === 0 ? (
-                <p className="text-center py-6 text-brand-400 text-sm">No appointments today</p>
+                <EmptyState icon={CalendarCheck} title="No appointments today" hint="Nothing is scheduled for today." compact />
               ) : (
                 todayAppts.map(a => <AppointmentCard key={a.id} a={a} />)
               )}
@@ -229,7 +252,7 @@ export default function Appointments() {
                 </thead>
                 <tbody>
                   {todayAppts.length === 0 ? (
-                    <tr><td colSpan={6} className="text-center py-6 text-brand-400">No appointments today</td></tr>
+                    <tr><td colSpan={6}><EmptyState icon={CalendarCheck} title="No appointments today" hint="Nothing is scheduled for today." compact /></td></tr>
                   ) : (
                     todayAppts.map(a => (
                       <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">
@@ -246,6 +269,7 @@ export default function Appointments() {
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
+                            {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>
@@ -265,7 +289,7 @@ export default function Appointments() {
           <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
             <div className="md:hidden divide-y divide-brand-50">
               {appointments.length === 0 ? (
-                <p className="text-center py-10 text-brand-400 text-sm">No appointments yet</p>
+                <EmptyState icon={CalendarCheck} title="No appointments yet" hint="Book your first appointment with + Add." />
               ) : (
                 appointments.map(a => <AppointmentCard key={a.id} a={a} />)
               )}
@@ -285,7 +309,7 @@ export default function Appointments() {
                 </thead>
                 <tbody>
                   {appointments.length === 0 ? (
-                    <tr><td colSpan={7} className="text-center py-10 text-brand-400">No appointments yet</td></tr>
+                    <tr><td colSpan={7}><EmptyState icon={CalendarCheck} title="No appointments yet" hint="Book your first appointment with + Add." /></td></tr>
                   ) : (
                     appointments.map(a => (
                       <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">
@@ -303,6 +327,7 @@ export default function Appointments() {
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
+                            {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>

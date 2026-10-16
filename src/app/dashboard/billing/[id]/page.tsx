@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -405,7 +407,7 @@ export default function InvoiceDetailPage() {
             )}
           </div>
           {payments.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">No payments recorded yet</p>
+            <EmptyState icon={Wallet} title="No payments yet" hint="Payments recorded against this invoice will show here." compact />
           ) : (
             <table className="w-full text-sm">
               <thead className="bg-brand-50 border-b border-brand-100 text-xs text-gray-500 font-semibold uppercase tracking-wide">

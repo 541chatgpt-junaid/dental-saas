@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import ReviewsTab from "./ReviewsTab";
+import DemoRequestsTab from "./DemoRequestsTab";
 
 interface Clinic {
   id: string;
@@ -29,6 +31,7 @@ export default function AdminPanel() {
   const [form, setForm] = useState({
     name: "", email: "", phone: "", address: "", adminPassword: "",
   });
+  const [tab, setTab] = useState<"clinics" | "reviews" | "demos">("clinics");
   const router = useRouter();
 
   useEffect(() => {
@@ -96,20 +99,33 @@ export default function AdminPanel() {
   if (!authorized) return null;
 
   return (
-    <div className="min-h-screen bg-brand-50 p-4 md:p-8">
+    <div className="de-app min-h-screen bg-brand-50 p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-2xl font-bold text-brand-900">Super Admin Panel</h1>
-            <p className="text-sm text-gray-500 mt-1">Manage all registered clinics</p>
+            <p className="text-sm text-gray-500 mt-1">Clinics, landing page reviews and demo requests</p>
           </div>
-          <button
+          {tab === "clinics" && <button
             onClick={() => { setShowForm(!showForm); setFormError(""); setFormSuccess(""); }}
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
+            className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium"
           >
             + Add New Clinic
-          </button>
+          </button>}
         </div>
+
+        <div className="mb-6 flex gap-1 rounded-xl border border-brand-200 bg-white p-1 w-fit" role="tablist">
+          {([["clinics", "Clinics"], ["reviews", "Reviews"], ["demos", "Demo requests"]] as const).map(([k, label]) => (
+            <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+              className={`rounded-lg px-4 py-2 text-sm font-medium ${tab === k ? "bg-brand-700 text-white shadow-sm" : "text-brand-600 hover:bg-brand-50"}`}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "reviews" && <ReviewsTab />}
+        {tab === "demos" && <DemoRequestsTab />}
+        {tab === "clinics" && (<>
 
         {formSuccess && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-green-700 text-sm font-medium">
@@ -121,15 +137,15 @@ export default function AdminPanel() {
           <div className="bg-white rounded-xl border border-brand-200 p-6 mb-8">
             <h2 className="text-base font-semibold text-brand-800 mb-4">Register New Clinic</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <input placeholder="Clinic Name *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-              <input placeholder="Admin Email *" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-              <input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-              <input placeholder="Admin Password *" type="password" value={form.adminPassword} onChange={e => setForm({ ...form, adminPassword: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-              <input placeholder="Address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 md:col-span-2" />
+              <input placeholder="Clinic Name *" value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Admin Email *" type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Phone" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Admin Password *" type="password" value={form.adminPassword} onChange={e => setForm({ ...form, adminPassword: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder="Address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
             </div>
             {formError && <p className="text-red-600 text-sm mb-3">❌ {formError}</p>}
             <div className="flex gap-3">
-              <button onClick={handleAddClinic} disabled={formLoading} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
+              <button onClick={handleAddClinic} disabled={formLoading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {formLoading ? "Creating..." : "Create Clinic"}
               </button>
               <button onClick={() => setShowForm(false)} className="border border-brand-200 text-gray-600 px-5 py-2 rounded-lg text-sm">Cancel</button>
@@ -209,7 +225,7 @@ export default function AdminPanel() {
                           </button>
                         </td>
                         <td className="px-5 py-3">
-                          <button onClick={() => handleExport(clinic.id)} className="text-indigo-600 text-xs font-medium hover:underline">
+                          <button onClick={() => handleExport(clinic.id)} className="text-brand-600 text-xs font-medium hover:underline">
                             Export CSV
                           </button>
                         </td>
@@ -221,6 +237,7 @@ export default function AdminPanel() {
             </div>
           </>
         )}
+        </>)}
       </div>
     </div>
   );

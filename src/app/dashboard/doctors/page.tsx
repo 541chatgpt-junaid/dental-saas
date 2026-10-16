@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Stethoscope } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -141,7 +143,7 @@ export default function Doctors() {
         </div>
 
         {showAnyForm && (
-          <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+          <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Doctor" : "New Doctor"}</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
@@ -201,7 +203,7 @@ export default function Doctors() {
           {/* Mobile Cards */}
           <div className="md:hidden divide-y divide-brand-50">
             {doctors.length === 0 ? (
-              <p className="text-center py-10 text-brand-400 text-sm">No doctors added yet</p>
+              <EmptyState icon={Stethoscope} title="No doctors yet" hint="Add the doctors who work at your clinic." />
             ) : (
               doctors.map(d => (
                 <div key={d.id} className="p-4">
@@ -246,7 +248,7 @@ export default function Doctors() {
               </thead>
               <tbody>
                 {doctors.length === 0 ? (
-                  <tr><td colSpan={7} className="text-center py-10 text-brand-400">No doctors added yet</td></tr>
+                  <tr><td colSpan={7}><EmptyState icon={Stethoscope} title="No doctors yet" hint="Add the doctors who work at your clinic." /></td></tr>
                 ) : (
                   doctors.map(d => (
                     <tr key={d.id} className="border-t border-brand-50 hover:bg-brand-50">

@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import EmptyState from "@/components/EmptyState";
+import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -645,7 +647,7 @@ export default function Patients() {
           <div>
             <button onClick={() => setSelectedPatient(null)} className="text-brand-600 text-sm mb-4 hover:underline">← Back to Patients</button>
 
-            <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+            <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -699,7 +701,7 @@ export default function Patients() {
             </div>
 
             {showAppointmentForm && (
-              <div className="bg-white rounded-xl p-4 md:p-6 border border-blue-100 mb-6">
+              <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-blue-100 mb-6">
                 <h3 className="text-sm font-semibold text-blue-800 mb-4">New Appointment — {selectedPatient.name}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div>
@@ -721,7 +723,7 @@ export default function Patients() {
             )}
 
             {showVisitForm && (
-              <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+              <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
                 <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingVisitId ? "Edit Visit" : "New Visit"} — {selectedPatient.name}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
                   <div>
@@ -1015,7 +1017,7 @@ export default function Patients() {
             </div>
 
             {showAnyForm && (
-              <div className="bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+              <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
                 <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingPatientId ? "Edit Patient" : "New Patient"}</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
                   <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
@@ -1047,7 +1049,7 @@ export default function Patients() {
               {/* Mobile */}
               <div className="md:hidden divide-y divide-brand-50">
                 {filteredPatients.length === 0 ? (
-                  <p className="text-center py-10 text-brand-400 text-sm">No patients found</p>
+                  <EmptyState icon={Users} title="No patients found" hint="Try a different search, or add your first patient." />
                 ) : (
                   filteredPatients.map(p => (
                     <div key={p.id} className="p-4">
@@ -1101,7 +1103,7 @@ export default function Patients() {
                   </thead>
                   <tbody>
                     {filteredPatients.length === 0 ? (
-                      <tr><td colSpan={10} className="text-center py-10 text-brand-400">No patients found</td></tr>
+                      <tr><td colSpan={10}><EmptyState icon={Users} title="No patients found" hint="Try a different search, or add your first patient." /></td></tr>
                     ) : (
                       filteredPatients.map(p => (
                         <tr key={p.id} className="border-t border-brand-50 hover:bg-brand-50">

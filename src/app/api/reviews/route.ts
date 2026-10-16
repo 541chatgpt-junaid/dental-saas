@@ -2,6 +2,22 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isRateLimited, TOO_MANY } from "@/lib/rateLimit";
 
+// GET — approved reviews for the landing page testimonials
+export async function GET() {
+  const admin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
+  const { data, error } = await admin
+    .from("reviews")
+    .select("name, clinic, rating, review")
+    .eq("is_approved", true)
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) return NextResponse.json([], { status: 200 });
+  return NextResponse.json(data, { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=600" } });
+}
+
 export async function POST(request: Request) {
   let body: Record<string, unknown>;
   try {
