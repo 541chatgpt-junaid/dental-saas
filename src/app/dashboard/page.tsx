@@ -6,6 +6,15 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import CountUp from "@/components/CountUp";
 
+type RecentPatient = {
+  id: string;
+  name: string;
+  doctor_name: string | null;
+  treatment: string | null;
+  fee_paid: number | null;
+  status: string;
+};
+
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
   const [todayPatients, setTodayPatients] = useState(0);
@@ -16,7 +25,7 @@ export default function Dashboard() {
   const [revenueThisMonth, setRevenueThisMonth] = useState(0);
   const [totalPatients, setTotalPatients] = useState(0);
   const [topTreatment, setTopTreatment] = useState("—");
-  const [recentPatients, setRecentPatients] = useState<any[]>([]);
+  const [recentPatients, setRecentPatients] = useState<RecentPatient[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
 
@@ -29,41 +38,42 @@ export default function Dashboard() {
       if (!user) { router.push("/"); return; }
       setUserEmail(user.email || "");
 
-      const { data: patients } = await supabase.from("patients").select("*").order("created_at", { ascending: false });
-      if (patients) {
-        const todayP = patients.filter(p => p.created_at?.startsWith(today));
-        setTodayPatients(todayP.length);
-        setTotalPatients(patients.length);
-        setTodayRevenue(todayP.reduce((sum, p) => sum + (p.fee_paid || 0), 0));
-        setPendingFees(patients.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0));
-        setRecentPatients(patients.slice(0, 5));
-      }
+      const tomorrow = new Date(`${today}T00:00:00Z`);
+      tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+      const monthStart = new Date();
+      monthStart.setDate(1);
+      monthStart.setHours(0, 0, 0, 0);
 
-      const { data: invItems } = await supabase.from("invoice_items").select("description");
-      if (invItems && invItems.length > 0) {
+      // Fetch only the columns and rows each card needs, all in parallel
+      const [total, todayRows, feeRows, recent, invItems, labs, invoices, monthPayments] = await Promise.all([
+        supabase.from("patients").select("id", { count: "exact", head: true }),
+        supabase.from("patients").select("fee_paid").gte("created_at", today).lt("created_at", tomorrow.toISOString()),
+        supabase.from("patients").select("fee_total, fee_paid"),
+        supabase.from("patients").select("id, name, doctor_name, treatment, fee_paid, status").order("created_at", { ascending: false }).limit(5),
+        supabase.from("invoice_items").select("description"),
+        supabase.from("labs").select("id", { count: "exact", head: true }).eq("status", "Pending"),
+        supabase.from("invoices").select("balance").in("status", ["unpaid", "partial"]),
+        supabase.from("payments").select("amount").gte("payment_date", monthStart.toISOString()),
+      ]);
+
+      setTotalPatients(total.count ?? 0);
+      if (todayRows.data) {
+        setTodayPatients(todayRows.data.length);
+        setTodayRevenue(todayRows.data.reduce((sum, p) => sum + (p.fee_paid || 0), 0));
+      }
+      if (feeRows.data) setPendingFees(feeRows.data.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0));
+      if (recent.data) setRecentPatients(recent.data);
+
+      if (invItems.data && invItems.data.length > 0) {
         const counts: Record<string, number> = {};
-        invItems.forEach(t => { counts[t.description] = (counts[t.description] || 0) + 1; });
+        invItems.data.forEach(t => { counts[t.description] = (counts[t.description] || 0) + 1; });
         const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
         setTopTreatment(top?.[0] || "—");
       }
 
-      const { data: labs } = await supabase.from("labs").select("status");
-      if (labs) setPendingLabs(labs.filter(l => l.status === "Pending").length);
-
-      const { data: invoices } = await supabase.from("invoices").select("balance, status");
-      if (invoices) {
-        const outstanding = invoices.filter(i => i.status === "unpaid" || i.status === "partial");
-        setPendingPayments(outstanding.reduce((sum, i) => sum + (i.balance || 0), 0));
-      }
-
-      const monthStart = new Date();
-      monthStart.setDate(1);
-      monthStart.setHours(0, 0, 0, 0);
-      const { data: monthPayments } = await supabase
-        .from("payments")
-        .select("amount")
-        .gte("payment_date", monthStart.toISOString());
-      if (monthPayments) setRevenueThisMonth(monthPayments.reduce((sum, p) => sum + (p.amount || 0), 0));
+      setPendingLabs(labs.count ?? 0);
+      if (invoices.data) setPendingPayments(invoices.data.reduce((sum, i) => sum + (i.balance || 0), 0));
+      if (monthPayments.data) setRevenueThisMonth(monthPayments.data.reduce((sum, p) => sum + (p.amount || 0), 0));
     };
     fetchData();
   }, [router, today]);
