@@ -8,7 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import CountUp from "@/components/CountUp";
 import Link from "next/link";
-import { BellRing, ChevronRight } from "lucide-react";
+import { BellRing, ChevronRight, PackageX } from "lucide-react";
 
 type RecentPatient = {
   id: string;
@@ -30,6 +30,7 @@ export default function Dashboard() {
   const [totalPatients, setTotalPatients] = useState(0);
   const [topTreatment, setTopTreatment] = useState("—");
   const [recallsDue, setRecallsDue] = useState(0);
+  const [stockAlerts, setStockAlerts] = useState({ low: 0, expiring: 0 });
   const [recentPatients, setRecentPatients] = useState<RecentPatient[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
@@ -83,6 +84,16 @@ export default function Dashboard() {
       const recalls = await supabase.from("recalls").select("id", { count: "exact", head: true })
         .in("status", ["pending", "contacted"]).lte("due_date", weekAhead);
       if (!recalls.error) setRecallsDue(recalls.count ?? 0);
+
+      // Inventory: low stock and items expired / expiring within 30 days
+      const { data: stock } = await supabase.from("materials").select("*");
+      if (stock) {
+        const soon = new Date(Date.now() + 30 * 86400000).toLocaleDateString("en-CA");
+        setStockAlerts({
+          low: stock.filter(m => (m.quantity ?? 0) <= (m.min_quantity ?? 0)).length,
+          expiring: stock.filter(m => m.expiry_date && m.expiry_date <= soon).length,
+        });
+      }
       if (invoices.data) setPendingPayments(invoices.data.reduce((sum, i) => sum + (i.balance || 0), 0));
       if (monthPayments.data) setRevenueThisMonth(monthPayments.data.reduce((sum, p) => sum + (p.amount || 0), 0));
     };
@@ -98,6 +109,19 @@ export default function Dashboard() {
           <h2 className="mt-1 text-2xl md:text-3xl font-semibold text-brand-800 tracking-tight">Dashboard</h2>
           <p className="text-sm text-gray-500 mt-1">Welcome back, {userEmail}</p>
         </div>
+
+        {(stockAlerts.low > 0 || stockAlerts.expiring > 0) && (
+          <Link href="/dashboard/materials" className="card-hover mb-4 flex items-center gap-3 rounded-xl border border-red-200 bg-white p-3 md:p-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-600"><PackageX className="h-5 w-5" /></span>
+            <p className="flex-1 text-sm text-brand-800">
+              <span className="font-semibold">Inventory needs attention:</span>
+              {stockAlerts.low > 0 && ` ${stockAlerts.low} item${stockAlerts.low === 1 ? "" : "s"} low on stock`}
+              {stockAlerts.low > 0 && stockAlerts.expiring > 0 && " ·"}
+              {stockAlerts.expiring > 0 && ` ${stockAlerts.expiring} expired or expiring within 30 days`}
+            </p>
+            <ChevronRight className="h-4 w-4 text-brand-400" />
+          </Link>
+        )}
 
         {recallsDue > 0 && (
           <Link href="/dashboard/recalls" className="card-hover mb-4 flex items-center gap-3 rounded-xl border border-gold/40 bg-white p-3 md:p-4">

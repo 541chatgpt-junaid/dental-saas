@@ -18,6 +18,22 @@ interface Material {
   price: number;
   supplier: string;
   user_id: string;
+  expiry_date?: string | null;
+}
+
+const todayISO = () => new Date().toLocaleDateString("en-CA");
+const daysUntil = (iso: string) => Math.round((new Date(`${iso}T00:00:00`).getTime() - new Date(`${todayISO()}T00:00:00`).getTime()) / 86400000);
+/** expired / expiring within 30 days / ok */
+const expiryState = (m: Material) => !m.expiry_date ? "none" : daysUntil(m.expiry_date) < 0 ? "expired" : daysUntil(m.expiry_date) <= 30 ? "soon" : "ok";
+const fmtExpiry = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+function StockBadge({ m, small }: { m: Material; small?: boolean }) {
+  const exp = expiryState(m);
+  const [label, cls] = exp === "expired" ? ["Expired", "bg-red-100 text-red-700"]
+    : m.quantity <= m.min_quantity ? ["Low Stock", "bg-red-100 text-red-700"]
+    : exp === "soon" ? ["Expiring soon", "bg-orange-100 text-orange-700"]
+    : ["In Stock", "bg-green-100 text-green-700"];
+  return <span className={`${small ? "px-2 py-0.5" : "px-2 py-1"} rounded-full text-xs font-medium whitespace-nowrap ${cls}`}>{label}</span>;
 }
 
 export default function Materials() {
@@ -27,11 +43,12 @@ export default function Materials() {
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     name: "", category: "Consumable", quantity: "",
-    unit: "Box", min_quantity: "", price: "", supplier: "",
+    unit: "Box", min_quantity: "", price: "", supplier: "", expiry_date: "",
   });
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
+  const [hadExpiry, setHadExpiry] = useState(false);
 
   const fetchMaterials = async () => {
     const supabase = createClient();
@@ -50,7 +67,7 @@ export default function Materials() {
   }, [router]);
 
   const resetForm = () => {
-    setForm({ name: "", category: "Consumable", quantity: "", unit: "Box", min_quantity: "", price: "", supplier: "" });
+    setForm({ name: "", category: "Consumable", quantity: "", unit: "Box", min_quantity: "", price: "", supplier: "", expiry_date: "" });
     setShowForm(false);
     setEditingId(null);
   };
@@ -63,6 +80,7 @@ export default function Materials() {
       quantity: parseInt(form.quantity) || 0, unit: form.unit,
       min_quantity: parseInt(form.min_quantity) || 0,
       price: parseInt(form.price) || 0,
+      ...(form.expiry_date ? { expiry_date: form.expiry_date } : {}),
       supplier: form.supplier, clinic_id: clinicId,
     }]);
     resetForm();
@@ -79,6 +97,7 @@ export default function Materials() {
       quantity: parseInt(form.quantity) || 0, unit: form.unit,
       min_quantity: parseInt(form.min_quantity) || 0,
       price: parseInt(form.price) || 0,
+      ...(form.expiry_date ? { expiry_date: form.expiry_date } : hadExpiry ? { expiry_date: null } : {}),
       supplier: form.supplier,
     }).eq("id", editingId);
     resetForm();
@@ -87,12 +106,14 @@ export default function Materials() {
   };
 
   const openEdit = (m: Material) => {
+    setHadExpiry(!!m.expiry_date);
     setEditingId(m.id);
     setForm({
       name: m.name, category: m.category,
       quantity: m.quantity.toString(), unit: m.unit,
       min_quantity: m.min_quantity.toString(),
       price: m.price.toString(), supplier: m.supplier || "",
+      expiry_date: m.expiry_date || "",
     });
     setShowForm(false);
   };
@@ -113,6 +134,8 @@ export default function Materials() {
   };
 
   const lowStock = materials.filter(m => m.quantity <= m.min_quantity);
+  const expired = materials.filter(m => expiryState(m) === "expired");
+  const expiringSoon = materials.filter(m => expiryState(m) === "soon");
   const showAnyForm = showForm || !!editingId;
 
   return (
@@ -127,16 +150,21 @@ export default function Materials() {
           <button onClick={() => { resetForm(); setShowForm(true); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">+ Add</button>
         </div>
 
-        {lowStock.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <p className="text-sm font-semibold text-red-700 mb-2">⚠️ Low Stock Alert!</p>
-            <div className="flex flex-wrap gap-2">
-              {lowStock.map(m => (
-                <span key={m.id} className="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full">
-                  {m.name} — {m.quantity} {m.unit} left
-                </span>
-              ))}
-            </div>
+        {(lowStock.length > 0 || expired.length > 0 || expiringSoon.length > 0) && (
+          <div className="stagger mb-6 grid gap-3 md:grid-cols-3">
+            {([
+              ["Low stock", lowStock, "border-red-200 bg-red-50 text-red-700", (m: Material) => `${m.quantity} ${m.unit} left`],
+              ["Expired", expired, "border-red-200 bg-red-50 text-red-700", (m: Material) => `expired ${fmtExpiry(m.expiry_date!)}`],
+              ["Expiring in 30 days", expiringSoon, "border-orange-200 bg-orange-50 text-orange-700", (m: Material) => `in ${daysUntil(m.expiry_date!)} days`],
+            ] as const).filter(([, list]) => list.length > 0).map(([title, list, cls, detail]) => (
+              <div key={title} className={`rounded-xl border p-4 ${cls}`}>
+                <p className="mb-2 text-sm font-semibold">⚠️ {title} ({list.length})</p>
+                <ul className="space-y-1 text-xs">
+                  {list.slice(0, 6).map(m => <li key={m.id}><span className="font-medium">{m.name}</span> · {detail(m)}</li>)}
+                  {list.length > 6 && <li>+{list.length - 6} more</li>}
+                </ul>
+              </div>
+            ))}
           </div>
         )}
 
@@ -154,7 +182,11 @@ export default function Materials() {
               </select>
               <input placeholder="Min Quantity (Low Stock Alert)" type="number" value={form.min_quantity} onChange={e => setForm({...form, min_quantity: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <input placeholder={`Price per Unit (${symbol})`} type="number" value={form.price} onChange={e => setForm({...form, price: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
-              <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
+              <input placeholder="Supplier Name" value={form.supplier} onChange={e => setForm({...form, supplier: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <label className="flex items-center gap-3 rounded-lg border border-brand-200 px-3 py-1 text-sm text-brand-600 focus-within:border-gold focus-within:ring-2 focus-within:ring-gold/50">
+                <span className="whitespace-nowrap text-xs">Expiry date</span>
+                <input type="date" value={form.expiry_date} onChange={e => setForm({...form, expiry_date: e.target.value})} aria-label="Expiry date (optional)" className="w-full border-0 bg-transparent py-1 text-sm focus:outline-none" />
+              </label>
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
@@ -177,12 +209,10 @@ export default function Materials() {
                       <p className="font-medium text-brand-800 text-sm">{m.name}</p>
                       <p className="text-xs text-brand-500">{m.category} · {m.supplier}</p>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${m.quantity <= m.min_quantity ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-                      {m.quantity <= m.min_quantity ? "Low Stock" : "In Stock"}
-                    </span>
+                    <StockBadge m={m} small />
                   </div>
                   <div className="flex justify-between items-center mt-2">
-                    <p className="text-xs text-brand-600">{m.quantity} {m.unit} · {symbol} {m.price}/unit</p>
+                    <p className="text-xs text-brand-600">{m.quantity} {m.unit} · {symbol} {m.price}/unit{m.expiry_date ? ` · exp ${fmtExpiry(m.expiry_date)}` : ""}</p>
                     <div className="flex gap-2">
                       <button onClick={() => updateQuantity(m, 1)} className="bg-brand-100 text-brand-700 px-2 py-1 rounded text-xs font-medium">+1</button>
                       <button onClick={() => updateQuantity(m, -1)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">-1</button>
@@ -203,13 +233,14 @@ export default function Materials() {
                   <th className="text-left px-4 py-3 text-brand-700 font-medium">Quantity</th>
                   <th className="text-left px-4 py-3 text-brand-700 font-medium">Price/Unit</th>
                   <th className="text-left px-4 py-3 text-brand-700 font-medium">Supplier</th>
+                  <th className="text-left px-4 py-3 text-brand-700 font-medium">Expiry</th>
                   <th className="text-left px-4 py-3 text-brand-700 font-medium">Status</th>
                   <th className="text-left px-4 py-3 text-brand-700 font-medium">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {materials.length === 0 ? (
-                  <tr><td colSpan={7}><EmptyState icon={Boxes} title="No materials yet" hint="Add items to keep track of your clinic's stock." /></td></tr>
+                  <tr><td colSpan={8}><EmptyState icon={Boxes} title="No materials yet" hint="Add items to keep track of your clinic's stock." /></td></tr>
                 ) : (
                   materials.map(m => (
                     <tr key={m.id} className="border-t border-brand-50 hover:bg-brand-50">
@@ -218,10 +249,9 @@ export default function Materials() {
                       <td className="px-4 py-3 text-brand-700">{m.quantity} {m.unit}</td>
                       <td className="px-4 py-3 text-brand-700">{symbol} {m.price}</td>
                       <td className="px-4 py-3 text-brand-700">{m.supplier}</td>
+                      <td className={`px-4 py-3 whitespace-nowrap ${expiryState(m) === "expired" ? "text-red-600 font-medium" : expiryState(m) === "soon" ? "text-orange-600 font-medium" : "text-brand-700"}`}>{m.expiry_date ? fmtExpiry(m.expiry_date) : "—"}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${m.quantity <= m.min_quantity ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
-                          {m.quantity <= m.min_quantity ? "Low Stock" : "In Stock"}
-                        </span>
+                        <StockBadge m={m} />
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">

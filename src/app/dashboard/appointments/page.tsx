@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
+import { CalendarDays, CalendarRange, List } from "lucide-react";
+import AppointmentCalendar, { slotKey } from "./AppointmentCalendar";
 
 interface Appointment {
   id: number;
@@ -38,6 +40,23 @@ export default function Appointments() {
   const router = useRouter();
   const { clinicId, clinicName } = useClinic();
   const [phones, setPhones] = useState<Record<string, string>>({});
+  const [view, setView] = useState<"list" | "day" | "week">("list");
+  const [calDate, setCalDate] = useState(() => new Date().toLocaleDateString("en-CA"));
+
+  /** Warn before saving a scheduled appointment that clashes with another for the same doctor and time */
+  const confirmNoClash = () => {
+    if (form.status !== "Scheduled" || !form.date || !form.time || !form.doctor_name) return true;
+    const key = slotKey(form);
+    const clash = appointments.find(a => a.id !== editingId && a.status === "Scheduled" && slotKey(a) === key);
+    return !clash || confirm(`Dr. ${form.doctor_name} already has ${clash.patient_name} at ${clash.time} on ${clash.date}.\n\nBook this appointment anyway?`);
+  };
+
+  const newAt = (date: string, time: string, doctor: string) => {
+    setEditingId(null);
+    setForm({ patient_name: "", doctor_name: doctor, date, time, treatment: "", status: "Scheduled", notes: "" });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const fetchAppointments = async () => {
     const supabase = createClient();
@@ -81,6 +100,7 @@ export default function Appointments() {
   }, [router]);
 
   const handleAdd = async () => {
+    if (!confirmNoClash()) return;
     setLoading(true);
     const supabase = createClient();
     await supabase.from("appointments").insert([{
@@ -100,6 +120,7 @@ export default function Appointments() {
 
   const handleEdit = async () => {
     if (!editingId) return;
+    if (!confirmNoClash()) return;
     setLoading(true);
     const supabase = createClient();
     await supabase.from("appointments").update({
@@ -127,6 +148,7 @@ export default function Appointments() {
       notes: a.notes,
     });
     setShowForm(false);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const updateStatus = async (id: number, newStatus: string) => {
@@ -186,9 +208,19 @@ export default function Appointments() {
             <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Appointments</h2>
             <p className="text-sm text-brand-600 mt-1">Total: {appointments.length} appointments</p>
           </div>
-          <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
-            + Add
-          </button>
+          <div className="flex items-center gap-2">
+            <div className="flex rounded-lg border border-brand-200 bg-white p-0.5" role="tablist" aria-label="View">
+              {([["list", "List", List], ["day", "Day", CalendarDays], ["week", "Week", CalendarRange]] as const).map(([k, l, Icon]) => (
+                <button key={k} role="tab" aria-selected={view === k} onClick={() => setView(k)}
+                  className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium ${view === k ? "bg-brand-700 text-white" : "text-brand-600 hover:bg-brand-50"}`}>
+                  <Icon className="h-3.5 w-3.5" /> <span className="hidden sm:inline">{l}</span>
+                </button>
+              ))}
+            </div>
+            <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+              + Add
+            </button>
+          </div>
         </div>
 
         {(showForm || !!editingId) && (
@@ -227,6 +259,17 @@ export default function Appointments() {
           </div>
         )}
 
+        {view !== "list" ? (
+          <AppointmentCalendar
+            view={view}
+            date={calDate}
+            onDateChange={setCalDate}
+            appointments={appointments}
+            doctors={doctors.map(d => d.name)}
+            onSelect={a => { const full = appointments.find(x => x.id === a.id); if (full) openEdit(full); }}
+            onNew={newAt}
+          />
+        ) : (<>
         {/* Today's Appointments */}
         <div className="mb-6">
           <h3 className="text-sm font-semibold text-brand-800 mb-3">Today's Appointments</h3>
@@ -340,6 +383,7 @@ export default function Appointments() {
             </div>
           </div>
         </div>
+        </>)}
       </div>
     </div>
   );
