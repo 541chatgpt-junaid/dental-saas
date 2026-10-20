@@ -1,0 +1,68 @@
+import { createClient } from "@supabase/supabase-js";
+import { NextResponse } from "next/server";
+import { clean } from "@/lib/formInput";
+import { isRateLimited, TOO_MANY } from "@/lib/rateLimit";
+import { availableSlots, isISODate, loadBookingContext } from "@/lib/booking";
+
+const admin = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+const NOT_FOUND = NextResponse.json({ error: "This booking page is not available." }, { status: 404 });
+
+// GET — public clinic info for the booking page
+export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const ctx = await loadBookingContext(admin(), slug);
+  if (!ctx) return NOT_FOUND;
+  const { settings, clinic, doctors } = ctx;
+  return NextResponse.json({
+    clinic,
+    doctors: doctors.map(d => ({ name: d.name, specialization: d.specialization, working_days: d.working_days })),
+    settings: { slot_minutes: settings.slot_minutes, days_ahead: settings.days_ahead, working_days: settings.working_days, note: settings.note },
+  });
+}
+
+// POST — create a booking request (appointment with status "Requested")
+export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const body = await request.json().catch(() => null);
+  if (!body) return NextResponse.json({ error: "Invalid request." }, { status: 400 });
+  if (clean(body.website, 200)) return NextResponse.json({ success: true }); // honeypot
+
+  const name = clean(body.name, 100);
+  const phone = clean(body.phone, 30);
+  const reason = clean(body.reason, 200);
+  const doctor = clean(body.doctor, 100);
+  const date = body.date;
+  const time = clean(body.time, 5);
+  if (name.length < 2) return NextResponse.json({ error: "Please enter your name." }, { status: 400 });
+  if (phone.replace(/\D/g, "").length < 7) return NextResponse.json({ error: "Please enter a valid phone number." }, { status: 400 });
+  if (!isISODate(date) || !/^\d{2}:\d{2}$/.test(time)) return NextResponse.json({ error: "Please choose a date and time." }, { status: 400 });
+
+  const db = admin();
+  if (await isRateLimited(db, request, "booking", { limit: 5, windowMs: 60 * 60 * 1000 }))
+    return NextResponse.json(TOO_MANY, { status: 429 });
+
+  const ctx = await loadBookingContext(db, slug);
+  if (!ctx) return NOT_FOUND;
+
+  // Re-check the slot so two people can't grab the same time
+  const slot = (await availableSlots(db, ctx, date, doctor)).find(s => s.time === time);
+  if (!slot) return NextResponse.json({ error: "Sorry, that time was just taken. Please pick another slot." }, { status: 409 });
+
+  const row = {
+    clinic_id: ctx.settings.clinic_id,
+    patient_name: name,
+    doctor_name: slot.doctor || "",
+    date, time,
+    treatment: reason || "Online booking",
+    status: "Requested",
+    notes: `Online booking · ${phone}`,
+  };
+  let { error } = await db.from("appointments").insert([{ ...row, phone, source: "online" }]);
+  // Older schemas without the phone/source columns: phone is still kept in notes
+  if (error && /phone|source/.test(error.message)) ({ error } = await db.from("appointments").insert([row]));
+  if (error) {
+    console.error("Online booking insert failed:", error.message);
+    return NextResponse.json({ error: "Could not save your booking. Please call the clinic." }, { status: 500 });
+  }
+  return NextResponse.json({ success: true, date, time, doctor: slot.doctor || null });
+}

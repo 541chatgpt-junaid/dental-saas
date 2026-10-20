@@ -20,6 +20,8 @@ interface Appointment {
   status: string;
   notes: string;
   user_id: string;
+  phone?: string | null;
+  source?: string | null;
 }
 
 interface Doctor {
@@ -75,10 +77,16 @@ export default function Appointments() {
     }
   };
 
+  const confirmLink = (a: Appointment) => {
+    const when = new Date(`${a.date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
+    const text = `Assalam o Alaikum ${a.patient_name}, your appointment${clinicName ? ` at ${clinicName}` : ""} on ${when}${a.time ? ` at ${a.time}` : ""}${a.doctor_name ? ` with Dr. ${a.doctor_name}` : ""} is confirmed. See you then!`;
+    return waLink(a.phone || phones[a.patient_name?.trim().toLowerCase()], text);
+  };
+
   const reminderLink = (a: Appointment) => {
     const when = new Date(`${a.date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" });
     const text = `Assalam o Alaikum ${a.patient_name}, this is a reminder of your appointment${clinicName ? ` at ${clinicName}` : ""} on ${when}${a.time ? ` at ${a.time}` : ""}${a.doctor_name ? ` with Dr. ${a.doctor_name}` : ""}. Please reply to confirm. Thank you!`;
-    return waLink(phones[a.patient_name?.trim().toLowerCase()], text);
+    return waLink(a.phone || phones[a.patient_name?.trim().toLowerCase()], text);
   };
 
   const fetchDoctors = async () => {
@@ -171,6 +179,7 @@ export default function Appointments() {
     <span className={`px-2 py-1 rounded-full text-xs font-medium ${
       status === "Completed" ? "bg-green-100 text-green-700" :
       status === "Scheduled" ? "bg-blue-100 text-blue-700" :
+      status === "Requested" ? "bg-gold/20 text-[#8a6d12]" :
       "bg-red-100 text-red-700"
     }`}>{status}</span>
   );
@@ -186,6 +195,13 @@ export default function Appointments() {
       <p className="text-xs text-brand-400 mt-1">{a.date} · {a.time}</p>
       {a.notes && <p className="text-xs text-brand-400">📝 {a.notes}</p>}
       <div className="flex gap-2 mt-2 flex-wrap">
+        {a.status === "Requested" && (
+          <>
+            <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold">✓ Confirm</button>
+            <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium">💬 Tell patient</a>
+            <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Decline</button>
+          </>
+        )}
         {a.status === "Scheduled" && (
           <>
             <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
@@ -207,6 +223,11 @@ export default function Appointments() {
           <div>
             <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Appointments</h2>
             <p className="text-sm text-brand-600 mt-1">Total: {appointments.length} appointments</p>
+            {appointments.some(a => a.status === "Requested") && (
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-[#8a6d12]">
+                🌐 {appointments.filter(a => a.status === "Requested").length} online booking request(s) waiting for confirmation
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <div className="flex rounded-lg border border-brand-200 bg-white p-0.5" role="tablist" aria-label="View">
@@ -306,6 +327,13 @@ export default function Appointments() {
                         <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2 flex-wrap">
+                            {a.status === "Requested" && (
+                              <>
+                                <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold">✓ Confirm</button>
+                                <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium">💬 Tell patient</a>
+                                <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Decline</button>
+                              </>
+                            )}
                             {a.status === "Scheduled" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
@@ -364,6 +392,13 @@ export default function Appointments() {
                         <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2 flex-wrap">
+                            {a.status === "Requested" && (
+                              <>
+                                <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold">✓ Confirm</button>
+                                <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium">💬 Tell patient</a>
+                                <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Decline</button>
+                              </>
+                            )}
                             {a.status === "Scheduled" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
