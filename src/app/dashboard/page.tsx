@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import CountUp from "@/components/CountUp";
+import Link from "next/link";
+import { BellRing, ChevronRight } from "lucide-react";
 
 type RecentPatient = {
   id: string;
@@ -27,6 +29,7 @@ export default function Dashboard() {
   const [revenueThisMonth, setRevenueThisMonth] = useState(0);
   const [totalPatients, setTotalPatients] = useState(0);
   const [topTreatment, setTopTreatment] = useState("—");
+  const [recallsDue, setRecallsDue] = useState(0);
   const [recentPatients, setRecentPatients] = useState<RecentPatient[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
@@ -74,6 +77,12 @@ export default function Dashboard() {
       }
 
       setPendingLabs(labs.count ?? 0);
+
+      // Recalls due within a week (table may not exist yet; ignore errors)
+      const weekAhead = new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 10);
+      const recalls = await supabase.from("recalls").select("id", { count: "exact", head: true })
+        .in("status", ["pending", "contacted"]).lte("due_date", weekAhead);
+      if (!recalls.error) setRecallsDue(recalls.count ?? 0);
       if (invoices.data) setPendingPayments(invoices.data.reduce((sum, i) => sum + (i.balance || 0), 0));
       if (monthPayments.data) setRevenueThisMonth(monthPayments.data.reduce((sum, p) => sum + (p.amount || 0), 0));
     };
@@ -89,6 +98,16 @@ export default function Dashboard() {
           <h2 className="mt-1 text-2xl md:text-3xl font-semibold text-brand-800 tracking-tight">Dashboard</h2>
           <p className="text-sm text-gray-500 mt-1">Welcome back, {userEmail}</p>
         </div>
+
+        {recallsDue > 0 && (
+          <Link href="/dashboard/recalls" className="card-hover mb-4 flex items-center gap-3 rounded-xl border border-gold/40 bg-white p-3 md:p-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gold/15 text-gold"><BellRing className="h-5 w-5" /></span>
+            <p className="flex-1 text-sm text-brand-800">
+              <span className="font-semibold">{recallsDue} patient{recallsDue === 1 ? " is" : "s are"} due for recall</span> this week. Send them a WhatsApp reminder.
+            </p>
+            <ChevronRight className="h-4 w-4 text-brand-400" />
+          </Link>
+        )}
 
         <div className="stagger grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-4">
           <div className="card-hover bg-white rounded-xl p-3 md:p-5 border border-brand-200 shadow-sm">

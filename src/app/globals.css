@@ -302,3 +302,16 @@
   :root[data-theme="dark"] .de-app .card-hover:hover { box-shadow: 0 16px 36px rgba(0, 0, 0, .35); }
   :root[data-theme="dark"] .de-app .form-panel { box-shadow: 0 18px 44px rgba(0, 0, 0, .3); }
 }
+
+/* ─── Treatment plan estimate printing ───
+   The page sets data-print-plan on <body> just before window.print();
+   only the expanded plan card (the one containing .print-only) is printed. */
+.print-only { display: none; }
+@media print {
+  body[data-print-plan] * { visibility: hidden; }
+  body[data-print-plan] .plan-card:has(.print-only),
+  body[data-print-plan] .plan-card:has(.print-only) * { visibility: visible; }
+  body[data-print-plan] .plan-card:has(.print-only) { position: absolute; left: 0; top: 0; width: 100%; border: 0; }
+  body[data-print-plan] .print-only { display: block; }
+  body[data-print-plan] .no-print { display: none !important; }
+}
