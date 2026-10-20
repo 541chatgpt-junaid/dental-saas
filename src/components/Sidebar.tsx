@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  BarChart3, BellRing, ListOrdered, Boxes, ClipboardList, HandCoins, CalendarCheck, FlaskConical, LayoutDashboard, LogOut, Menu, Receipt, Settings,
+  BarChart3, BellRing, Globe, ListOrdered, Boxes, ClipboardList, HandCoins, CalendarCheck, FlaskConical, LayoutDashboard, LogOut, Menu, Receipt, Settings,
   Moon, ShoppingCart, Stethoscope, Sun, UserCog, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -27,6 +27,7 @@ const navItems: { label: string; href: string; icon: LucideIcon; permission?: st
   { label: "Expenses", href: "/dashboard/expenses", icon: Wallet, permission: "Expenses" },
   { label: "Reports", href: "/dashboard/reports", icon: BarChart3, permission: "Reports" },
   { label: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "Staff" },
+  { label: "Online Booking", href: "/dashboard/settings/booking", icon: Globe, permission: "Settings" },
   { label: "Settings", href: "/dashboard/settings", icon: Settings, permission: "Settings" },
 ];
 
@@ -52,7 +53,9 @@ function Wordmark({ size = "text-xl" }: { size?: string }) {
 function NavLink({ href, label, icon: Icon, pathname, index, onClick, animate }: {
   href: string; label: string; icon: LucideIcon; pathname: string; index: number; onClick?: () => void; animate?: boolean;
 }) {
-  const isActive = href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  // The most specific matching item wins (e.g. Online Booking over Settings)
+  const matches = (h: string) => (h === "/dashboard" ? pathname === h : pathname === h || pathname.startsWith(`${h}/`));
+  const isActive = matches(href) && !navItems.some(i => i.href.length > href.length && matches(i.href));
   return (
     <Link
       href={href}
