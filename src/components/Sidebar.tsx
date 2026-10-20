@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import {
-  BarChart3, Boxes, CalendarCheck, FlaskConical, LayoutDashboard, LogOut, Menu, Receipt, Settings,
+  BarChart3, BellRing, Boxes, ClipboardList, HandCoins, CalendarCheck, FlaskConical, LayoutDashboard, LogOut, Menu, Receipt, Settings,
   Moon, ShoppingCart, Stethoscope, Sun, UserCog, Users, Wallet, X, type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -15,7 +15,10 @@ const navItems: { label: string; href: string; icon: LucideIcon; permission?: st
   { label: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { label: "Patients", href: "/dashboard/patients", icon: Users, permission: "Patients" },
   { label: "Appointments", href: "/dashboard/appointments", icon: CalendarCheck, permission: "Appointments" },
+  { label: "Treatment Plans", href: "/dashboard/treatment-plans", icon: ClipboardList, permission: "Treatment Plans" },
+  { label: "Recalls", href: "/dashboard/recalls", icon: BellRing, permission: "Recalls" },
   { label: "Doctors", href: "/dashboard/doctors", icon: Stethoscope, permission: "Doctors" },
+  { label: "Commissions", href: "/dashboard/commissions", icon: HandCoins, permission: "Commissions" },
   { label: "Lab Records", href: "/dashboard/labs", icon: FlaskConical, permission: "Lab Records" },
   { label: "Advanced Billing", href: "/dashboard/billing", icon: Receipt, permission: "Billing" },
   { label: "Inventory", href: "/dashboard/materials", icon: Boxes, permission: "Materials" },
