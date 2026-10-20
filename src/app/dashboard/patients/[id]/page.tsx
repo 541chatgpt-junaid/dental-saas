@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
+import { useClinic } from "@/lib/ClinicContext";
+import PatientFiles from "./PatientFiles";
 
 interface Patient {
   id: number;
@@ -64,7 +66,8 @@ export default function PatientHistoryPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<"invoices" | "payments">("invoices");
+  const [tab, setTab] = useState<"invoices" | "payments" | "files">("invoices");
+  const { clinicId } = useClinic();
 
   useEffect(() => {
     const supabase = createClient();
@@ -159,13 +162,13 @@ export default function PatientHistoryPage() {
 
         {/* Tabs */}
         <div className="flex gap-1 bg-white border border-brand-200 shadow-sm rounded-xl p-1 mb-5 w-fit">
-          {(["invoices", "payments"] as const).map(t => (
+          {(["invoices", "payments", "files"] as const).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`px-4 py-1.5 rounded-lg text-xs font-medium capitalize transition-colors ${tab === t ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}
             >
-              {t} ({t === "invoices" ? invoices.length : payments.length})
+              {t === "files" ? "X-rays & photos" : `${t} (${t === "invoices" ? invoices.length : payments.length})`}
             </button>
           ))}
         </div>
@@ -236,6 +239,8 @@ export default function PatientHistoryPage() {
             )}
           </>
         )}
+
+        {tab === "files" && <PatientFiles patientId={Number(id)} clinicId={clinicId} />}
 
         {tab === "payments" && (
           <>

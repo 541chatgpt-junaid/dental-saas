@@ -53,7 +53,7 @@ export async function POST(request: Request) {
 
   await admin.from("staff").insert([{
     name, email, role: "admin", status: "Active",
-    permissions: "Dashboard,Patients,Appointments,Treatment Plans,Recalls,Doctors,Commissions,Lab Records,Billing,Materials,Purchases,Expenses,Reports,Staff,Settings",
+    permissions: "Dashboard,Patients,Appointments,Queue,Treatment Plans,Recalls,Doctors,Commissions,Lab Records,Billing,Materials,Purchases,Expenses,Reports,Staff,Settings",
     user_id: authUser.user.id,
     clinic_id: clinic.id,
   }]);

@@ -17,6 +17,7 @@ const pagePermissionMap: Record<string, string> = {
   "/dashboard/treatment-plans": "Treatment Plans",
   "/dashboard/commissions": "Commissions",
   "/dashboard/recalls": "Recalls",
+  "/dashboard/queue": "Queue",
 };
 
 export async function middleware(request: NextRequest) {

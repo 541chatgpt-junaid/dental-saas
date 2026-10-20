@@ -18,7 +18,7 @@ interface Staff {
 }
 
 const allPages = [
-  "Dashboard", "Patients", "Appointments", "Treatment Plans", "Recalls", "Doctors", "Commissions",
+  "Dashboard", "Patients", "Appointments", "Queue", "Treatment Plans", "Recalls", "Doctors", "Commissions",
   "Lab Records", "Billing", "Materials", "Purchases", "Expenses", "Reports", "Staff", "Settings",
 ];
 
