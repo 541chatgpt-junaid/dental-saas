@@ -8,6 +8,10 @@ import Sidebar from "@/components/Sidebar";
 import Receipt from "@/components/Receipt";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import {
+  billingByPatient, createInvoice, loadLedger, markMigrated, NO_BILLS, payPatientBalance, recordPayment,
+  REGISTRATION_NOTE, setSingleItem, VISIT_NOTE, type Ledgered, type LedgerInvoiceRow, type PatientBilling,
+} from "@/lib/ledger";
 
 interface Patient {
   id: number;
@@ -70,13 +74,17 @@ interface Doctor {
   name: string;
 }
 
-type InvoiceSummary = { totalBilled: number; totalPaid: number; outstanding: number };
+type LedgerInvoice = Ledgered<LedgerInvoiceRow>;
+const statusLabel = (s: string) => (s === "paid" ? "Paid" : s === "partial" ? "Partial" : "Unpaid");
 interface TreatmentPreset { id: string; name: string; price: number; }
 
 const upperRight = [18,17,16,15,14,13,12,11];
 const upperLeft = [21,22,23,24,25,26,27,28];
 const lowerRight = [48,47,46,45,44,43,42,41];
 const lowerLeft = [31,32,33,34,35,36,37,38];
+
+/** A visit-day payment is dated on the visit day (noon, so the day survives any timezone) */
+const visitDateTime = (d: string) => (d && d !== new Date().toISOString().split("T")[0] ? `${d}T12:00:00.000Z` : new Date().toISOString());
 
 const formatDate = (dateStr: string) => {
   if (!dateStr) return "—";
@@ -88,7 +96,8 @@ const formatDate = (dateStr: string) => {
 export default function Patients() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [allPatients, setAllPatients] = useState<Patient[]>([]);
-  const [invoiceSummaryMap, setInvoiceSummaryMap] = useState<Record<number, InvoiceSummary>>({});
+  const [invoiceSummaryMap, setInvoiceSummaryMap] = useState<Record<number, PatientBilling>>({});
+  const [ledgerInvoices, setLedgerInvoices] = useState<LedgerInvoice[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
@@ -179,26 +188,30 @@ export default function Patients() {
     }
   };
 
+  // Every money figure on this page comes from the ledger (invoices + payments)
   const fetchInvoiceSummaries = async () => {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("invoices")
-      .select("patient_id, total, amount_paid, balance")
-      .neq("status", "cancelled");
-    if (!data) return;
-    const map: Record<number, InvoiceSummary> = {};
-    data.forEach(r => {
-      const pid = r.patient_id as number;
-      if (!map[pid]) map[pid] = { totalBilled: 0, totalPaid: 0, outstanding: 0 };
-      map[pid].totalBilled += r.total || 0;
-      map[pid].totalPaid += r.amount_paid || 0;
-      map[pid].outstanding += r.balance || 0;
-    });
-    setInvoiceSummaryMap(map);
+    try {
+      const { invoices } = await loadLedger(createClient(), {
+        select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, created_at, notes",
+      });
+      setLedgerInvoices(invoices);
+      setInvoiceSummaryMap(billingByPatient(invoices));
+    } catch (e) {
+      console.error("Could not load billing:", e);
+    }
   };
 
-  const invSummary = (patientId: number): InvoiceSummary =>
-    invoiceSummaryMap[patientId] ?? { totalBilled: 0, totalPaid: 0, outstanding: 0 };
+  const invSummary = (patientId: number): PatientBilling => invoiceSummaryMap[patientId] ?? NO_BILLS;
+
+  const registrationInvoice = (patientId: number) =>
+    ledgerInvoices.find(i => i.patient_id === patientId && i.notes === REGISTRATION_NOTE && i.counted);
+  const visitInvoice = (visitId: number) => ledgerInvoices.find(i => i.visit_id === visitId && i.counted);
+  const visitBill = (v: Visit) => {
+    const inv = visitInvoice(v.id);
+    return inv
+      ? { fee: inv.total, paid: inv.amount_paid, due: Math.max(0, inv.balance), status: statusLabel(inv.status) }
+      : { fee: 0, paid: 0, due: 0, status: "No bill" };
+  };
 
   useEffect(() => {
     const checkUser = async () => {
@@ -249,34 +262,35 @@ export default function Patients() {
   };
 
   const handleAdd = async () => {
-    setLoading(true);
-    const supabase = createClient();
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
+    if (fee_paid > fee_total) { alert("Fee paid can't be more than the fee."); return; }
+    setLoading(true);
+    const supabase = createClient();
     const status = fee_paid >= fee_total && fee_total > 0 ? "Paid" : fee_paid > 0 ? "Partial" : "Pending";
 
-    const { data: patient } = await supabase.from("patients").insert([{
+    // fee_total / fee_paid / status are kept only as a record of what was typed at registration;
+    // the bill itself is the registration invoice below
+    const row = {
       name: form.name, phone: form.phone, address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
       doctor_name: form.doctor_name, fee_total, fee_paid, status,
       clinic_id: clinicId,
-    }]).select().single();
+    };
+    let { data: patient, error } = await supabase.from("patients").insert([{ ...row, ledger_migrated_at: new Date().toISOString() }]).select().single();
+    if (error?.message.includes("ledger_migrated_at")) ({ data: patient, error } = await supabase.from("patients").insert([row]).select().single());
 
     if (patient && fee_total > 0) {
-      const { data: invNum } = await supabase.rpc("generate_invoice_number", { p_clinic_id: clinicId });
-      const invStatus = fee_paid >= fee_total ? "paid" : fee_paid > 0 ? "partial" : "unpaid";
-      await supabase.from("invoices").insert([{
-        clinic_id: clinicId,
-        patient_id: patient.id,
-        invoice_number: invNum,
-        status: invStatus,
-        subtotal: fee_total,
-        discount: 0,
-        total: fee_total,
-        amount_paid: fee_paid,
-        notes: "[Registration]",
-      }]);
+      const { id: invoiceId, error: invErr } = await createInvoice(supabase, {
+        clinicId, patientId: patient.id, notes: REGISTRATION_NOTE,
+        items: [{ description: form.treatment || "Registration / consultation", quantity: 1, unit_price: fee_total }],
+      });
+      if (invErr) alert(`Patient saved, but the invoice could not be created: ${invErr}`);
+      if (invoiceId && fee_paid > 0) {
+        const payErr = await recordPayment(supabase, { clinicId, invoiceId, patientId: patient.id, amount: fee_paid, note: "Paid at registration" });
+        if (payErr) alert(`Patient saved, but the payment could not be recorded: ${payErr}`);
+      }
     }
 
     resetForm();
@@ -287,49 +301,37 @@ export default function Patients() {
 
   const handleEditPatient = async () => {
     if (!editingPatientId) return;
-    setLoading(true);
-    const supabase = createClient();
     const fee_total = parseInt(form.fee_total) || 0;
     const fee_paid = parseInt(form.fee_paid) || 0;
-    const status = fee_paid >= fee_total && fee_total > 0 ? "Paid" : fee_paid > 0 ? "Partial" : "Pending";
+    const reg = registrationInvoice(editingPatientId);
+    if (fee_paid > fee_total) { alert("Fee paid can't be more than the fee."); return; }
+    if (reg && fee_paid < reg.amount_paid) {
+      alert(`${symbol} ${reg.amount_paid.toLocaleString()} is already recorded as paid on the registration invoice. Payments stay in the payment history and can't be reduced here.`);
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
 
     await supabase.from("patients").update({
       name: form.name, phone: form.phone, address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
-      doctor_name: form.doctor_name, fee_total, fee_paid, status,
+      doctor_name: form.doctor_name,
     }).eq("id", editingPatientId);
 
-    if (fee_total > 0) {
-      const invStatus = fee_paid >= fee_total ? "paid" : fee_paid > 0 ? "partial" : "unpaid";
-      const { data: existingInv } = await supabase
-        .from("invoices")
-        .select("id")
-        .eq("patient_id", editingPatientId)
-        .eq("notes", "[Registration]")
-        .maybeSingle();
-
-      if (existingInv) {
-        await supabase.from("invoices").update({
-          subtotal: fee_total,
-          total: fee_total,
-          amount_paid: fee_paid,
-          status: invStatus,
-        }).eq("id", existingInv.id);
-      } else {
-        const { data: invNum } = await supabase.rpc("generate_invoice_number", { p_clinic_id: clinicId });
-        await supabase.from("invoices").insert([{
-          clinic_id: clinicId,
-          patient_id: editingPatientId,
-          invoice_number: invNum,
-          status: invStatus,
-          subtotal: fee_total,
-          discount: 0,
-          total: fee_total,
-          amount_paid: fee_paid,
-          notes: "[Registration]",
-        }]);
-      }
+    let invoiceId = reg ? String(reg.id) : null;
+    if (reg && fee_total !== reg.total) {
+      await setSingleItem(supabase, clinicId, String(reg.id), form.treatment || "Registration / consultation", fee_total);
+    } else if (!reg && fee_total > 0) {
+      ({ id: invoiceId } = await createInvoice(supabase, {
+        clinicId, patientId: editingPatientId, notes: REGISTRATION_NOTE,
+        items: [{ description: form.treatment || "Registration / consultation", quantity: 1, unit_price: fee_total }],
+      }));
+    }
+    const extra = fee_paid - (reg?.amount_paid || 0);
+    if (invoiceId && extra > 0) {
+      const payErr = await recordPayment(supabase, { clinicId, invoiceId, patientId: editingPatientId, amount: extra, note: "Paid at registration" });
+      if (payErr) alert(`The payment could not be recorded: ${payErr}`);
     }
 
     resetForm();
@@ -344,7 +346,8 @@ export default function Patients() {
       name: p.name, phone: p.phone || "", address: p.address || "",
       age: p.age?.toString() || "", gender: p.gender || "Male",
       treatment: p.treatment || "", doctor_name: p.doctor_name || "",
-      fee_total: p.fee_total?.toString() || "", fee_paid: p.fee_paid?.toString() || "",
+      fee_total: registrationInvoice(p.id)?.total.toString() || "",
+      fee_paid: registrationInvoice(p.id)?.amount_paid.toString() || "",
     });
     setSelectedTeeth(p.tooth_number ? p.tooth_number.split(", ").map(Number).filter(Boolean) : []);
     setShowForm(false);
@@ -352,13 +355,14 @@ export default function Patients() {
 
   const handleAddVisit = async () => {
     if (!selectedPatient) return;
-    setLoading(true);
-    const supabase = createClient();
     const visitFee = parseInt(visitForm.fee) || 0;
     const visitFeePaid = parseInt(visitForm.fee_paid) || 0;
+    if (visitFeePaid > visitFee) { alert("Fee paid can't be more than the visit fee."); return; }
+    setLoading(true);
+    const supabase = createClient();
     const visitStatus = visitFeePaid >= visitFee && visitFee > 0 ? "Paid" : visitFeePaid > 0 ? "Partial" : "Pending";
 
-    await supabase.from("visits").insert([{
+    const row = {
       patient_id: selectedPatient.id,
       patient_name: selectedPatient.name,
       doctor_name: visitForm.doctor_name,
@@ -370,27 +374,43 @@ export default function Patients() {
       visit_date: visitForm.visit_date,
       status: visitStatus,
       clinic_id: clinicId,
-    }]);
+    };
+    const first = await supabase.from("visits").insert([{ ...row, ledger_migrated_at: new Date().toISOString() }]).select().single();
+    const visit = first.error?.message.includes("ledger_migrated_at")
+      ? (await supabase.from("visits").insert([row]).select().single()).data
+      : first.data;
 
-    const newTotal = selectedPatient.fee_total + visitFee;
-    const newPaid = selectedPatient.fee_paid + visitFeePaid;
-    const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
-    await supabase.from("patients").update({ fee_total: newTotal, fee_paid: newPaid, status: newStatus }).eq("id", selectedPatient.id);
-    setSelectedPatient({ ...selectedPatient, fee_total: newTotal, fee_paid: newPaid, status: newStatus });
+    // The visit fee is billed as its own invoice, linked to the visit
+    if (visit && visitFee > 0) {
+      const { id: invoiceId, error: invErr } = await createInvoice(supabase, {
+        clinicId, patientId: selectedPatient.id, visitId: visit.id, notes: VISIT_NOTE,
+        items: [{ description: visitForm.treatment || "Visit", quantity: 1, unit_price: visitFee }],
+      });
+      if (invErr) alert(`Visit saved, but the invoice could not be created: ${invErr}`);
+      if (invoiceId && visitFeePaid > 0) {
+        const payErr = await recordPayment(supabase, { clinicId, invoiceId, patientId: selectedPatient.id, amount: visitFeePaid, date: visitDateTime(visitForm.visit_date), note: "Paid at visit" });
+        if (payErr) alert(`Visit saved, but the payment could not be recorded: ${payErr}`);
+      }
+    }
 
     resetVisitForm();
     setLoading(false);
     fetchVisits(selectedPatient.id);
-    fetchPatients();
+    fetchInvoiceSummaries();
   };
 
   const handleEditVisit = async () => {
     if (!selectedPatient || !editingVisitId) return;
-    setLoading(true);
-    const supabase = createClient();
-    const oldVisit = visits.find(v => v.id === editingVisitId);
     const visitFee = parseInt(visitForm.fee) || 0;
     const visitFeePaid = parseInt(visitForm.fee_paid) || 0;
+    const inv = visitInvoice(editingVisitId);
+    if (visitFeePaid > visitFee) { alert("Fee paid can't be more than the visit fee."); return; }
+    if (inv && visitFeePaid < inv.amount_paid) {
+      alert(`${symbol} ${inv.amount_paid.toLocaleString()} is already recorded as paid for this visit. Payments stay in the payment history and can't be reduced here.`);
+      return;
+    }
+    setLoading(true);
+    const supabase = createClient();
     const visitStatus = visitFeePaid >= visitFee && visitFee > 0 ? "Paid" : visitFeePaid > 0 ? "Partial" : "Pending";
 
     await supabase.from("visits").update({
@@ -404,18 +424,26 @@ export default function Patients() {
       status: visitStatus,
     }).eq("id", editingVisitId);
 
-    if (oldVisit) {
-      const newTotal = selectedPatient.fee_total - oldVisit.fee + visitFee;
-      const newPaid = selectedPatient.fee_paid - oldVisit.fee_paid + visitFeePaid;
-      const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
-      await supabase.from("patients").update({ fee_total: newTotal, fee_paid: newPaid, status: newStatus }).eq("id", selectedPatient.id);
-      setSelectedPatient({ ...selectedPatient, fee_total: newTotal, fee_paid: newPaid, status: newStatus });
+    let invoiceId = inv ? String(inv.id) : null;
+    if (inv && visitFee !== inv.total) {
+      await setSingleItem(supabase, clinicId, String(inv.id), visitForm.treatment || "Visit", visitFee);
+    } else if (!inv && visitFee > 0) {
+      ({ id: invoiceId } = await createInvoice(supabase, {
+        clinicId, patientId: selectedPatient.id, visitId: editingVisitId, notes: VISIT_NOTE,
+        items: [{ description: visitForm.treatment || "Visit", quantity: 1, unit_price: visitFee }],
+      }));
+      await markMigrated(supabase, "visits", editingVisitId);
+    }
+    const extra = visitFeePaid - (inv?.amount_paid || 0);
+    if (invoiceId && extra > 0) {
+      const payErr = await recordPayment(supabase, { clinicId, invoiceId, patientId: selectedPatient.id, amount: extra, note: "Paid at visit" });
+      if (payErr) alert(`The payment could not be recorded: ${payErr}`);
     }
 
     resetVisitForm();
     setLoading(false);
     fetchVisits(selectedPatient.id);
-    fetchPatients();
+    fetchInvoiceSummaries();
   };
 
   const openEditVisit = (v: Visit) => {
@@ -424,8 +452,8 @@ export default function Patients() {
       doctor_name: v.doctor_name || "",
       treatment: v.treatment || "",
       notes: v.notes || "",
-      fee: v.fee.toString(),
-      fee_paid: v.fee_paid.toString(),
+      fee: visitBill(v).fee.toString(),
+      fee_paid: visitBill(v).paid.toString(),
       visit_date: v.visit_date || new Date().toISOString().split("T")[0],
       status: v.status || "Pending",
     });
@@ -434,33 +462,28 @@ export default function Patients() {
   };
 
   const handleDeleteVisit = async (v: Visit) => {
-    if (!selectedPatient || !confirm("Delete this visit?")) return;
+    const inv = visitInvoice(v.id);
+    if (!selectedPatient || !confirm(inv ? "Delete this visit? Its invoice will be cancelled." : "Delete this visit?")) return;
     const supabase = createClient();
+    // Cancelled invoices are left out of every total; the invoice number stays used
+    if (inv) await supabase.from("invoices").update({ status: "cancelled", visit_id: null }).eq("id", inv.id);
     await supabase.from("visits").delete().eq("id", v.id);
-    const newTotal = selectedPatient.fee_total - v.fee;
-    const newPaid = selectedPatient.fee_paid - v.fee_paid;
-    const newStatus = newPaid >= newTotal && newTotal > 0 ? "Paid" : newPaid > 0 ? "Partial" : "Pending";
-    await supabase.from("patients").update({ fee_total: newTotal, fee_paid: newPaid, status: newStatus }).eq("id", selectedPatient.id);
-    setSelectedPatient({ ...selectedPatient, fee_total: newTotal, fee_paid: newPaid, status: newStatus });
     fetchVisits(selectedPatient.id);
-    fetchPatients();
+    fetchInvoiceSummaries();
   };
 
   const handleVisitPayment = async (v: Visit) => {
     if (!selectedPatient) return;
-    const amount = prompt(`Additional payment for — ${v.treatment}:`);
+    const inv = visitInvoice(v.id);
+    if (!inv) return;
+    const amount = prompt(`Additional payment for — ${v.treatment}:`, String(Math.max(0, inv.balance)));
     if (!amount) return;
-    const extra = parseInt(amount);
-    const supabase = createClient();
-    const newPaid = v.fee_paid + extra;
-    const newStatus = newPaid >= v.fee ? "Paid" : "Partial";
-    await supabase.from("visits").update({ fee_paid: newPaid, status: newStatus }).eq("id", v.id);
-    const patNewPaid = selectedPatient.fee_paid + extra;
-    const patStatus = patNewPaid >= selectedPatient.fee_total && selectedPatient.fee_total > 0 ? "Paid" : "Partial";
-    await supabase.from("patients").update({ fee_paid: patNewPaid, status: patStatus }).eq("id", selectedPatient.id);
-    setSelectedPatient({ ...selectedPatient, fee_paid: patNewPaid, status: patStatus });
-    fetchVisits(selectedPatient.id);
-    fetchPatients();
+    const extra = parseFloat(amount);
+    if (!extra || extra <= 0) return;
+    if (extra > inv.balance) { alert(`Only ${symbol} ${inv.balance.toLocaleString()} is due on this visit.`); return; }
+    const err = await recordPayment(createClient(), { clinicId, invoiceId: String(inv.id), patientId: selectedPatient.id, amount: extra });
+    if (err) alert(err);
+    fetchInvoiceSummaries();
   };
 
   const handleSaveMedical = async () => {
@@ -510,14 +533,6 @@ export default function Patients() {
     if (selectedPatient) fetchAppointments(selectedPatient.id);
   };
 
-  const handlePayment = async (patient: Patient, extraPayment: number) => {
-    const supabase = createClient();
-    const newPaid = patient.fee_paid + extraPayment;
-    const newStatus = newPaid >= patient.fee_total && patient.fee_total > 0 ? "Paid" : "Partial";
-    await supabase.from("patients").update({ fee_paid: newPaid, status: newStatus }).eq("id", patient.id);
-    fetchPatients();
-  };
-
   const openPayModal = (p: Patient) => {
     const outstanding = invSummary(p.id).outstanding;
     setPayingPatient(p);
@@ -532,43 +547,14 @@ export default function Patients() {
 
     setPayLoading(true);
     setPayError("");
-    const supabase = createClient();
-
-    // Update patients table
-    const newPaid = payingPatient.fee_paid + amount;
-    const newPatientStatus = newPaid >= payingPatient.fee_total && payingPatient.fee_total > 0 ? "Paid" : "Partial";
-    await supabase.from("patients")
-      .update({ fee_paid: newPaid, status: newPatientStatus })
-      .eq("id", payingPatient.id);
-
-    // Find and update the registration invoice
-    const { data: inv } = await supabase
-      .from("invoices")
-      .select("id, total, amount_paid")
-      .eq("patient_id", payingPatient.id)
-      .eq("notes", "[Registration]")
-      .maybeSingle();
-
-    if (inv) {
-      const newAmountPaid = Math.min(inv.total, inv.amount_paid + amount);
-      const invStatus = newAmountPaid >= inv.total ? "paid" : newAmountPaid > 0 ? "partial" : "unpaid";
-      await supabase.from("invoices")
-        .update({ amount_paid: newAmountPaid, status: invStatus })
-        .eq("id", inv.id);
-
-      await supabase.from("payments").insert([{
-        invoice_id: inv.id,
-        clinic_id: clinicId,
-        amount,
-        payment_method: payForm.method,
-        payment_date: new Date().toISOString(),
-        notes: payForm.notes || null,
-      }]);
-    }
+    // Settles the patient's open invoices oldest first, one payment row per invoice
+    const err = await payPatientBalance(createClient(), {
+      clinicId, patientId: payingPatient.id, amount, method: payForm.method, note: payForm.notes || null,
+    });
+    setPayLoading(false);
+    if (err) { setPayError(err); return; }
 
     setPayingPatient(null);
-    setPayLoading(false);
-    fetchPatients();
     fetchInvoiceSummaries();
   };
 
@@ -585,9 +571,9 @@ export default function Patients() {
     getClinicPatientNumber(p.id).toString().includes(search)
   );
 
-  const visitTotalFee = visits.reduce((s, v) => s + (v.fee || 0), 0);
-  const visitTotalPaid = visits.reduce((s, v) => s + (v.fee_paid || 0), 0);
-  const visitTotalPending = visitTotalFee - visitTotalPaid;
+  const visitTotalFee = visits.reduce((s, v) => s + visitBill(v).fee, 0);
+  const visitTotalPaid = visits.reduce((s, v) => s + visitBill(v).paid, 0);
+  const visitTotalPending = visits.reduce((s, v) => s + visitBill(v).due, 0);
 
   const ToothBtn = ({ num, selected, onToggle }: { num: number; selected: number[]; onToggle: (n: number) => void }) => (
     <button type="button" onClick={() => onToggle(num)}
@@ -629,6 +615,7 @@ export default function Patients() {
       status === "Completed" ? "bg-green-100 text-green-700" :
       status === "Scheduled" ? "bg-blue-100 text-blue-700" :
       status === "Cancelled" ? "bg-red-100 text-red-700" :
+      status === "No bills" || status === "No bill" ? "bg-gray-100 text-gray-500" :
       "bg-orange-100 text-orange-700"
     }`}>{status}</span>
   );
@@ -640,7 +627,7 @@ export default function Patients() {
       <Sidebar />
       <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         {showReceipt && receiptPatient && (
-          <Receipt patient={receiptPatient} onClose={() => setShowReceipt(false)} />
+          <Receipt patient={receiptPatient} billing={invSummary(receiptPatient.id)} onClose={() => setShowReceipt(false)} />
         )}
 
         {selectedPatient ? (
@@ -653,7 +640,7 @@ export default function Patients() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-lg md:text-xl font-semibold text-brand-800">{selectedPatient.name}</h2>
                     <span className="text-xs text-brand-400 bg-brand-50 px-2 py-0.5 rounded-full">#{getClinicPatientNumber(selectedPatient.id)}</span>
-                    <StatusBadge status={selectedPatient.status} />
+                    <StatusBadge status={invSummary(selectedPatient.id).status} />
                   </div>
                   <p className="text-xs md:text-sm text-brand-500 mt-1">
                     {selectedPatient.phone} · {selectedPatient.gender} · {selectedPatient.age} yrs · {selectedPatient.address}
@@ -751,11 +738,6 @@ export default function Patients() {
                       </div>
                     )}
                   </div>
-                  <select value={visitForm.status} onChange={e => setVisitForm({...visitForm, status: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
-                    <option>Pending</option>
-                    <option>Partial</option>
-                    <option>Paid</option>
-                  </select>
                   <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <div className="md:col-span-2">
@@ -847,7 +829,7 @@ export default function Patients() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap mb-1">
                               <p className="text-sm font-semibold text-brand-800">Visit {visits.length - i}</p>
-                              <StatusBadge status={v.status || "Pending"} />
+                              <StatusBadge status={visitBill(v).status} />
                               <span className="text-xs text-brand-400 bg-brand-50 px-2 py-0.5 rounded-full">
                                 📅 {formatDate(v.visit_date)}
                               </span>
@@ -859,11 +841,11 @@ export default function Patients() {
                             {v.notes && <p className="text-xs text-brand-400 mt-1 italic">{v.notes}</p>}
                           </div>
                           <div className="text-right shrink-0">
-                            <p className="text-sm font-semibold text-brand-800">{symbol} {v.fee}</p>
-                            <p className="text-xs text-green-600">Paid: {symbol} {v.fee_paid}</p>
-                            <p className="text-xs text-orange-500">Due: {symbol} {v.fee - v.fee_paid}</p>
+                            <p className="text-sm font-semibold text-brand-800">{symbol} {visitBill(v).fee.toLocaleString()}</p>
+                            <p className="text-xs text-green-600">Paid: {symbol} {visitBill(v).paid.toLocaleString()}</p>
+                            <p className="text-xs text-orange-500">Due: {symbol} {visitBill(v).due.toLocaleString()}</p>
                             <div className="flex gap-2 mt-1 justify-end">
-                              {v.fee_paid < v.fee && (
+                              {visitBill(v).due > 0 && (
                                 <button onClick={() => handleVisitPayment(v)} className="text-brand-600 text-xs font-medium hover:underline">Pay</button>
                               )}
                               <button onClick={() => openEditVisit(v)} className="text-brand-600 text-xs font-medium">✏️</button>
@@ -878,9 +860,9 @@ export default function Patients() {
                     <div className="px-4 py-3 bg-brand-50 flex flex-wrap justify-between items-center gap-2">
                       <span className="text-xs font-semibold text-brand-700">All visits total</span>
                       <div className="flex gap-4 flex-wrap">
-                        <span className="text-xs text-brand-700">Billed: <strong>{symbol} {visitTotalFee}</strong></span>
-                        <span className="text-xs text-green-700">Paid: <strong>{symbol} {visitTotalPaid}</strong></span>
-                        <span className="text-xs text-orange-600">Pending: <strong>{symbol} {visitTotalPending}</strong></span>
+                        <span className="text-xs text-brand-700">Billed: <strong>{symbol} {visitTotalFee.toLocaleString()}</strong></span>
+                        <span className="text-xs text-green-700">Paid: <strong>{symbol} {visitTotalPaid.toLocaleString()}</strong></span>
+                        <span className="text-xs text-orange-600">Pending: <strong>{symbol} {visitTotalPending.toLocaleString()}</strong></span>
                       </div>
                     </div>
                   )}
@@ -1062,7 +1044,7 @@ export default function Patients() {
                           <p className="text-xs text-brand-400">{p.phone} · {p.gender} · {p.age}y</p>
                           <p className="text-xs text-brand-300">{formatDate(p.created_at)}</p>
                         </div>
-                        <StatusBadge status={p.status} />
+                        <StatusBadge status={invSummary(p.id).status} />
                       </div>
                       <p className="text-xs text-brand-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· Dr. ${p.doctor_name}` : ""}</p>
                       <div className="flex justify-between items-center">
@@ -1120,7 +1102,7 @@ export default function Patients() {
                           <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalBilled.toLocaleString()}</td>
                           <td className="px-4 py-3 text-green-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalPaid.toLocaleString()}</td>
                           <td className="px-4 py-3 text-orange-600 cursor-pointer font-medium" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).outstanding.toLocaleString()}</td>
-                          <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}><StatusBadge status={p.status} /></td>
+                          <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}><StatusBadge status={invSummary(p.id).status} /></td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
                               <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-brand-600 text-xs font-medium">🖨️</button>

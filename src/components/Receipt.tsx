@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useCurrency } from "@/lib/useCurrency";
+import type { PatientBilling } from "@/lib/ledger";
 
 interface ReceiptProps {
   patient: {
@@ -14,11 +15,10 @@ interface ReceiptProps {
     treatment: string;
     tooth_number: string;
     doctor_name: string;
-    fee_total: number;
-    fee_paid: number;
-    status: string;
     created_at: string;
   };
+  /** The patient's figures from the billing ledger (invoices + payments) */
+  billing: PatientBilling;
   onClose: () => void;
 }
 
@@ -29,7 +29,7 @@ interface Settings {
   clinic_email: string;
 }
 
-export default function Receipt({ patient, onClose }: ReceiptProps) {
+export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
   const [settings, setSettings] = useState<Settings>({
     clinic_name: "DentEase Clinic",
     clinic_address: "",
@@ -47,7 +47,8 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
     fetchSettings();
   }, []);
 
-  const remaining = patient.fee_total - patient.fee_paid;
+  const remaining = billing.outstanding;
+  const fullyPaid = billing.status === "Paid";
   const date = new Date(patient.created_at).toLocaleDateString("en-PK", {
     day: "numeric", month: "long", year: "numeric"
   });
@@ -123,7 +124,7 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
                 <p className="text-xs font-medium text-gray-700">{patient.treatment || "General Checkup"}</p>
                 {patient.tooth_number && <p className="text-xs text-gray-400">Tooth: {patient.tooth_number}</p>}
               </div>
-              <p className="text-xs font-semibold text-gray-700">{symbol} {patient.fee_total?.toLocaleString()}</p>
+              <p className="text-xs font-semibold text-gray-700">{symbol} {billing.totalBilled.toLocaleString()}</p>
             </div>
           </div>
 
@@ -131,24 +132,24 @@ export default function Receipt({ patient, onClose }: ReceiptProps) {
           <div className="space-y-1.5 mb-3">
             <div className="flex justify-between text-xs">
               <span className="text-gray-500">Total Fee</span>
-              <span className="font-medium text-gray-700">{symbol} {patient.fee_total?.toLocaleString()}</span>
+              <span className="font-medium text-gray-700">{symbol} {billing.totalBilled.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-gray-500">Amount Paid</span>
-              <span className="font-semibold text-green-600">{symbol} {patient.fee_paid?.toLocaleString()}</span>
+              <span className="font-semibold text-green-600">{symbol} {billing.totalPaid.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-xs">
               <span className="text-gray-500">Remaining</span>
               <span className={`font-semibold ${remaining > 0 ? "text-orange-500" : "text-green-600"}`}>
-                {symbol} {remaining?.toLocaleString()}
+                {symbol} {remaining.toLocaleString()}
               </span>
             </div>
           </div>
 
           {/* Status Badge */}
-          <div className={`rounded-xl p-2.5 text-center mb-3 ${patient.status === "Paid" ? "bg-green-50" : "bg-orange-50"}`}>
-            <p className={`text-xs font-bold ${patient.status === "Paid" ? "text-green-600" : "text-orange-500"}`}>
-              {patient.status === "Paid" ? "✅ FULLY PAID" : "⏳ PAYMENT PENDING"}
+          <div className={`rounded-xl p-2.5 text-center mb-3 ${fullyPaid ? "bg-green-50" : "bg-orange-50"}`}>
+            <p className={`text-xs font-bold ${fullyPaid ? "text-green-600" : "text-orange-500"}`}>
+              {fullyPaid ? "✅ FULLY PAID" : "⏳ PAYMENT PENDING"}
             </p>
           </div>
 

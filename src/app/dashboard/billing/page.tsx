@@ -8,9 +8,11 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 import Link from "next/link";
+import { loadLedger } from "@/lib/ledger";
 
 interface Invoice {
   id: string;
+  patient_id: number | null;
   invoice_number: string;
   status: string;
   subtotal: number;
@@ -58,12 +60,11 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (!clinicId) return;
-    const supabase = createClient();
-    supabase
-      .from("invoices")
-      .select("*, patients(name)")
-      .order("created_at", { ascending: false })
-      .then(({ data }) => { setInvoices(data || []); setLoading(false); });
+    // Paid / balance / status are derived from each invoice's items and payments
+    loadLedger<Invoice>(createClient(), { select: "*, patients(name)" })
+      .then(({ invoices }) => setInvoices(invoices))
+      .catch(e => console.error("Could not load invoices:", e))
+      .finally(() => setLoading(false));
   }, [clinicId]);
 
   const filtered = invoices.filter(inv => {

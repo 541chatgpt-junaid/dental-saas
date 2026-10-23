@@ -9,15 +9,18 @@ import { useCurrency } from "@/lib/useCurrency";
 import CountUp from "@/components/CountUp";
 import Link from "next/link";
 import { BellRing, ChevronRight, Globe, PackageX } from "lucide-react";
+import { billingByPatient, countedPayments, loadLedger, NO_BILLS, sumPaymentsBetween, type PatientBilling } from "@/lib/ledger";
 
 type RecentPatient = {
   id: string;
   name: string;
   doctor_name: string | null;
   treatment: string | null;
-  fee_paid: number | null;
-  status: string;
+  billing: PatientBilling;
 };
+
+const badge = (s: string) =>
+  s === "Paid" ? "bg-green-100 text-green-700" : s === "Partial" ? "bg-yellow-100 text-yellow-700" : s === "No bills" ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-700";
 
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
@@ -52,24 +55,30 @@ export default function Dashboard() {
       monthStart.setHours(0, 0, 0, 0);
 
       // Fetch only the columns and rows each card needs, all in parallel
-      const [total, todayRows, feeRows, recent, invItems, labs, invoices, monthPayments] = await Promise.all([
+      const [total, todayRows, recent, invItems, labs, ledger] = await Promise.all([
         supabase.from("patients").select("id", { count: "exact", head: true }),
-        supabase.from("patients").select("fee_paid").gte("created_at", today).lt("created_at", tomorrow.toISOString()),
-        supabase.from("patients").select("fee_total, fee_paid"),
-        supabase.from("patients").select("id, name, doctor_name, treatment, fee_paid, status").order("created_at", { ascending: false }).limit(5),
+        supabase.from("patients").select("id", { count: "exact", head: true }).gte("created_at", today).lt("created_at", tomorrow.toISOString()),
+        supabase.from("patients").select("id, name, doctor_name, treatment").order("created_at", { ascending: false }).limit(5),
         supabase.from("invoice_items").select("description"),
         supabase.from("labs").select("id", { count: "exact", head: true }).eq("status", "Pending"),
-        supabase.from("invoices").select("balance").in("status", ["unpaid", "partial"]),
-        supabase.from("payments").select("amount").gte("payment_date", monthStart.toISOString()),
+        loadLedger(supabase, { select: "id, patient_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
       ]);
 
       setTotalPatients(total.count ?? 0);
-      if (todayRows.data) {
-        setTodayPatients(todayRows.data.length);
-        setTodayRevenue(todayRows.data.reduce((sum, p) => sum + (p.fee_paid || 0), 0));
+      setTodayPatients(todayRows.count ?? 0);
+
+      // Money cards: only the ledger (invoices + payments), drafts and cancelled invoices left out
+      const byPatient = ledger ? billingByPatient(ledger.invoices) : {};
+      if (recent.data) setRecentPatients(recent.data.map(p => ({ ...p, billing: byPatient[Number(p.id)] ?? NO_BILLS })));
+      if (ledger) {
+        const paid = countedPayments(ledger.payments, ledger.invoices);
+        setTodayRevenue(sumPaymentsBetween(paid, new Date(`${today}T00:00:00Z`), tomorrow));
+        setRevenueThisMonth(sumPaymentsBetween(paid, monthStart));
+        const open = ledger.invoices.filter(i => i.counted && i.balance > 0);
+        setPendingFees(open.reduce((sum, i) => sum + i.balance, 0));
+        const now = Date.now();
+        setPendingPayments(open.filter(i => i.due_date && new Date(String(i.due_date)).getTime() < now).reduce((sum, i) => sum + i.balance, 0));
       }
-      if (feeRows.data) setPendingFees(feeRows.data.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0));
-      if (recent.data) setRecentPatients(recent.data);
 
       if (invItems.data && invItems.data.length > 0) {
         const counts: Record<string, number> = {};
@@ -98,8 +107,6 @@ export default function Dashboard() {
           expiring: stock.filter(m => m.expiry_date && m.expiry_date <= soon).length,
         });
       }
-      if (invoices.data) setPendingPayments(invoices.data.reduce((sum, i) => sum + (i.balance || 0), 0));
-      if (monthPayments.data) setRevenueThisMonth(monthPayments.data.reduce((sum, p) => sum + (p.amount || 0), 0));
     };
     fetchData();
   }, [router, today]);
@@ -177,9 +184,9 @@ export default function Dashboard() {
             <p className="text-xs text-gray-400 mt-1">Still to collect</p>
           </div>
           <div className="card-hover bg-white rounded-xl p-3 md:p-5 border-l-4 border-l-red-400 border border-brand-200 shadow-sm">
-            <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">Pending Payments</p>
+            <p className="text-xs font-semibold text-red-600 uppercase tracking-wide mb-2">Overdue Payments</p>
             <p className="text-lg md:text-2xl font-bold text-red-600">{symbol} <CountUp value={pendingPayments} /></p>
-            <p className="text-xs text-gray-400 mt-1">Invoice balance due</p>
+            <p className="text-xs text-gray-400 mt-1">Part of pending, past due date</p>
           </div>
           <div className="card-hover bg-white rounded-xl p-3 md:p-5 border-l-4 border-l-green-400 border border-brand-200 shadow-sm">
             <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-2">Revenue This Month</p>
@@ -204,12 +211,12 @@ export default function Dashboard() {
                   <div key={p.id} className="border border-brand-200 rounded-xl p-3 shadow-sm">
                     <div className="flex justify-between items-start mb-1">
                       <p className="font-semibold text-brand-800 text-sm">{p.name}</p>
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{p.status}</span>
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${badge(p.billing.status)}`}>{p.billing.status}</span>
                     </div>
                     <p className="text-xs text-gray-600">{p.treatment}</p>
                     <div className="flex justify-between mt-1">
                       <p className="text-xs text-gray-500">Dr. {p.doctor_name || "-"}</p>
-                      <p className="text-xs font-semibold text-gray-700">{symbol} {p.fee_paid}</p>
+                      <p className="text-xs font-semibold text-gray-700">{symbol} {p.billing.totalPaid.toLocaleString()}</p>
                     </div>
                   </div>
                 ))}
@@ -231,9 +238,9 @@ export default function Dashboard() {
                         <td className="px-4 py-3 font-semibold text-brand-800">{p.name}</td>
                         <td className="px-4 py-3 text-gray-600">{p.doctor_name || "-"}</td>
                         <td className="px-4 py-3 text-gray-600">{p.treatment}</td>
-                        <td className="px-4 py-3 font-medium text-gray-700">{symbol} {p.fee_paid}</td>
+                        <td className="px-4 py-3 font-medium text-gray-700">{symbol} {p.billing.totalPaid.toLocaleString()}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${p.status === "Paid" ? "bg-green-100 text-green-700" : "bg-orange-100 text-orange-700"}`}>{p.status}</span>
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${badge(p.billing.status)}`}>{p.billing.status}</span>
                         </td>
                       </tr>
                     ))}

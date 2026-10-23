@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import EmptyState from "@/components/EmptyState";
 import { useClinic } from "@/lib/ClinicContext";
 import { useCurrency } from "@/lib/useCurrency";
+import { countedPayments, doctorResolver, loadLedger, sumPaymentsBetween } from "@/lib/ledger";
 
 interface Doctor { id: number; name: string; commission_percent: number | null }
 interface Payout { id: string; doctor_name: string; amount: number; paid_on: string; note: string | null }
@@ -42,10 +43,11 @@ export default function Commissions() {
     setLoading(true);
     const supabase = createClient();
     const [start, end] = monthRange(month);
-    const [docs, visits, regInvoices, pays] = await Promise.all([
+    const [docs, visits, patients, ledger, pays] = await Promise.all([
       supabase.from("doctors").select("id, name, commission_percent").order("name"),
-      supabase.from("visits").select("doctor_name, fee_paid").gte("visit_date", start).lt("visit_date", end),
-      supabase.from("invoices").select("patient_id, amount_paid").eq("notes", "[Registration]").gte("created_at", start).lt("created_at", end),
+      supabase.from("visits").select("id, doctor_name"),
+      supabase.from("patients").select("id, doctor_name"),
+      loadLedger(supabase, { select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, created_at, notes" }).catch(() => null),
       supabase.from("doctor_payouts").select("id, doctor_name, amount, paid_on, note").eq("month", month).order("paid_on"),
     ]);
     if (docs.error) {
@@ -59,21 +61,19 @@ export default function Commissions() {
       setError("Could not load payouts. Has supabase_clinic_features.sql been run?");
     } else setError("");
 
-    // Registration fees belong to the doctor the patient was registered with
-    const patientIds = [...new Set((regInvoices.data || []).map(i => i.patient_id).filter(Boolean))];
-    const patientDoctor: Record<string, string> = {};
-    if (patientIds.length) {
-      const { data: pts } = await supabase.from("patients").select("id, doctor_name").in("id", patientIds);
-      (pts || []).forEach(p => { if (p.doctor_name) patientDoctor[String(p.id)] = p.doctor_name; });
-    }
-
+    // Collected = payments received this month (ledger), credited to the visit's doctor
+    // for visit invoices, otherwise to the doctor the patient is registered with
     const key = (n: string | null | undefined) => (n || "").trim().toLowerCase();
+    const doctorOf = doctorResolver(visits.data || [], patients.data || []);
     const visitSum: Record<string, number> = {};
-    (visits.data || []).forEach(v => { visitSum[key(v.doctor_name)] = (visitSum[key(v.doctor_name)] || 0) + (Number(v.fee_paid) || 0); });
     const regSum: Record<string, number> = {};
-    (regInvoices.data || []).forEach(i => {
-      const d = key(patientDoctor[String(i.patient_id)]);
-      if (d) regSum[d] = (regSum[d] || 0) + (Number(i.amount_paid) || 0);
+    const from = new Date(`${start}T00:00:00Z`), to = new Date(`${end}T00:00:00Z`);
+    countedPayments(ledger?.payments || [], ledger?.invoices || []).forEach(p => {
+      const amount = sumPaymentsBetween([p], from, to);
+      if (!amount) return;
+      const d = key(doctorOf(p.invoice));
+      const bucket = p.invoice.visit_id != null ? visitSum : regSum;
+      bucket[d] = (bucket[d] || 0) + amount;
     });
     const paidSum: Record<string, number> = {};
     (pays.data || []).forEach(p => { paidSum[key(p.doctor_name)] = (paidSum[key(p.doctor_name)] || 0) + (Number(p.amount) || 0); });
@@ -175,7 +175,7 @@ export default function Commissions() {
                     <tr key={r.doctor.id} className="border-t border-brand-100 hover:bg-brand-50">
                       <td className="px-4 py-3">
                         <p className="font-medium text-brand-800">Dr. {r.doctor.name}</p>
-                        <p className="text-[11px] text-brand-500">Visits {money(r.visits)} · Registrations {money(r.registrations)}</p>
+                        <p className="text-[11px] text-brand-500">Visits {money(r.visits)} · Registration &amp; other {money(r.registrations)}</p>
                       </td>
                       <td className="px-4 py-3 text-right text-brand-800">{money(r.collected)}</td>
                       <td className="px-4 py-3 text-center">
@@ -205,7 +205,7 @@ export default function Commissions() {
 
         <p className="mt-3 flex items-start gap-2 text-xs text-brand-500">
           <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          Collected = fees paid on each doctor&apos;s visits in this month (by visit date) plus registration fees of patients registered with that doctor this month.
+          Collected = payments received this month on each doctor&apos;s invoices: visit invoices count for the visit&apos;s doctor, registration and other invoices for the patient&apos;s doctor. Draft and cancelled invoices are left out.
           Set a doctor&apos;s share by typing the percentage and leaving the box.
         </p>
 
