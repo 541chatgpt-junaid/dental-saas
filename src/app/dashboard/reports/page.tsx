@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import * as XLSX from "xlsx";
 import { useCurrency } from "@/lib/useCurrency";
+import { billingByPatient, countedPayments, doctorResolver, loadLedger, NO_BILLS } from "@/lib/ledger";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend
@@ -42,17 +43,29 @@ export default function Reports() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.push("/"); return; }
 
-    const { data: patients } = await supabase.from("patients").select("*");
+    // Income and pending come only from the ledger: payments and invoice balances
+    // (draft and cancelled invoices left out)
+    const [{ data: patients }, { data: visitRows }, ledger] = await Promise.all([
+      supabase.from("patients").select("*"),
+      supabase.from("visits").select("id, doctor_name"),
+      loadLedger(supabase, { select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, created_at, notes" }).catch(() => null),
+    ]);
     if (patients) {
-      setAllPatients(patients);
-      const filtered = patients.filter(p => {
-        if (filter === "today") return p.created_at?.startsWith(today);
-        if (filter === "month") return p.created_at?.startsWith(thisMonth);
+      const invoices = (ledger?.invoices || []).filter(i => i.counted);
+      const payments = ledger ? countedPayments(ledger.payments, ledger.invoices) : [];
+      const billing = billingByPatient(invoices);
+      setAllPatients(patients.map(p => ({ ...p, billing: billing[p.id] ?? NO_BILLS })));
+
+      const dayKey = (d: string | null | undefined) => { const t = d ? new Date(d) : null; return t && !isNaN(t.getTime()) ? t.toISOString() : ""; };
+      const inFilter = (d: string | null | undefined) => {
+        if (filter === "today") return dayKey(d).startsWith(today);
+        if (filter === "month") return dayKey(d).startsWith(thisMonth);
         return true;
-      });
-      setIncome(filtered.reduce((sum, p) => sum + (p.fee_paid || 0), 0));
+      };
+      const filtered = patients.filter(p => inFilter(p.created_at));
+      setIncome(payments.filter(p => inFilter(p.payment_date)).reduce((sum, p) => sum + (Number(p.amount) || 0), 0));
       setPatientCount(filtered.length);
-      setPendingFees(filtered.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0));
+      setPendingFees(invoices.filter(i => inFilter(i.created_at)).reduce((sum, i) => sum + Math.max(0, i.balance), 0));
 
       // Monthly data
       const months = parseInt(chartRange);
@@ -62,12 +75,12 @@ export default function Reports() {
         d.setMonth(d.getMonth() - i);
         const monthKey = d.toISOString().slice(0, 7);
         const monthName = d.toLocaleString("default", { month: "short", year: "2-digit" });
-        const monthPatients = patients.filter(p => p.created_at?.startsWith(monthKey));
+        const monthPatients = patients.filter(p => dayKey(p.created_at).startsWith(monthKey));
         monthlyArr.push({
           month: monthName,
-          income: monthPatients.reduce((sum, p) => sum + (p.fee_paid || 0), 0),
+          income: payments.filter(p => dayKey(p.payment_date).startsWith(monthKey)).reduce((sum, p) => sum + (Number(p.amount) || 0), 0),
           patients: monthPatients.length,
-          pending: monthPatients.reduce((sum, p) => sum + ((p.fee_total || 0) - (p.fee_paid || 0)), 0),
+          pending: invoices.filter(inv => dayKey(inv.created_at).startsWith(monthKey)).reduce((sum, inv) => sum + Math.max(0, inv.balance), 0),
         });
       }
       setMonthlyData(monthlyArr);
@@ -85,15 +98,13 @@ export default function Reports() {
         .slice(0, 6);
       setTreatmentData(treatmentArr);
 
-      // Doctor breakdown
+      // Doctor breakdown: payments and balances per doctor (visit doctor, else the patient's doctor)
+      const doctorOf = doctorResolver(visitRows || [], patients);
       const doctorMap: Record<string, { patients: number; income: number; pending: number }> = {};
-      patients.forEach(p => {
-        const doc = p.doctor_name || "Unassigned";
-        if (!doctorMap[doc]) doctorMap[doc] = { patients: 0, income: 0, pending: 0 };
-        doctorMap[doc].patients += 1;
-        doctorMap[doc].income += p.fee_paid || 0;
-        doctorMap[doc].pending += (p.fee_total || 0) - (p.fee_paid || 0);
-      });
+      const row = (doc: string) => (doctorMap[doc || "Unassigned"] ||= { patients: 0, income: 0, pending: 0 });
+      patients.forEach(p => { row(p.doctor_name).patients += 1; });
+      payments.forEach(p => { row(doctorOf(p.invoice)).income += Number(p.amount) || 0; });
+      invoices.forEach(inv => { if (inv.balance > 0) row(doctorOf(inv)).pending += inv.balance; });
       const doctorArr = Object.entries(doctorMap)
         .map(([name, data]) => ({ name, ...data }))
         .sort((a, b) => b.patients - a.patients);
@@ -147,8 +158,8 @@ export default function Reports() {
     const patientsData = allPatients.map(p => ({
       ID: p.id, Name: p.name, Phone: p.phone, Age: p.age,
       Gender: p.gender, Doctor: p.doctor_name, Treatment: p.treatment,
-      "Total Fee": p.fee_total, "Fee Paid": p.fee_paid,
-      Remaining: p.fee_total - p.fee_paid, Status: p.status,
+      "Total Billed": p.billing.totalBilled, Paid: p.billing.totalPaid,
+      Remaining: p.billing.outstanding, Status: p.billing.status,
       Date: new Date(p.created_at).toLocaleDateString(),
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(patientsData), "Patients");

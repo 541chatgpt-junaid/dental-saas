@@ -8,6 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 import PatientFiles from "./PatientFiles";
+import { billingOf, loadLedger, REGISTRATION_NOTE, type Ledgered } from "@/lib/ledger";
 
 interface Patient {
   id: number;
@@ -17,23 +18,18 @@ interface Patient {
   gender: string;
   treatment: string;
   doctor_name: string;
-  fee_total: number;
-  fee_paid: number;
-  status: string;
   created_at: string;
 }
 
-interface Invoice {
+type Invoice = Ledgered<{
   id: string;
+  patient_id: number | null;
   invoice_number: string;
   status: string;
-  total: number;
-  amount_paid: number;
-  balance: number;
   due_date: string | null;
   created_at: string;
   notes: string | null;
-}
+}>;
 
 interface Payment {
   id: string;
@@ -72,29 +68,23 @@ export default function PatientHistoryPage() {
   useEffect(() => {
     const supabase = createClient();
     const fetchAll = async () => {
-      const [{ data: p }, { data: inv }] = await Promise.all([
+      const [{ data: p }, ledger] = await Promise.all([
         supabase.from("patients").select("*").eq("id", Number(id)).single(),
-        supabase.from("invoices").select("*").eq("patient_id", Number(id)).order("created_at", { ascending: false }),
+        loadLedger<Invoice>(supabase, { patientId: Number(id) }).catch(() => ({ invoices: [] as Invoice[], payments: [] })),
       ]);
       setPatient(p || null);
-      const invList = inv || [];
-      setInvoices(invList);
-      if (invList.length > 0) {
-        const { data: pays } = await supabase
-          .from("payments")
-          .select("*, invoices(invoice_number)")
-          .in("invoice_id", invList.map(i => i.id))
-          .order("payment_date", { ascending: false });
-        setPayments(pays || []);
-      }
+      setInvoices(ledger.invoices);
+      setPayments(ledger.payments
+        .map(pay => ({ ...pay, invoices: pay.invoice ? { invoice_number: pay.invoice.invoice_number } : null }) as Payment)
+        .reverse());
       setLoading(false);
     };
     fetchAll();
   }, [id]);
 
-  const totalBilled = invoices.filter(i => i.status !== "cancelled" && i.status !== "draft").reduce((s, i) => s + i.total, 0);
-  const totalPaid = invoices.filter(i => i.status !== "cancelled" && i.status !== "draft").reduce((s, i) => s + i.amount_paid, 0);
-  const outstanding = invoices.filter(i => i.status !== "cancelled" && i.status !== "draft").reduce((s, i) => s + i.balance, 0);
+  // Draft and cancelled invoices are left out of every total
+  const { totalBilled, totalPaid, outstanding } = billingOf(invoices);
+  const registration = invoices.find(i => i.notes === REGISTRATION_NOTE && i.counted);
 
   if (loading) return (
     <div className="min-h-screen flex bg-brand-50">
@@ -150,12 +140,12 @@ export default function PatientHistoryPage() {
           </div>
         </div>
 
-        {/* Also show patient's direct fee from patients table */}
-        {(patient.fee_total > 0) && (
+        {/* Registration invoice, with its current figures from the ledger */}
+        {registration && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 mb-5 text-sm text-blue-800">
-            Registration receipt: {symbol} {patient.fee_paid.toLocaleString()} paid of {symbol} {patient.fee_total.toLocaleString()} total
-            {patient.fee_total - patient.fee_paid > 0 && (
-              <span className="ml-2 font-semibold text-orange-700">({symbol} {(patient.fee_total - patient.fee_paid).toLocaleString()} pending)</span>
+            Registration receipt ({registration.invoice_number}): {symbol} {registration.amount_paid.toLocaleString()} paid of {symbol} {registration.total.toLocaleString()} total
+            {registration.balance > 0 && (
+              <span className="ml-2 font-semibold text-orange-700">({symbol} {registration.balance.toLocaleString()} pending)</span>
             )}
           </div>
         )}

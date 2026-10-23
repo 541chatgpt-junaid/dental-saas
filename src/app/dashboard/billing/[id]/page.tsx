@@ -7,9 +7,11 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import { applyLedger, recordPayment } from "@/lib/ledger";
 
 interface Invoice {
   id: string;
+  patient_id: number | null;
   invoice_number: string;
   status: string;
   subtotal: number;
@@ -86,7 +88,8 @@ export default function InvoiceDetailPage() {
       supabase.from("invoice_items").select("*").eq("invoice_id", id),
       supabase.from("payments").select("*").eq("invoice_id", id).order("payment_date"),
     ]);
-    setInvoice(inv || null);
+    // Total, paid, balance and status come from the line items and payments
+    setInvoice(inv ? applyLedger([inv as Invoice], invItems || [], pays || [])[0] : null);
     setItems(invItems || []);
     setPayments(pays || []);
     setLoading(false);
@@ -160,20 +163,11 @@ export default function InvoiceDetailPage() {
     setPayError("");
     const supabase = createClient();
 
-    const { error: pErr } = await supabase.from("payments").insert([{
-      invoice_id: id,
-      clinic_id: clinicId,
-      amount: amt,
-      payment_method: payMethod,
-      payment_date: new Date().toISOString(),
-      notes: payNotes || null,
-    }]);
-
-    if (pErr) { setPayError(pErr.message); setPayLoading(false); return; }
-
-    const newAmountPaid = invoice.amount_paid + amt;
-    const newStatus = newAmountPaid >= invoice.total ? "paid" : "partial";
-    await supabase.from("invoices").update({ amount_paid: newAmountPaid, status: newStatus }).eq("id", id);
+    const pErr = await recordPayment(supabase, {
+      clinicId, invoiceId: id, patientId: invoice.patient_id ?? null,
+      amount: amt, method: payMethod, note: payNotes || null,
+    });
+    if (pErr) { setPayError(pErr); setPayLoading(false); return; }
 
     setShowPayModal(false);
     setPayAmount("");
