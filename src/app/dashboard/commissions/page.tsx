@@ -48,7 +48,7 @@ export default function Commissions() {
       supabase.from("doctors").select("id, name, commission_percent").order("name"),
       supabase.from("visits").select("id, doctor_name"),
       supabase.from("patients").select("id, doctor_name"),
-      loadLedger(supabase, { select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, created_at, notes" }).catch(() => null),
+      loadLedger(supabase, { clinicId, select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, created_at, notes" }).catch(() => null),
       supabase.from("doctor_payouts").select("id, doctor_name, amount, paid_on, note").eq("month", month).order("paid_on"),
     ]);
     if (docs.error) {

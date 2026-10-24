@@ -81,10 +81,14 @@ export default function InvoiceDetailPage() {
   const fetchData = async () => {
     setLoading(true);
     const supabase = createClient();
+    // clinic_id filter in code too, so a guessed invoice id can't load another clinic's invoice even if RLS were off
+    const cid = clinicId || "";
+    let invQ = supabase.from("invoices").select("*, patients(name, phone)").eq("id", id);
+    let itemQ = supabase.from("invoice_items").select("*").eq("invoice_id", id);
+    let payQ = supabase.from("payments").select("*").eq("invoice_id", id).order("payment_date");
+    if (cid) { invQ = invQ.eq("clinic_id", cid); itemQ = itemQ.eq("clinic_id", cid); payQ = payQ.eq("clinic_id", cid); }
     const [{ data: inv }, { data: invItems }, { data: pays }] = await Promise.all([
-      supabase.from("invoices").select("*, patients(name, phone)").eq("id", id).single(),
-      supabase.from("invoice_items").select("*").eq("invoice_id", id),
-      supabase.from("payments").select("*").eq("invoice_id", id).order("payment_date"),
+      invQ.maybeSingle(), itemQ, payQ,
     ]);
     // Total, paid, balance and status come from the line items and payments
     setInvoice(inv ? applyLedger([inv as Invoice], invItems || [], pays || [])[0] : null);

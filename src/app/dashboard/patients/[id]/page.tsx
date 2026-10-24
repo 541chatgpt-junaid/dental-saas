@@ -70,9 +70,12 @@ export default function PatientHistoryPage() {
   useEffect(() => {
     const supabase = createClient();
     const fetchAll = async () => {
+      // clinic_id filter in code too: a guessed patient id can't open another clinic's record
+      let patientQ = supabase.from("patients").select("*").eq("id", Number(id));
+      if (clinicId) patientQ = patientQ.eq("clinic_id", clinicId);
       const [{ data: p }, ledger] = await Promise.all([
-        supabase.from("patients").select("*").eq("id", Number(id)).single(),
-        loadLedger<Invoice>(supabase, { patientId: Number(id) }).catch(() => ({ invoices: [] as Invoice[], payments: [] })),
+        patientQ.maybeSingle(),
+        loadLedger<Invoice>(supabase, { patientId: Number(id), clinicId }).catch(() => ({ invoices: [] as Invoice[], payments: [] })),
       ]);
       setPatient(p || null);
       setInvoices(ledger.invoices);
@@ -82,7 +85,7 @@ export default function PatientHistoryPage() {
       setLoading(false);
     };
     fetchAll();
-  }, [id]);
+  }, [id, clinicId]);
 
   // Draft and cancelled invoices are left out of every total
   const { totalBilled, totalPaid, outstanding } = billingOf(invoices);
