@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import * as XLSX from "xlsx";
 import { useCurrency } from "@/lib/useCurrency";
 import { billingByPatient, countedPayments, doctorResolver, loadLedger, NO_BILLS } from "@/lib/ledger";
+import { useClinic } from "@/lib/ClinicContext";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend
@@ -33,6 +34,7 @@ export default function Reports() {
   const [treatmentData, setTreatmentData] = useState<any[]>([]);
   const [doctorData, setDoctorData] = useState<any[]>([]);
   const router = useRouter();
+  const { clinicId } = useClinic();
   const { symbol } = useCurrency();
 
   const today = new Date().toISOString().split("T")[0];
@@ -48,7 +50,7 @@ export default function Reports() {
     const [{ data: patients }, { data: visitRows }, ledger] = await Promise.all([
       supabase.from("patients").select("*"),
       supabase.from("visits").select("id, doctor_name"),
-      loadLedger(supabase, { select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
+      loadLedger(supabase, { clinicId, select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
     ]);
     if (patients) {
       const invoices = (ledger?.invoices || []).filter(i => i.counted);
@@ -147,7 +149,7 @@ export default function Reports() {
     if (purchases) setAllPurchases(purchases);
   };
 
-  useEffect(() => { fetchData(); }, [filter, chartRange]);
+  useEffect(() => { fetchData(); }, [filter, chartRange, clinicId]);
 
   const totalExpenses = labCost + manualExpenses + materialCost;
   const profit = income - totalExpenses;

@@ -63,7 +63,7 @@ export default function BillingPage() {
   useEffect(() => {
     if (!clinicId) return;
     // Paid / balance / status are derived from each invoice's items and payments
-    loadLedger<Invoice>(createClient(), { select: "*, patients(name)" })
+    loadLedger<Invoice>(createClient(), { clinicId, select: "*, patients(name)" })
       .then(({ invoices }) => setInvoices(invoices))
       .catch(e => console.error("Could not load invoices:", e))
       .finally(() => setLoading(false));

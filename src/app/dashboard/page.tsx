@@ -9,6 +9,7 @@ import { useCurrency } from "@/lib/useCurrency";
 import CountUp from "@/components/CountUp";
 import Link from "next/link";
 import { BellRing, ChevronRight, Globe, PackageX } from "lucide-react";
+import { useClinic } from "@/lib/ClinicContext";
 import { billingByPatient, countedPayments, loadLedger, NO_BILLS, sumPaymentsBetween, type PatientBilling } from "@/lib/ledger";
 
 type RecentPatient = {
@@ -38,6 +39,7 @@ export default function Dashboard() {
   const [recentPatients, setRecentPatients] = useState<RecentPatient[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
+  const { clinicId } = useClinic();
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -61,7 +63,7 @@ export default function Dashboard() {
         supabase.from("patients").select("id, name, doctor_name, treatment").order("created_at", { ascending: false }).limit(5),
         supabase.from("invoice_items").select("description"),
         supabase.from("labs").select("id", { count: "exact", head: true }).eq("status", "Pending"),
-        loadLedger(supabase, { select: "id, patient_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
+        loadLedger(supabase, { clinicId, select: "id, patient_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
       ]);
 
       setTotalPatients(total.count ?? 0);
@@ -108,7 +110,7 @@ export default function Dashboard() {
       }
     };
     fetchData();
-  }, [router, today]);
+  }, [router, today, clinicId]);
 
   return (
     <div className="min-h-screen flex bg-brand-50">

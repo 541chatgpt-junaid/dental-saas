@@ -198,6 +198,7 @@ export default function Patients() {
   const fetchInvoiceSummaries = async () => {
     try {
       const { invoices } = await loadLedger(createClient(), {
+        clinicId,
         select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes",
       });
       setLedgerInvoices(invoices);

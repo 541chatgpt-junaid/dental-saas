@@ -207,14 +207,20 @@ export interface LoadedLedger<T extends LedgerInvoiceRow = LedgerInvoiceRow & Re
 /**
  * Load invoices (optionally one patient's), their items and payments, and
  * apply the ledger rules. `select` is the invoice column list (embeds allowed).
+ *
+ * `clinicId` scopes every query to the caller's clinic in code as well, so
+ * isolation never rests on RLS alone (defense in depth). Pass it from
+ * ClinicContext on every screen.
  */
 export async function loadLedger<T extends LedgerInvoiceRow = LedgerInvoiceRow & Record<string, unknown>>(
   supabase: SupabaseClient,
-  opts: { patientId?: number; select?: string } = {},
+  opts: { patientId?: number; select?: string; clinicId?: string | null } = {},
 ): Promise<LoadedLedger<T>> {
   const select = opts.select || "*";
+  const clinic = opts.clinicId ?? undefined;
   const invoices = await fetchAll<T>((a, b) => {
     let q = supabase.from("invoices").select(select);
+    if (clinic) q = q.eq("clinic_id", clinic);
     if (opts.patientId != null) q = q.eq("patient_id", opts.patientId);
     return q.order("created_at", { ascending: false }).range(a, b) as unknown as PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
   });
@@ -229,8 +235,8 @@ export async function loadLedger<T extends LedgerInvoiceRow = LedgerInvoiceRow &
     ]);
   } else {
     [items, payments] = await Promise.all([
-      fetchAll<LedgerItemRow>((a, b) => supabase.from("invoice_items").select("invoice_id, quantity, unit_price").range(a, b)),
-      fetchAll<LedgerPaymentRow>((a, b) => supabase.from("payments").select("*").range(a, b)),
+      fetchAll<LedgerItemRow>((a, b) => { let q = supabase.from("invoice_items").select("invoice_id, quantity, unit_price"); if (clinic) q = q.eq("clinic_id", clinic); return q.range(a, b); }),
+      fetchAll<LedgerPaymentRow>((a, b) => { let q = supabase.from("payments").select("*"); if (clinic) q = q.eq("clinic_id", clinic); return q.range(a, b); }),
     ]);
   }
   payments.sort((x, y) => String(x.payment_date).localeCompare(String(y.payment_date)));
