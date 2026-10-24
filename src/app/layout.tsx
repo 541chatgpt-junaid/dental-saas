@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "DentEase – Best Dental Clinic Management Software in Pakistan",
+  title: "DentEase – Dental Clinic Management Software",
   description:
-    "DentEase is the #1 dental clinic management software in Pakistan. Manage patients, appointments, lab records, staff & revenue in one place. Free to use. No credit card required.",
+    "DentEase helps dental clinics in Pakistan manage patients, appointments, lab records, staff & revenue in one place. Free to get started. No credit card required.",
   keywords: [
     "dental clinic software pakistan",
     "dental management software",
@@ -13,14 +13,13 @@ export const metadata: Metadata = {
     "patient management dental",
     "lab record dental software",
     "dental appointment software",
-    "best dental software pakistan",
     "dental clinic management system",
     "dental EMR software",
   ],
   openGraph: {
-    title: "DentEase – Best Dental Clinic Management Software",
+    title: "DentEase – Dental Clinic Management Software",
     description:
-      "Manage patients, appointments, lab records, staff & revenue in one place. Free to use.",
+      "Manage patients, appointments, lab records, staff & revenue in one place. Free to get started.",
     type: "website",
     locale: "en_PK",
   },

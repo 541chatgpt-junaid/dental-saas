@@ -8,9 +8,9 @@ import {
 } from "lucide-react";
 
 /* ─── CONTACT ───────────────────────────────────────────── */
-const PHONE_DISPLAY = "+92 310 5913101";
-const PHONE_TEL = "tel:+923105913101";
-const WHATSAPP = "https://wa.me/923105913101";
+const PHONE_DISPLAY = "+92 313 0709941";
+const PHONE_TEL = "tel:+923130709941";
+const WHATSAPP = "https://wa.me/923130709941";
 
 /* ─── DATA ─────────────────────────────────────────────── */
 const NAV = [
@@ -20,13 +20,6 @@ const NAV = [
   ["#reviews", "Reviews"],
   ["#faq", "FAQ"],
 ] as const;
-
-const STATS = [
-  { num: 500, suffix: "+", label: "Clinics onboard" },
-  { num: 50000, suffix: "+", label: "Patient records managed" },
-  { num: 99.9, suffix: "%", label: "Platform uptime", decimals: 1 },
-  { num: 100, suffix: "%", label: "Free to get started" },
-];
 
 const FEATURES = [
   { icon: CalendarCheck, title: "Appointment Booking", desc: "Book, reschedule and confirm visits in seconds, with the whole day's chair schedule on one calm screen." },
@@ -44,13 +37,6 @@ const PRINCIPLES = [
 ];
 
 type Testimonial = { name: string; clinic: string; rating: number; text: string };
-
-// Shown until approved reviews load from /api/reviews (or if there are none yet)
-const TESTIMONIALS: Testimonial[] = [
-  { name: "Dr. Ahmed Raza", clinic: "Raza Dental Care, Lahore", rating: 5, text: "DentEase has completely transformed how we manage our clinic. Patient records and lab work tracking is now seamless." },
-  { name: "Dr. Sarah Khan", clinic: "SmilePro Dental, Karachi", rating: 5, text: "The FDI tooth chart feature is brilliant! Our lab record management has never been this organized. Highly recommended." },
-  { name: "Dr. Usman Ali", clinic: "Ali Dental Clinic, Islamabad", rating: 5, text: "Free software with this many features? Unbelievable. The reports section alone saves us hours every month." },
-];
 
 const FAQS = [
   { q: "Is DentEase really free to start?", a: "Yes. You can create your clinic account and start managing patients, appointments and billing without a credit card or setup fee." },
@@ -113,32 +99,6 @@ function Wordmark({ light = true }: { light?: boolean }) {
 }
 
 /* ─── COUNT-UP STAT ─────────────────────────────────────── */
-function CountUp({ num, suffix, decimals = 0 }: { num: number; suffix: string; decimals?: number }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [val, setVal] = useState(0);
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-    let raf = 0;
-    const obs = new IntersectionObserver(([e]) => {
-      if (!e.isIntersecting) return;
-      obs.disconnect();
-      const start = performance.now();
-      const dur = 2000;
-      const tick = (now: number) => {
-        const p = Math.min((now - start) / dur, 1);
-        setVal(num * (1 - Math.pow(2, -10 * p))); // ease-out-expo
-        if (p < 1) raf = requestAnimationFrame(tick);
-        else setVal(num);
-      };
-      raf = requestAnimationFrame(tick);
-    }, { threshold: 0.4 });
-    obs.observe(el);
-    return () => { obs.disconnect(); cancelAnimationFrame(raf); };
-  }, [num]);
-  const shown = num >= 1000 ? `${Math.floor(val / 1000)}K` : val.toFixed(decimals);
-  return <span ref={ref}>{shown}{suffix}</span>;
-}
 
 /* ─── BEFORE / AFTER SLIDER ─────────────────────────────── */
 function PaperRecords() {
@@ -482,7 +442,7 @@ export default function LandingPage() {
   const [reviewWebsite, setReviewWebsite] = useState("");
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewError, setReviewError] = useState("");
-  const [testimonials, setTestimonials] = useState<Testimonial[]>(TESTIMONIALS);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -645,20 +605,6 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── STATS ── */}
-        <section aria-label="DentEase in numbers" className="bg-navy-2">
-          <div className="mx-auto grid max-w-7xl grid-cols-2 px-4 sm:px-6 lg:grid-cols-4">
-            {STATS.map((s, i) => (
-              <div key={s.label} {...rv(i * 120)} className={`px-4 py-10 text-center sm:py-14 ${i % 2 === 1 ? "border-l border-gold/20" : ""} ${i >= 2 ? "border-t border-gold/20 lg:border-t-0" : ""} ${i === 2 ? "lg:border-l" : ""}`}>
-                <p className="font-display text-4xl font-semibold text-gold sm:text-5xl">
-                  <CountUp num={s.num} suffix={s.suffix} decimals={s.decimals} />
-                </p>
-                <p className="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-white/60">{s.label}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-
         {/* ── FEATURES ── */}
         <section id="features" aria-label="Features" className="scroll-mt-20 bg-white py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -731,9 +677,13 @@ export default function LandingPage() {
         {/* ── TESTIMONIALS ── */}
         <section id="reviews" aria-label="Reviews" className="scroll-mt-20 overflow-hidden bg-cream-2 py-24 sm:py-32">
           <div className="mx-auto max-w-2xl px-4 text-center sm:px-6">
-            <div {...rv()}><Eyebrow>Testimonials</Eyebrow></div>
-            <h2 {...rv(100)} className={`${sectionHead} text-navy`}>Trusted by dental professionals</h2>
+            <div {...rv()}><Eyebrow>{testimonials.length > 0 ? "Testimonials" : "Reviews"}</Eyebrow></div>
+            <h2 {...rv(100)} className={`${sectionHead} text-navy`}>
+              {testimonials.length > 0 ? "Trusted by dental professionals" : "Share your experience"}
+            </h2>
           </div>
+          {/* Only real, approved reviews from /api/reviews are shown; nothing is rendered until some exist */}
+          {testimonials.length > 0 && (
           <div {...rv(200, "fade")} className="relative mt-16 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
             <div className="marquee-track flex w-max animate-marquee gap-6">
               {/* Repeat an even number of times so the -50% marquee loop is seamless and the strip is never short */}
@@ -759,6 +709,7 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
+          )}
 
           {/* Share your experience */}
           <div {...rv(100)} className="mx-auto mt-20 max-w-2xl px-4 sm:px-6">
