@@ -64,11 +64,13 @@ export default function AdminPanel() {
   };
 
   const toggleActive = async (clinic: Clinic) => {
-    await fetch("/api/admin/clinics", {
+    const res = await fetch("/api/admin/clinics", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clinicId: clinic.id, is_active: !clinic.is_active }),
-    });
+    }).catch(() => null);
+    const json = res ? await res.json().catch(() => ({})) : { error: "no connection to the server" };
+    if (!res?.ok || json.error) alert(`Could not change ${clinic.name}: ${json.error || res?.statusText || "request failed"}`);
     fetchClinics();
   };
 

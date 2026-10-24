@@ -257,10 +257,12 @@ export async function syncInvoice(supabase: SupabaseClient, invoiceId: string) {
   ]);
   if (!inv) return;
   const [l] = applyLedger([inv as LedgerInvoiceRow], items || [], pays || []);
-  await supabase.from("invoices").update({
+  // Screens never read these stored figures, so a failure here changes nothing shown; still say so
+  const { error } = await supabase.from("invoices").update({
     subtotal: l.subtotal, total: l.total, amount_paid: l.amount_paid,
     status: storedStatus({ status: l.status, total: l.total, paid: l.amount_paid, due_date: l.due_date }),
   }).eq("id", invoiceId);
+  if (error) console.warn(`Stored invoice figures not updated: ${error.message}`);
 }
 
 export async function recordPayment(supabase: SupabaseClient, p: {
@@ -296,16 +298,20 @@ export async function createInvoice(supabase: SupabaseClient, p: {
   return { id: invoice.id as string, error: null };
 }
 
-/** Set the single line item of a registration / visit invoice to a new amount */
+/** Set the single line item of a registration / visit invoice to a new amount; returns an error message or null */
 export async function setSingleItem(supabase: SupabaseClient, clinicId: string | null, invoiceId: string, description: string, amount: number) {
-  const { data: items } = await supabase.from("invoice_items").select("id").eq("invoice_id", invoiceId);
+  const { data: items, error: readErr } = await supabase.from("invoice_items").select("id").eq("invoice_id", invoiceId);
+  if (readErr) return readErr.message;
+  let error: { message: string } | null = null;
   if (items && items.length) {
-    await supabase.from("invoice_items").update({ description, quantity: 1, unit_price: amount }).eq("id", items[0].id);
-    if (items.length > 1) await supabase.from("invoice_items").delete().in("id", items.slice(1).map(i => i.id));
+    ({ error } = await supabase.from("invoice_items").update({ description, quantity: 1, unit_price: amount }).eq("id", items[0].id));
+    if (!error && items.length > 1) ({ error } = await supabase.from("invoice_items").delete().in("id", items.slice(1).map(i => i.id)));
   } else {
-    await supabase.from("invoice_items").insert([{ invoice_id: invoiceId, clinic_id: clinicId, description, quantity: 1, unit_price: amount }]);
+    ({ error } = await supabase.from("invoice_items").insert([{ invoice_id: invoiceId, clinic_id: clinicId, description, quantity: 1, unit_price: amount }]));
   }
+  if (error) return error.message;
   await syncInvoice(supabase, invoiceId);
+  return null;
 }
 
 /** Mark a patient / visit row as already in the ledger so the one-time migration skips it */

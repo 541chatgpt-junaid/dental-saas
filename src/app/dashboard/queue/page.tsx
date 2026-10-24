@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowUpRight, Check, ListOrdered, MessageCircle, Monitor, Plus, SkipForward, Undo2, UserRoundCheck, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { saveErrorMessage } from "@/lib/formSave";
 import Sidebar from "@/components/Sidebar";
 import EmptyState from "@/components/EmptyState";
 import { useClinic } from "@/lib/ClinicContext";
@@ -79,7 +80,12 @@ export default function QueuePage() {
     const patch: Partial<Token> = { status };
     if (status === "in_chair") patch.called_at = new Date().toISOString();
     setTokens(list => list.map(x => (x.id === t.id ? { ...x, ...patch } : x)));
-    await createClient().from("queue_tokens").update(patch).eq("id", t.id);
+    const { error } = await createClient().from("queue_tokens").update(patch).eq("id", t.id);
+    if (error) {
+      // Put the token back the way it was and say why
+      setTokens(list => list.map(x => (x.id === t.id ? t : x)));
+      alert(saveErrorMessage(error, "token status"));
+    }
   };
 
   const waiting = useMemo(() => tokens.filter(t => t.status === "waiting" && (!doctorFilter || !t.doctor_name || t.doctor_name === doctorFilter)), [tokens, doctorFilter]);

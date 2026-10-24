@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import FormError from "@/components/FormError";
+import { dateOrNull, dateOrToday, firstError, readAmount, saveErrorMessage, todayISO } from "@/lib/formSave";
 
 interface Lab {
   id: number;
@@ -271,10 +273,11 @@ export default function Labs() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [form, setForm] = useState({
     patient_name: "", lab_name: "", work_type: "Crown",
     units: "1", shade: "", material: "Zirconia",
-    given_date: "", delivery_date: "", fee: "", fee_paid: "0",
+    given_date: todayISO(), delivery_date: "", fee: "", fee_paid: "0",
     status: "Pending", notes: "", tooth_chart: "",
   });
   const router = useRouter();
@@ -298,47 +301,68 @@ export default function Labs() {
   }, [router]);
 
   const resetForm = () => {
-    setForm({ patient_name: "", lab_name: "", work_type: "Crown", units: "1", shade: "", material: "Zirconia", given_date: "", delivery_date: "", fee: "", fee_paid: "0", status: "Pending", notes: "", tooth_chart: "" });
+    setForm({ patient_name: "", lab_name: "", work_type: "Crown", units: "1", shade: "", material: "Zirconia", given_date: todayISO(), delivery_date: "", fee: "", fee_paid: "0", status: "Pending", notes: "", tooth_chart: "" });
     setShowForm(false);
     setEditingId(null);
+    setSaveError("");
+  };
+
+  /** Validated row from the form, or an error message naming the problem */
+  const labRow = () => {
+    const fee = readAmount(form.fee, "Total fee");
+    const paid = readAmount(form.fee_paid, "Fee paid");
+    const units = readAmount(form.units, "Units", { min: 1 });
+    const error = firstError(
+      !form.patient_name.trim() && "Patient name is required.",
+      !form.lab_name.trim() && "Lab name is required.",
+      fee.error, paid.error, units.error,
+      paid.value > fee.value && "Fee paid can't be more than the total fee.",
+      form.delivery_date && form.given_date && form.delivery_date < form.given_date && "Delivery date can't be before the given date.",
+    );
+    if (error) return { error, row: null };
+    return {
+      error: null,
+      row: {
+        patient_name: form.patient_name.trim(), lab_name: form.lab_name.trim(),
+        work_type: form.work_type, units: units.value,
+        shade: form.shade, material: form.material,
+        // Given date defaults to today; an unknown delivery date is stored as empty, never as ""
+        given_date: dateOrToday(form.given_date), delivery_date: dateOrNull(form.delivery_date),
+        fee: fee.value, fee_paid: paid.value,
+        status: form.status, notes: form.notes, tooth_chart: form.tooth_chart,
+      },
+    };
   };
 
   const handleAdd = async () => {
+    const { error: invalid, row } = labRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("labs").insert([{
-      patient_name: form.patient_name, lab_name: form.lab_name,
-      work_type: form.work_type, units: parseInt(form.units) || 1,
-      shade: form.shade, material: form.material,
-      given_date: form.given_date, delivery_date: form.delivery_date,
-      fee: parseInt(form.fee) || 0, fee_paid: parseInt(form.fee_paid) || 0,
-      status: form.status, notes: form.notes,
-      tooth_chart: form.tooth_chart, clinic_id: clinicId,
-    }]);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("labs").insert([{ ...row, clinic_id: clinicId }]);
     setLoading(false);
+    // On failure the form stays open with everything typed
+    if (error) { setSaveError(saveErrorMessage(error, "lab record")); return; }
+    resetForm();
     fetchLabs();
   };
 
   const handleEdit = async () => {
     if (!editingId) return;
+    const { error: invalid, row } = labRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("labs").update({
-      patient_name: form.patient_name, lab_name: form.lab_name,
-      work_type: form.work_type, units: parseInt(form.units) || 1,
-      shade: form.shade, material: form.material,
-      given_date: form.given_date, delivery_date: form.delivery_date,
-      fee: parseInt(form.fee) || 0, fee_paid: parseInt(form.fee_paid) || 0,
-      status: form.status, notes: form.notes, tooth_chart: form.tooth_chart,
-    }).eq("id", editingId);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("labs").update(row).eq("id", editingId);
     setLoading(false);
+    if (error) { setSaveError(saveErrorMessage(error, "lab record")); return; }
+    resetForm();
     fetchLabs();
   };
 
   const openEdit = (l: Lab) => {
     setEditingId(l.id);
+    setSaveError("");
     setForm({
       patient_name: l.patient_name, lab_name: l.lab_name,
       work_type: l.work_type, units: l.units.toString(),
@@ -353,21 +377,25 @@ export default function Labs() {
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this lab record?")) return;
     const supabase = createClient();
-    await supabase.from("labs").delete().eq("id", id);
+    const { error } = await supabase.from("labs").delete().eq("id", id);
+    if (error) alert(saveErrorMessage(error, "lab record").replace("save", "delete"));
     fetchLabs();
   };
 
   const handlePayment = async (lab: Lab, extraPayment: number) => {
+    if (!(extraPayment > 0)) { alert("Enter a payment amount greater than 0."); return; }
     const supabase = createClient();
     const newPaid = lab.fee_paid + extraPayment;
     const newStatus = newPaid >= lab.fee ? "Delivered" : lab.status;
-    await supabase.from("labs").update({ fee_paid: newPaid, status: newStatus }).eq("id", lab.id);
+    const { error } = await supabase.from("labs").update({ fee_paid: newPaid, status: newStatus }).eq("id", lab.id);
+    if (error) alert(saveErrorMessage(error, "lab payment"));
     fetchLabs();
   };
 
   const updateStatus = async (lab: Lab, newStatus: string) => {
     const supabase = createClient();
-    await supabase.from("labs").update({ status: newStatus }).eq("id", lab.id);
+    const { error } = await supabase.from("labs").update({ status: newStatus }).eq("id", lab.id);
+    if (error) alert(saveErrorMessage(error, "lab status"));
     fetchLabs();
   };
 
@@ -397,6 +425,7 @@ export default function Labs() {
         {showAnyForm && (
           <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Lab Record" : "New Lab Record"}</h3>
+            <FormError message={saveError} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
 
               <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />

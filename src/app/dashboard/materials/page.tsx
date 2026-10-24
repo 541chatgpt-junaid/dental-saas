@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import FormError from "@/components/FormError";
+import { dateOrNull, firstError, readAmount, saveErrorMessage, todayISO } from "@/lib/formSave";
 
 interface Material {
   id: number;
@@ -21,7 +23,6 @@ interface Material {
   expiry_date?: string | null;
 }
 
-const todayISO = () => new Date().toLocaleDateString("en-CA");
 const daysUntil = (iso: string) => Math.round((new Date(`${iso}T00:00:00`).getTime() - new Date(`${todayISO()}T00:00:00`).getTime()) / 86400000);
 /** expired / expiring within 30 days / ok */
 const expiryState = (m: Material) => !m.expiry_date ? "none" : daysUntil(m.expiry_date) < 0 ? "expired" : daysUntil(m.expiry_date) <= 30 ? "soon" : "ok";
@@ -49,6 +50,7 @@ export default function Materials() {
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
   const [hadExpiry, setHadExpiry] = useState(false);
+  const [saveError, setSaveError] = useState("");
 
   const fetchMaterials = async () => {
     const supabase = createClient();
@@ -70,44 +72,59 @@ export default function Materials() {
     setForm({ name: "", category: "Consumable", quantity: "", unit: "Box", min_quantity: "", price: "", supplier: "", expiry_date: "" });
     setShowForm(false);
     setEditingId(null);
+    setSaveError("");
+  };
+
+  /** Validated row from the form, or an error message naming the problem */
+  const materialRow = () => {
+    const qty = readAmount(form.quantity, "Quantity");
+    const min = readAmount(form.min_quantity, "Minimum quantity");
+    const price = readAmount(form.price, "Price");
+    const error = firstError(!form.name.trim() && "Material name is required.", qty.error, min.error, price.error);
+    if (error) return { error, row: null };
+    return {
+      error: null,
+      row: {
+        name: form.name.trim(), category: form.category, quantity: qty.value, unit: form.unit,
+        min_quantity: min.value, price: price.value, supplier: form.supplier,
+      },
+    };
   };
 
   const handleAdd = async () => {
+    const { error: invalid, row } = materialRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("materials").insert([{
-      name: form.name, category: form.category,
-      quantity: parseInt(form.quantity) || 0, unit: form.unit,
-      min_quantity: parseInt(form.min_quantity) || 0,
-      price: parseInt(form.price) || 0,
-      ...(form.expiry_date ? { expiry_date: form.expiry_date } : {}),
-      supplier: form.supplier, clinic_id: clinicId,
-    }]);
-    resetForm();
+    setSaveError("");
+    const expiry = dateOrNull(form.expiry_date);
+    const { error } = await createClient().from("materials").insert([{ ...row, ...(expiry ? { expiry_date: expiry } : {}), clinic_id: clinicId }]);
     setLoading(false);
+    // On failure the form stays open with everything typed
+    if (error) { setSaveError(saveErrorMessage(error, "material")); return; }
+    resetForm();
     fetchMaterials();
   };
 
   const handleEdit = async () => {
     if (!editingId) return;
+    const { error: invalid, row } = materialRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("materials").update({
-      name: form.name, category: form.category,
-      quantity: parseInt(form.quantity) || 0, unit: form.unit,
-      min_quantity: parseInt(form.min_quantity) || 0,
-      price: parseInt(form.price) || 0,
-      ...(form.expiry_date ? { expiry_date: form.expiry_date } : hadExpiry ? { expiry_date: null } : {}),
-      supplier: form.supplier,
+    setSaveError("");
+    const expiry = dateOrNull(form.expiry_date);
+    const { error } = await createClient().from("materials").update({
+      ...row, ...(expiry ? { expiry_date: expiry } : hadExpiry ? { expiry_date: null } : {}),
     }).eq("id", editingId);
-    resetForm();
     setLoading(false);
+    if (error) { setSaveError(saveErrorMessage(error, "material")); return; }
+    resetForm();
     fetchMaterials();
   };
 
   const openEdit = (m: Material) => {
     setHadExpiry(!!m.expiry_date);
     setEditingId(m.id);
+    setSaveError("");
     setForm({
       name: m.name, category: m.category,
       quantity: m.quantity.toString(), unit: m.unit,
@@ -121,7 +138,8 @@ export default function Materials() {
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this material?")) return;
     const supabase = createClient();
-    await supabase.from("materials").delete().eq("id", id);
+    const { error } = await supabase.from("materials").delete().eq("id", id);
+    if (error) alert(saveErrorMessage(error, "material").replace("save", "delete"));
     fetchMaterials();
   };
 
@@ -129,7 +147,8 @@ export default function Materials() {
     const supabase = createClient();
     const newQty = material.quantity + change;
     if (newQty < 0) return;
-    await supabase.from("materials").update({ quantity: newQty }).eq("id", material.id);
+    const { error } = await supabase.from("materials").update({ quantity: newQty }).eq("id", material.id);
+    if (error) alert(saveErrorMessage(error, "stock change"));
     fetchMaterials();
   };
 
@@ -171,6 +190,7 @@ export default function Materials() {
         {showAnyForm && (
           <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Material" : "New Material"}</h3>
+            <FormError message={saveError} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Material Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">

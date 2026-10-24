@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { saveErrorMessage } from "@/lib/formSave";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
@@ -96,15 +97,17 @@ export default function InvoiceDetailPage() {
 
   const handleMarkStatus = async (newStatus: "sent" | "cancelled" | "unpaid") => {
     setMarkingStatus(true);
-    await createClient().from("invoices").update({ status: newStatus }).eq("id", id);
+    const { error } = await createClient().from("invoices").update({ status: newStatus }).eq("id", id);
     setMarkingStatus(false);
+    if (error) alert(saveErrorMessage(error, "invoice"));
     fetchData();
   };
 
   const handleFinalizeDraft = async () => {
     setMarkingStatus(true);
-    await createClient().from("invoices").update({ status: "unpaid" }).eq("id", id);
+    const { error } = await createClient().from("invoices").update({ status: "unpaid" }).eq("id", id);
     setMarkingStatus(false);
+    if (error) alert(saveErrorMessage(error, "invoice"));
     fetchData();
   };
 

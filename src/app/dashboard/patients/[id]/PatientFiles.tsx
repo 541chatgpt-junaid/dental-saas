@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Columns2, ExternalLink, FileText, ImagePlus, LoaderCircle, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { saveErrorMessage } from "@/lib/formSave";
 import EmptyState from "@/components/EmptyState";
 
 type Category = "xray" | "opg" | "before" | "after" | "document";
@@ -98,8 +99,14 @@ export default function PatientFiles({ patientId, clinicId }: { patientId: numbe
     setViewing(null);
     setFiles(list => list.filter(x => x.id !== f.id));
     const supabase = createClient();
+    const { error } = await supabase.from("patient_files").delete().eq("id", f.id);
+    if (error) {
+      // Keep the file (and its record) when the record can't be deleted
+      setFiles(list => [f, ...list]);
+      alert(saveErrorMessage(error, "file").replace("save", "delete"));
+      return;
+    }
     await supabase.storage.from(BUCKET).remove([f.file_path]);
-    await supabase.from("patient_files").delete().eq("id", f.id);
   };
 
   const shown = files.filter(f => filter === "all" || f.category === filter);

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HandCoins, Info, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { saveErrorMessage } from "@/lib/formSave";
 import Sidebar from "@/components/Sidebar";
 import EmptyState from "@/components/EmptyState";
 import { useClinic } from "@/lib/ClinicContext";
@@ -119,7 +120,8 @@ export default function Commissions() {
 
   const deletePayout = async (p: Payout) => {
     if (!confirm(`Delete the ${money(p.amount)} payout to Dr. ${p.doctor_name}?`)) return;
-    await createClient().from("doctor_payouts").delete().eq("id", p.id);
+    const { error } = await createClient().from("doctor_payouts").delete().eq("id", p.id);
+    if (error) alert(saveErrorMessage(error, "payout").replace("save", "delete"));
     load();
   };
 

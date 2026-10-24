@@ -9,6 +9,8 @@ import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
 import { CalendarDays, CalendarRange, List } from "lucide-react";
 import AppointmentCalendar, { slotKey } from "./AppointmentCalendar";
+import FormError from "@/components/FormError";
+import { dateOrToday, firstError, saveErrorMessage, todayISO } from "@/lib/formSave";
 
 interface Appointment {
   id: number;
@@ -35,8 +37,9 @@ export default function Appointments() {
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [saveError, setSaveError] = useState("");
   const [form, setForm] = useState({
-    patient_name: "", doctor_name: "", date: "",
+    patient_name: "", doctor_name: "", date: todayISO(),
     time: "", treatment: "", status: "Scheduled", notes: "",
   });
   const router = useRouter();
@@ -55,6 +58,7 @@ export default function Appointments() {
 
   const newAt = (date: string, time: string, doctor: string) => {
     setEditingId(null);
+    setSaveError("");
     setForm({ patient_name: "", doctor_name: doctor, date, time, treatment: "", status: "Scheduled", notes: "" });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -107,46 +111,55 @@ export default function Appointments() {
     fetchPhones();
   }, [router]);
 
+  const emptyForm = () => ({ patient_name: "", doctor_name: "", date: todayISO(), time: "", treatment: "", status: "Scheduled", notes: "" });
+
+  /** Validated row from the form, or an error message naming the problem */
+  const appointmentRow = () => {
+    const error = firstError(!form.patient_name.trim() && "Patient name is required.", !form.time && "Pick a time for the appointment.");
+    if (error) return { error, row: null };
+    return {
+      error: null,
+      row: {
+        patient_name: form.patient_name.trim(), doctor_name: form.doctor_name,
+        date: dateOrToday(form.date), time: form.time,
+        treatment: form.treatment, status: form.status, notes: form.notes,
+      },
+    };
+  };
+
   const handleAdd = async () => {
+    const { error: invalid, row } = appointmentRow();
+    if (!row) { setSaveError(invalid!); return; }
     if (!confirmNoClash()) return;
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("appointments").insert([{
-      patient_name: form.patient_name,
-      doctor_name: form.doctor_name,
-      date: form.date, time: form.time,
-      treatment: form.treatment,
-      status: form.status,
-      notes: form.notes,
-      clinic_id: clinicId,
-    }]);
-    setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" });
-    setShowForm(false);
+    setSaveError("");
+    const { error } = await createClient().from("appointments").insert([{ ...row, clinic_id: clinicId }]);
     setLoading(false);
+    // On failure the form stays open with everything typed
+    if (error) { setSaveError(saveErrorMessage(error, "appointment")); return; }
+    setForm(emptyForm());
+    setShowForm(false);
     fetchAppointments();
   };
 
   const handleEdit = async () => {
     if (!editingId) return;
+    const { error: invalid, row } = appointmentRow();
+    if (!row) { setSaveError(invalid!); return; }
     if (!confirmNoClash()) return;
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("appointments").update({
-      patient_name: form.patient_name,
-      doctor_name: form.doctor_name,
-      date: form.date, time: form.time,
-      treatment: form.treatment,
-      status: form.status,
-      notes: form.notes,
-    }).eq("id", editingId);
-    setEditingId(null);
-    setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" });
+    setSaveError("");
+    const { error } = await createClient().from("appointments").update(row).eq("id", editingId);
     setLoading(false);
+    if (error) { setSaveError(saveErrorMessage(error, "appointment")); return; }
+    setEditingId(null);
+    setForm(emptyForm());
     fetchAppointments();
   };
 
   const openEdit = (a: Appointment) => {
     setEditingId(a.id);
+    setSaveError("");
     setForm({
       patient_name: a.patient_name,
       doctor_name: a.doctor_name,
@@ -161,14 +174,16 @@ export default function Appointments() {
 
   const updateStatus = async (id: number, newStatus: string) => {
     const supabase = createClient();
-    await supabase.from("appointments").update({ status: newStatus }).eq("id", id);
+    const { error } = await supabase.from("appointments").update({ status: newStatus }).eq("id", id);
+    if (error) alert(saveErrorMessage(error, "appointment status"));
     fetchAppointments();
   };
 
   const deleteAppointment = async (id: number) => {
     if (!confirm("Delete this appointment?")) return;
     const supabase = createClient();
-    await supabase.from("appointments").delete().eq("id", id);
+    const { error } = await supabase.from("appointments").delete().eq("id", id);
+    if (error) alert(saveErrorMessage(error, "appointment").replace("save", "delete"));
     fetchAppointments();
   };
 
@@ -238,7 +253,7 @@ export default function Appointments() {
                 </button>
               ))}
             </div>
-            <button onClick={() => { setShowForm(!showForm); setEditingId(null); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+            <button onClick={() => { setShowForm(!showForm); setEditingId(null); setSaveError(""); }} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
               + Add
             </button>
           </div>
@@ -249,6 +264,7 @@ export default function Appointments() {
             <h3 className="text-sm font-semibold text-brand-800 mb-4">
               {editingId ? "Edit Appointment" : "New Appointment"}
             </h3>
+            <FormError message={saveError} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
@@ -275,7 +291,7 @@ export default function Appointments() {
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : editingId ? "Update Appointment" : "Save Appointment"}
               </button>
-              <button onClick={() => { setShowForm(false); setEditingId(null); setForm({ patient_name: "", doctor_name: "", date: "", time: "", treatment: "", status: "Scheduled", notes: "" }); }} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
+              <button onClick={() => { setShowForm(false); setEditingId(null); setSaveError(""); setForm(emptyForm()); }} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { UserCog } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { saveErrorMessage } from "@/lib/formSave";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
@@ -89,7 +90,7 @@ export default function StaffPage() {
 
     // Step 2: Staff table mein save karo
     const supabase = createClient();
-    await supabase.from("staff").insert([{
+    const { error } = await supabase.from("staff").insert([{
       name: form.name,
       email: form.email,
       role: form.role,
@@ -98,6 +99,12 @@ export default function StaffPage() {
       user_id: result.userId,
       clinic_id: clinicId,
     }]);
+    if (error) {
+      // The login was created but the staff record was not: keep the form so it can be retried
+      setAddResult({ error: `The login for ${form.email} was created, but ${saveErrorMessage(error, "staff record").replace(/^C/, "c")}` });
+      setLoading(false);
+      return;
+    }
 
     setAddResult({ success: true });
     setForm({ name: "", email: "", role: "Receptionist", status: "Active", password: "DentEase@123" });
@@ -111,7 +118,9 @@ export default function StaffPage() {
     if (!editingStaff) return;
     setLoading(true);
     const supabase = createClient();
-    await supabase.from("staff").update({ permissions: editPermissions.join(",") }).eq("id", editingStaff.id);
+    const { error } = await supabase.from("staff").update({ permissions: editPermissions.join(",") }).eq("id", editingStaff.id);
+    setLoading(false);
+    if (error) { alert(saveErrorMessage(error, "permissions")); return; }
     setEditingStaff(null);
     setEditPermissions([]);
     setLoading(false);
@@ -125,14 +134,16 @@ export default function StaffPage() {
 
   const toggleStatus = async (s: Staff) => {
     const supabase = createClient();
-    await supabase.from("staff").update({ status: s.status === "Active" ? "Inactive" : "Active" }).eq("id", s.id);
+    const { error } = await supabase.from("staff").update({ status: s.status === "Active" ? "Inactive" : "Active" }).eq("id", s.id);
+    if (error) alert(saveErrorMessage(error, "staff status"));
     fetchStaff();
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this staff member?")) return;
     const supabase = createClient();
-    await supabase.from("staff").delete().eq("id", id);
+    const { error } = await supabase.from("staff").delete().eq("id", id);
+    if (error) alert(saveErrorMessage(error, "staff member").replace("save", "delete"));
     fetchStaff();
   };
 
