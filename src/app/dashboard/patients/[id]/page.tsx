@@ -44,7 +44,9 @@ interface Payment {
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
+// Colours for the shared ledger statuses (getInvoiceStatus)
 const statusColor = (s: string) => {
+  if (s === "overdue") return "bg-red-100 text-red-700";
   if (s === "paid") return "bg-green-100 text-green-700";
   if (s === "partial") return "bg-blue-100 text-blue-700";
   if (s === "cancelled") return "bg-gray-100 text-gray-500";
@@ -175,7 +177,7 @@ export default function PatientHistoryPage() {
                     <div key={inv.id} className="bg-white rounded-xl border border-brand-200 shadow-sm p-4">
                       <div className="flex justify-between items-start mb-2">
                         <p className="font-semibold text-brand-700 text-sm">{inv.invoice_number}</p>
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.status)}`}>{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor(inv.state.toLowerCase())}`}>{inv.state}</span>
                       </div>
                       <div className="flex justify-between text-xs text-gray-500 mb-2">
                         <span>{formatDate(inv.created_at)}</span>
@@ -215,7 +217,7 @@ export default function PatientHistoryPage() {
                           <td className="px-5 py-3 text-right text-emerald-600 font-medium">{symbol} {inv.amount_paid.toLocaleString()}</td>
                           <td className="px-5 py-3 text-right font-bold text-orange-600">{symbol} {inv.balance.toLocaleString()}</td>
                           <td className="px-5 py-3">
-                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(inv.status)}`}>{inv.status.charAt(0).toUpperCase() + inv.status.slice(1)}</span>
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(inv.state.toLowerCase())}`}>{inv.state}</span>
                           </td>
                           <td className="px-5 py-3">
                             <button onClick={() => router.push(`/dashboard/billing/${inv.id}`)} className="text-brand-600 text-xs font-semibold hover:underline">View</button>

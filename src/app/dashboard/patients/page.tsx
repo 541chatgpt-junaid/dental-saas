@@ -75,7 +75,6 @@ interface Doctor {
 }
 
 type LedgerInvoice = Ledgered<LedgerInvoiceRow>;
-const statusLabel = (s: string) => (s === "paid" ? "Paid" : s === "partial" ? "Partial" : "Unpaid");
 interface TreatmentPreset { id: string; name: string; price: number; }
 
 const upperRight = [18,17,16,15,14,13,12,11];
@@ -192,7 +191,7 @@ export default function Patients() {
   const fetchInvoiceSummaries = async () => {
     try {
       const { invoices } = await loadLedger(createClient(), {
-        select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, created_at, notes",
+        select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes",
       });
       setLedgerInvoices(invoices);
       setInvoiceSummaryMap(billingByPatient(invoices));
@@ -209,8 +208,8 @@ export default function Patients() {
   const visitBill = (v: Visit) => {
     const inv = visitInvoice(v.id);
     return inv
-      ? { fee: inv.total, paid: inv.amount_paid, due: Math.max(0, inv.balance), status: statusLabel(inv.status) }
-      : { fee: 0, paid: 0, due: 0, status: "No bill" };
+      ? { fee: inv.total, paid: inv.amount_paid, due: Math.max(0, inv.balance), status: inv.state }
+      : { fee: 0, paid: 0, due: 0, status: "—" };
   };
 
   useEffect(() => {
@@ -615,7 +614,8 @@ export default function Patients() {
       status === "Completed" ? "bg-green-100 text-green-700" :
       status === "Scheduled" ? "bg-blue-100 text-blue-700" :
       status === "Cancelled" ? "bg-red-100 text-red-700" :
-      status === "No bills" || status === "No bill" ? "bg-gray-100 text-gray-500" :
+      status === "Overdue" ? "bg-red-100 text-red-700" :
+      status === "—" ? "bg-gray-100 text-gray-500" :
       "bg-orange-100 text-orange-700"
     }`}>{status}</span>
   );

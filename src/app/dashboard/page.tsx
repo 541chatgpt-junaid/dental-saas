@@ -20,7 +20,7 @@ type RecentPatient = {
 };
 
 const badge = (s: string) =>
-  s === "Paid" ? "bg-green-100 text-green-700" : s === "Partial" ? "bg-yellow-100 text-yellow-700" : s === "No bills" ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-700";
+  s === "Paid" ? "bg-green-100 text-green-700" : s === "Partial" ? "bg-yellow-100 text-yellow-700" : s === "Overdue" ? "bg-red-100 text-red-700" : s === "—" ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-700";
 
 export default function Dashboard() {
   const [userEmail, setUserEmail] = useState("");
@@ -76,8 +76,7 @@ export default function Dashboard() {
         setRevenueThisMonth(sumPaymentsBetween(paid, monthStart));
         const open = ledger.invoices.filter(i => i.counted && i.balance > 0);
         setPendingFees(open.reduce((sum, i) => sum + i.balance, 0));
-        const now = Date.now();
-        setPendingPayments(open.filter(i => i.due_date && new Date(String(i.due_date)).getTime() < now).reduce((sum, i) => sum + i.balance, 0));
+        setPendingPayments(open.filter(i => i.state === "Overdue").reduce((sum, i) => sum + i.balance, 0));
       }
 
       if (invItems.data && invItems.data.length > 0) {

@@ -8,7 +8,7 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 import Link from "next/link";
-import { loadLedger } from "@/lib/ledger";
+import { loadLedger, type InvoiceStatus } from "@/lib/ledger";
 
 interface Invoice {
   id: string;
@@ -20,6 +20,8 @@ interface Invoice {
   total: number;
   amount_paid: number;
   balance: number;
+  /** Payment status from getInvoiceStatus() (via loadLedger) */
+  state: InvoiceStatus;
   created_at: string;
   due_date: string | null;
   patients: { name: string } | null;
@@ -29,10 +31,10 @@ const STATUS_TABS = ["All", "draft", "unpaid", "overdue", "partial", "sent", "pa
 
 const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const isOverdue = (inv: Invoice) =>
-  !!inv.due_date && new Date(inv.due_date) < new Date() && inv.balance > 0 && inv.status !== "paid" && inv.status !== "cancelled" && inv.status !== "draft";
-
-const effectiveStatus = (inv: Invoice) => isOverdue(inv) ? "overdue" : inv.status;
+// Status comes only from the shared ledger helper; "sent" is a delivery flag, not a payment status
+const effectiveStatus = (inv: Invoice) => inv.state.toLowerCase();
+const matchesTab = (inv: Invoice, tab: string) =>
+  tab === "All" || (tab === "sent" ? inv.status === "sent" && inv.state !== "Paid" : effectiveStatus(inv) === tab);
 
 const statusColor = (s: string) => {
   if (s === "paid") return "bg-green-100 text-green-700";
@@ -68,8 +70,7 @@ export default function BillingPage() {
   }, [clinicId]);
 
   const filtered = invoices.filter(inv => {
-    const effStatus = effectiveStatus(inv);
-    const matchTab = tab === "All" || effStatus === tab;
+    const matchTab = matchesTab(inv, tab);
     const q = search.toLowerCase();
     const matchSearch = !q ||
       inv.invoice_number.toLowerCase().includes(q) ||
@@ -182,7 +183,7 @@ export default function BillingPage() {
                     >
                       View
                     </button>
-                    {inv.status !== "paid" && inv.status !== "cancelled" && (
+                    {inv.state !== "Paid" && inv.state !== "Cancelled" && (
                       <button
                         onClick={() => router.push(`/dashboard/billing/${inv.id}?pay=1`)}
                         className="text-xs px-3 py-1.5 rounded-lg bg-brand-600 text-white font-medium"
@@ -230,7 +231,7 @@ export default function BillingPage() {
                           >
                             View
                           </button>
-                          {inv.status !== "paid" && inv.status !== "cancelled" && (
+                          {inv.state !== "Paid" && inv.state !== "Cancelled" && (
                             <button
                               onClick={() => router.push(`/dashboard/billing/${inv.id}?pay=1`)}
                               className="text-orange-600 text-xs font-semibold hover:underline"

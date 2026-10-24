@@ -48,7 +48,7 @@ export default function Reports() {
     const [{ data: patients }, { data: visitRows }, ledger] = await Promise.all([
       supabase.from("patients").select("*"),
       supabase.from("visits").select("id, doctor_name"),
-      loadLedger(supabase, { select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, created_at, notes" }).catch(() => null),
+      loadLedger(supabase, { select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
     ]);
     if (patients) {
       const invoices = (ledger?.invoices || []).filter(i => i.counted);
@@ -65,7 +65,8 @@ export default function Reports() {
       const filtered = patients.filter(p => inFilter(p.created_at));
       setIncome(payments.filter(p => inFilter(p.payment_date)).reduce((sum, p) => sum + (Number(p.amount) || 0), 0));
       setPatientCount(filtered.length);
-      setPendingFees(invoices.filter(i => inFilter(i.created_at)).reduce((sum, i) => sum + Math.max(0, i.balance), 0));
+      // Pending is what is owed right now: the same figure as the Dashboard and the Patients list
+      setPendingFees(invoices.reduce((sum, i) => sum + Math.max(0, i.balance), 0));
 
       // Monthly data
       const months = parseInt(chartRange);
