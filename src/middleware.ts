@@ -13,6 +13,7 @@ const pagePermissionMap: Record<string, string> = {
   "/dashboard/expenses": "Expenses",
   "/dashboard/reports": "Reports",
   "/dashboard/staff": "Staff",
+  "/dashboard/settings/booking": "Online Booking",
   "/dashboard/settings": "Settings",
   "/dashboard/treatment-plans": "Treatment Plans",
   "/dashboard/commissions": "Commissions",

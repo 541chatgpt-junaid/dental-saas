@@ -27,7 +27,7 @@ const navItems: { label: string; href: string; icon: LucideIcon; permission?: st
   { label: "Expenses", href: "/dashboard/expenses", icon: Wallet, permission: "Expenses" },
   { label: "Reports", href: "/dashboard/reports", icon: BarChart3, permission: "Reports" },
   { label: "Staff", href: "/dashboard/staff", icon: UserCog, permission: "Staff" },
-  { label: "Online Booking", href: "/dashboard/settings/booking", icon: Globe, permission: "Settings" },
+  { label: "Online Booking", href: "/dashboard/settings/booking", icon: Globe, permission: "Online Booking" },
   { label: "Settings", href: "/dashboard/settings", icon: Settings, permission: "Settings" },
 ];
 
