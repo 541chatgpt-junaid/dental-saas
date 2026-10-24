@@ -8,9 +8,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  *   total   = SUM(items.quantity × items.unit_price) − discount
  *   paid    = SUM(payments.amount)
  *   balance = total − paid
- *   status  = balance ≤ 0 → paid · paid > 0 → partial · otherwise unpaid
+ *   state   = getInvoiceStatus(): Paid · Partial · Unpaid · Overdue (· Draft · Cancelled)
  *
  * Draft and cancelled invoices (and their payments) are left out of every total.
+ * Payment status is never read from a stored column: every screen shows
+ * getInvoiceStatus() / getPatientStatus().
  */
 
 export const REGISTRATION_NOTE = "[Registration]";
@@ -36,21 +38,28 @@ export interface LedgerInvoiceRow {
   amount_paid?: number | null;
   balance?: number | null;
   created_at?: string;
+  due_date?: string | null;
   notes?: string | null;
 }
+
+export type InvoiceStatus = "Paid" | "Partial" | "Unpaid" | "Overdue" | "Draft" | "Cancelled";
+export type PatientStatus = "Paid" | "Partial" | "Unpaid" | "Overdue" | "—";
 
 export type Ledgered<T> = T & {
   subtotal: number;
   total: number;
   amount_paid: number;
   balance: number;
+  /** The stored lifecycle flag (draft / sent / cancelled …) — never shown as payment status */
   status: string;
-  /** false for draft / cancelled invoices, which no total includes */
+  /** Payment status from getInvoiceStatus(); the only status screens may show */
+  state: InvoiceStatus;
+  /** false for draft / cancelled invoices, which no total or status count includes */
   counted: boolean;
 };
 
-export type PatientBilling = { totalBilled: number; totalPaid: number; outstanding: number; status: "Paid" | "Partial" | "Unpaid" | "No bills" };
-export const NO_BILLS: PatientBilling = { totalBilled: 0, totalPaid: 0, outstanding: 0, status: "No bills" };
+export type PatientBilling = { totalBilled: number; totalPaid: number; outstanding: number; status: PatientStatus };
+export const NO_BILLS: PatientBilling = { totalBilled: 0, totalPaid: 0, outstanding: 0, status: "—" };
 
 const num = (v: unknown) => Number(v) || 0;
 const isExcluded = (status: string | null | undefined) => {
@@ -58,12 +67,52 @@ const isExcluded = (status: string | null | undefined) => {
   return s === "draft" || s === "cancelled";
 };
 
-export function deriveStatus(stored: string | null | undefined, total: number, paid: number) {
-  const s = (stored || "").toLowerCase();
-  if (s === "draft" || s === "cancelled") return s;
-  if (total - paid <= 0) return "paid";
-  if (paid > 0) return "partial";
-  return s === "sent" ? "sent" : "unpaid";
+/** Start of today, local time: an invoice due today is not overdue yet */
+const startOfToday = () => { const d = new Date(); d.setHours(0, 0, 0, 0); return d.getTime(); };
+const isPastDue = (due: string | null | undefined, now = startOfToday()) => {
+  if (!due) return false;
+  const t = new Date(/^\d{4}-\d{2}-\d{2}$/.test(due) ? `${due}T00:00:00` : due).getTime();
+  return !isNaN(t) && t < now;
+};
+
+/**
+ * THE invoice status rule. Every screen shows this; nothing else decides it.
+ *   draft / cancelled           → Draft / Cancelled (left out of every count)
+ *   balance ≤ 0 and total > 0   → Paid
+ *   balance > 0, past due date  → Overdue
+ *   paid > 0, balance > 0       → Partial
+ *   nothing paid, not yet due   → Unpaid
+ */
+export function getInvoiceStatus(inv: { status?: string | null; total: number; paid: number; due_date?: string | null }): InvoiceStatus {
+  const s = (inv.status || "").toLowerCase();
+  if (s === "draft") return "Draft";
+  if (s === "cancelled") return "Cancelled";
+  const balance = inv.total - inv.paid;
+  if (balance <= 0) return "Paid";
+  if (isPastDue(inv.due_date)) return "Overdue";
+  return inv.paid > 0 ? "Partial" : "Unpaid";
+}
+
+/**
+ * THE patient status rule, from that patient's counted invoices:
+ * none → "—" · any Overdue → Overdue · all Paid → Paid · something paid → Partial · else Unpaid.
+ */
+export function getPatientStatus(invoices: { state: InvoiceStatus; counted: boolean; amount_paid: number }[]): PatientStatus {
+  const counted = invoices.filter(i => i.counted);
+  if (!counted.length) return "—";
+  if (counted.some(i => i.state === "Overdue")) return "Overdue";
+  if (counted.every(i => i.state === "Paid")) return "Paid";
+  if (counted.some(i => i.state === "Partial" || i.amount_paid > 0)) return "Partial";
+  return "Unpaid";
+}
+
+/** Value kept in the invoices.status column for exports; derived from getInvoiceStatus(), never read back for display */
+export function storedStatus(inv: { status?: string | null; total: number; paid: number; due_date?: string | null }) {
+  const st = getInvoiceStatus(inv);
+  if (st === "Paid") return "paid";
+  if (st === "Partial" || (st === "Overdue" && inv.paid > 0)) return "partial";
+  if (st === "Draft" || st === "Cancelled") return st.toLowerCase();
+  return (inv.status || "").toLowerCase() === "sent" ? "sent" : "unpaid";
 }
 
 /** Recompute total / paid / balance / status of each invoice from its items and payments */
@@ -86,8 +135,8 @@ export function applyLedger<T extends LedgerInvoiceRow>(invoices: T[], items: Le
     const total = it ? Math.max(0, subtotal - num(inv.discount)) : num(inv.total);
     const paid = paidSum[k] || 0;
     return {
-      ...inv, subtotal, total, amount_paid: paid, balance: total - paid,
-      status: deriveStatus(inv.status, total, paid), counted: !isExcluded(inv.status),
+      ...inv, subtotal, total, amount_paid: paid, balance: total - paid, status: (inv.status || "").toLowerCase(),
+      state: getInvoiceStatus({ status: inv.status, total, paid, due_date: inv.due_date }), counted: !isExcluded(inv.status),
     };
   });
 }
@@ -106,7 +155,7 @@ export function billingOf(invoices: Ledgered<LedgerInvoiceRow>[]): PatientBillin
   const totalBilled = counted.reduce((s, i) => s + i.total, 0);
   const totalPaid = counted.reduce((s, i) => s + i.amount_paid, 0);
   const outstanding = counted.reduce((s, i) => s + Math.max(0, i.balance), 0);
-  return { totalBilled, totalPaid, outstanding, status: outstanding <= 0 ? "Paid" : totalPaid > 0 ? "Partial" : "Unpaid" };
+  return { totalBilled, totalPaid, outstanding, status: getPatientStatus(counted) };
 }
 
 export function billingByPatient(invoices: Ledgered<LedgerInvoiceRow>[]): Record<number, PatientBilling> {
@@ -202,13 +251,16 @@ const missingColumn = (e: { message?: string } | null, col: string) => !!e && (e
  */
 export async function syncInvoice(supabase: SupabaseClient, invoiceId: string) {
   const [{ data: inv }, { data: items }, { data: pays }] = await Promise.all([
-    supabase.from("invoices").select("id, patient_id, status, subtotal, discount, total").eq("id", invoiceId).single(),
+    supabase.from("invoices").select("id, patient_id, status, subtotal, discount, total, due_date").eq("id", invoiceId).single(),
     supabase.from("invoice_items").select("invoice_id, quantity, unit_price").eq("invoice_id", invoiceId),
     supabase.from("payments").select("invoice_id, amount, payment_date").eq("invoice_id", invoiceId),
   ]);
   if (!inv) return;
   const [l] = applyLedger([inv as LedgerInvoiceRow], items || [], pays || []);
-  await supabase.from("invoices").update({ subtotal: l.subtotal, total: l.total, amount_paid: l.amount_paid, status: l.status }).eq("id", invoiceId);
+  await supabase.from("invoices").update({
+    subtotal: l.subtotal, total: l.total, amount_paid: l.amount_paid,
+    status: storedStatus({ status: l.status, total: l.total, paid: l.amount_paid, due_date: l.due_date }),
+  }).eq("id", invoiceId);
 }
 
 export async function recordPayment(supabase: SupabaseClient, p: {

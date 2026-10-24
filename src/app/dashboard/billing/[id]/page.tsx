@@ -7,7 +7,7 @@ import { useRouter, useParams, useSearchParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
-import { applyLedger, recordPayment } from "@/lib/ledger";
+import { applyLedger, recordPayment, type InvoiceStatus } from "@/lib/ledger";
 
 interface Invoice {
   id: string;
@@ -19,6 +19,8 @@ interface Invoice {
   total: number;
   amount_paid: number;
   balance: number;
+  /** Payment status from getInvoiceStatus() (via applyLedger) */
+  state: InvoiceStatus;
   notes: string | null;
   due_date: string | null;
   created_at: string;
@@ -40,11 +42,6 @@ interface Payment {
   payment_date: string;
   notes: string | null;
 }
-
-const isOverdue = (inv: Invoice) =>
-  !!inv.due_date && new Date(inv.due_date) < new Date() && inv.balance > 0 && inv.status !== "paid" && inv.status !== "cancelled";
-
-const effectiveStatus = (inv: Invoice) => isOverdue(inv) ? "overdue" : inv.status;
 
 const statusColor = (s: string) => {
   if (s === "paid") return "bg-green-100 text-green-700";
@@ -191,8 +188,9 @@ export default function InvoiceDetailPage() {
     </div>
   );
 
-  const effStatus = effectiveStatus(invoice);
-  const isFullyPaid = invoice.balance <= 0;
+  // Status comes only from the shared ledger helper
+  const effStatus = invoice.state.toLowerCase();
+  const isFullyPaid = invoice.state === "Paid";
 
   return (
     <div className="min-h-screen flex bg-brand-50">
@@ -217,13 +215,13 @@ export default function InvoiceDetailPage() {
             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(effStatus)}`}>{statusLabel(effStatus)}</span>
           </div>
           <div className="flex gap-2 flex-wrap">
-            {invoice.status === "draft" && (
+            {invoice.state === "Draft" && (
               <button onClick={handleFinalizeDraft} disabled={markingStatus}
                 className="border border-purple-200 text-purple-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-purple-50">
                 Finalize Invoice
               </button>
             )}
-            {invoice.status !== "draft" && invoice.status !== "paid" && invoice.status !== "cancelled" && invoice.status !== "sent" && (
+            {invoice.state !== "Draft" && invoice.state !== "Paid" && invoice.state !== "Cancelled" && invoice.status !== "sent" && (
               <button onClick={() => handleMarkStatus("sent")} disabled={markingStatus}
                 className="border border-sky-200 text-sky-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-sky-50">
                 Mark as Sent
@@ -242,7 +240,7 @@ export default function InvoiceDetailPage() {
               className="border border-brand-200 text-brand-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-50">
               🖨️ Print
             </button>
-            {invoice.status !== "paid" && invoice.status !== "cancelled" && (
+            {invoice.state !== "Paid" && invoice.state !== "Cancelled" && (
               <button onClick={() => { setShowPayModal(true); setPayError(""); }}
                 className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium">
                 Record Payment
@@ -292,7 +290,7 @@ export default function InvoiceDetailPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-1">Due Date</p>
-                  <p className={`text-sm font-medium ${invoice.due_date && new Date(invoice.due_date) < new Date() && invoice.balance > 0 ? "text-red-600 font-bold" : "text-gray-700"}`}>
+                  <p className={`text-sm font-medium ${invoice.state === "Overdue" ? "text-red-600 font-bold" : "text-gray-700"}`}>
                     {invoice.due_date ? formatDate(invoice.due_date) : "—"}
                   </p>
                 </div>
@@ -353,19 +351,19 @@ export default function InvoiceDetailPage() {
                 {/* Balance Box */}
                 <div className={`rounded-xl px-4 py-3.5 mt-1 border-2 ${
                   isFullyPaid ? "bg-green-50 border-green-300" :
-                  invoice.status === "partial" ? "bg-orange-50 border-orange-300" :
+                  invoice.state === "Partial" ? "bg-orange-50 border-orange-300" :
                   "bg-red-50 border-red-300"
                 }`}>
                   <div className="flex justify-between items-center">
                     <span className={`text-sm font-bold ${
                       isFullyPaid ? "text-green-700" :
-                      invoice.status === "partial" ? "text-orange-700" : "text-red-700"
+                      invoice.state === "Partial" ? "text-orange-700" : "text-red-700"
                     }`}>
                       {isFullyPaid ? "✓ Fully Paid" : "Balance Due"}
                     </span>
                     <span className={`text-2xl font-black ${
                       isFullyPaid ? "text-green-700" :
-                      invoice.status === "partial" ? "text-orange-700" : "text-red-700"
+                      invoice.state === "Partial" ? "text-orange-700" : "text-red-700"
                     }`}>
                       {symbol} {Math.max(0, invoice.balance).toLocaleString()}
                     </span>
