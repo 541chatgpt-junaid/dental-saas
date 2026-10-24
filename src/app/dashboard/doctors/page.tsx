@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
 import { Stethoscope } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import FormError from "@/components/FormError";
+import { firstError, saveErrorMessage } from "@/lib/formSave";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
@@ -28,6 +30,7 @@ export default function Doctors() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const [selectedWorkingDays, setSelectedWorkingDays] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: "", specialization: "", phone: "", email: "", status: "Active",
@@ -57,6 +60,26 @@ export default function Doctors() {
     setSelectedWorkingDays([]);
     setShowForm(false);
     setEditingId(null);
+    setSaveError("");
+  };
+
+  /** Validated row from the form, or an error message naming the problem */
+  const doctorRow = () => {
+    const error = firstError(
+      !form.name.trim() && "Doctor name is required.",
+      (!form.timing_start || !form.timing_end) && "Set both the start and end time.",
+      form.timing_start && form.timing_end && form.timing_end <= form.timing_start && "End time must be after start time.",
+    );
+    if (error) return { error, row: null };
+    return {
+      error: null,
+      row: {
+        name: form.name.trim(), specialization: form.specialization,
+        phone: form.phone, email: form.email, status: form.status,
+        timing_start: form.timing_start, timing_end: form.timing_end,
+        working_days: selectedWorkingDays.join(", "), off_days: form.off_days,
+      },
+    };
   };
 
   const toggleDay = (day: string) => {
@@ -66,41 +89,34 @@ export default function Doctors() {
   };
 
   const handleAdd = async () => {
+    const { error: invalid, row } = doctorRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("doctors").insert([{
-      name: form.name, specialization: form.specialization,
-      phone: form.phone, email: form.email,
-      status: form.status, clinic_id: clinicId,
-      timing_start: form.timing_start,
-      timing_end: form.timing_end,
-      working_days: selectedWorkingDays.join(", "),
-      off_days: form.off_days,
-    }]);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("doctors").insert([{ ...row, clinic_id: clinicId }]);
     setLoading(false);
+    // On failure the form stays open with everything typed
+    if (error) { setSaveError(saveErrorMessage(error, "doctor")); return; }
+    resetForm();
     fetchDoctors();
   };
 
   const handleEdit = async () => {
     if (!editingId) return;
+    const { error: invalid, row } = doctorRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("doctors").update({
-      name: form.name, specialization: form.specialization,
-      phone: form.phone, email: form.email, status: form.status,
-      timing_start: form.timing_start,
-      timing_end: form.timing_end,
-      working_days: selectedWorkingDays.join(", "),
-      off_days: form.off_days,
-    }).eq("id", editingId);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("doctors").update(row).eq("id", editingId);
     setLoading(false);
+    if (error) { setSaveError(saveErrorMessage(error, "doctor")); return; }
+    resetForm();
     fetchDoctors();
   };
 
   const openEdit = (d: Doctor) => {
     setEditingId(d.id);
+    setSaveError("");
     setForm({
       name: d.name, specialization: d.specialization,
       phone: d.phone, email: d.email, status: d.status,
@@ -115,14 +131,16 @@ export default function Doctors() {
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this doctor?")) return;
     const supabase = createClient();
-    await supabase.from("doctors").delete().eq("id", id);
+    const { error } = await supabase.from("doctors").delete().eq("id", id);
+    if (error) alert(saveErrorMessage(error, "doctor").replace("save", "delete"));
     fetchDoctors();
   };
 
   const toggleStatus = async (doctor: Doctor) => {
     const supabase = createClient();
     const newStatus = doctor.status === "Active" ? "Inactive" : "Active";
-    await supabase.from("doctors").update({ status: newStatus }).eq("id", doctor.id);
+    const { error } = await supabase.from("doctors").update({ status: newStatus }).eq("id", doctor.id);
+    if (error) alert(saveErrorMessage(error, "doctor status"));
     fetchDoctors();
   };
 
@@ -145,6 +163,7 @@ export default function Doctors() {
         {showAnyForm && (
           <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Doctor" : "New Doctor"}</h3>
+            <FormError message={saveError} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <input placeholder="Specialization" value={form.specialization} onChange={e => setForm({...form, specialization: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />

@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import FormError from "@/components/FormError";
+import { dateOrToday, firstError, readAmount, saveErrorMessage, todayISO } from "@/lib/formSave";
 
 interface Expense {
   id: number;
@@ -27,8 +29,9 @@ export default function Expenses() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [form, setForm] = useState({
-    title: "", category: "Rent", amount: "", date: "", notes: "",
+    title: "", category: "Rent", amount: "", date: todayISO(), notes: "",
   });
+  const [saveError, setSaveError] = useState("");
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
@@ -59,44 +62,53 @@ export default function Expenses() {
   }, [router]);
 
   const resetForm = () => {
-    setForm({ title: "", category: "Rent", amount: "", date: "", notes: "" });
+    setForm({ title: "", category: "Rent", amount: "", date: todayISO(), notes: "" });
     setShowForm(false);
     setEditingId(null);
+    setSaveError("");
+  };
+
+  /** Validated row from the form, or an error message naming the problem */
+  const expenseRow = () => {
+    const amount = readAmount(form.amount, "Amount");
+    const error = firstError(!form.title.trim() && "Title is required.", amount.error, amount.value === 0 && "Amount is required.");
+    if (error) return { error, row: null };
+    return { error: null, row: { title: form.title.trim(), category: form.category, amount: amount.value, date: dateOrToday(form.date), notes: form.notes } };
   };
 
   const handleAdd = async () => {
+    const { error: invalid, row } = expenseRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("expenses").insert([{
-      title: form.title, category: form.category,
-      amount: parseInt(form.amount) || 0,
-      date: form.date, notes: form.notes, clinic_id: clinicId,
-    }]);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("expenses").insert([{ ...row, clinic_id: clinicId }]);
     setLoading(false);
+    // On failure the form stays open with everything typed
+    if (error) { setSaveError(saveErrorMessage(error, "expense")); return; }
+    resetForm();
     fetchExpenses();
   };
 
   const handleEdit = async () => {
     if (!editingId) return;
+    const { error: invalid, row } = expenseRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    await supabase.from("expenses").update({
-      title: form.title, category: form.category,
-      amount: parseInt(form.amount) || 0,
-      date: form.date, notes: form.notes,
-    }).eq("id", editingId);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("expenses").update(row).eq("id", editingId);
     setLoading(false);
+    if (error) { setSaveError(saveErrorMessage(error, "expense")); return; }
+    resetForm();
     fetchExpenses();
   };
 
   const openEdit = (e: Expense) => {
     setEditingId(e.id);
+    setSaveError("");
     setForm({
       title: e.title, category: e.category,
       amount: e.amount.toString(),
-      date: e.date, notes: e.notes || "",
+      date: e.date || todayISO(), notes: e.notes || "",
     });
     setShowForm(false);
   };
@@ -104,7 +116,8 @@ export default function Expenses() {
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this expense?")) return;
     const supabase = createClient();
-    await supabase.from("expenses").delete().eq("id", id);
+    const { error } = await supabase.from("expenses").delete().eq("id", id);
+    if (error) alert(saveErrorMessage(error, "expense").replace("save", "delete"));
     fetchExpenses();
   };
 
@@ -159,6 +172,7 @@ export default function Expenses() {
         {showAnyForm && (
           <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Expense" : "New Expense"}</h3>
+            <FormError message={saveError} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Expense Title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">

@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
 import { useCurrency } from "@/lib/useCurrency";
+import FormError from "@/components/FormError";
+import { readAmount, saveErrorMessage } from "@/lib/formSave";
 
 const currencies = [
   { code: "PKR", symbol: "Rs", name: "Pakistani Rupee" },
@@ -45,6 +47,8 @@ export default function Settings() {
   // General settings
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
+  // Shown above the current tab; forms keep what was typed when a save fails
+  const [saveError, setSaveError] = useState("");
   const [autoDetected, setAutoDetected] = useState("");
   const [form, setForm] = useState({ clinic_name: "", clinic_address: "", clinic_phone: "", clinic_email: "", currency: "PKR" });
 
@@ -103,79 +107,103 @@ export default function Settings() {
 
   // General save
   const handleSave = async () => {
+    if (!form.clinic_name.trim()) { setSaveError("Clinic name is required."); return; }
     setLoading(true);
+    setSaveError("");
     const supabase = createClient();
-    const { data: existing } = await supabase.from("settings").select("id").single();
-    if (existing) {
-      await supabase.from("settings").update({ clinic_name: form.clinic_name, clinic_address: form.clinic_address, clinic_phone: form.clinic_phone, clinic_email: form.clinic_email, currency: form.currency }).eq("id", existing.id);
-    } else {
-      await supabase.from("settings").insert([{ ...form, clinic_id: clinicId }]);
-    }
+    const { data: existing } = await supabase.from("settings").select("id").maybeSingle();
+    const { error } = existing
+      ? await supabase.from("settings").update({ clinic_name: form.clinic_name, clinic_address: form.clinic_address, clinic_phone: form.clinic_phone, clinic_email: form.clinic_email, currency: form.currency }).eq("id", existing.id)
+      : await supabase.from("settings").insert([{ ...form, clinic_id: clinicId }]);
     setLoading(false);
+    if (error) { setSaveError(saveErrorMessage(error, "settings")); return; }
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
 
+  /** Call the presets API; returns an error message naming the problem, or null */
+  const presetRequest = async (what: string, url: string, init: RequestInit) => {
+    try {
+      const res = await fetch(url, { headers: { "Content-Type": "application/json" }, ...init });
+      const json = await res.json().catch(() => ({}));
+      if (res.ok && !json.error) return null;
+      return saveErrorMessage({ message: json.error || res.statusText, code: json.code }, what);
+    } catch {
+      return saveErrorMessage({ message: "Failed to fetch" }, what);
+    }
+  };
+
   // Treatment preset actions
   const addTreatment = async () => {
-    if (!tForm.name.trim()) return;
+    if (!tForm.name.trim()) { setSaveError("Treatment name is required."); return; }
+    const price = readAmount(tForm.price, "Price");
+    if (price.error) { setSaveError(price.error); return; }
     setTLoading(true);
-    await fetch("/api/presets", {
+    const err = await presetRequest("treatment preset", "/api/presets", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "treatments", name: tForm.name.trim(), price: Number(tForm.price) || 0 }),
+      body: JSON.stringify({ type: "treatments", name: tForm.name.trim(), price: price.value }),
     });
+    setTLoading(false);
+    setSaveError(err || "");
+    if (err) return;
     setTForm({ name: "", price: "" });
     await fetchTreatments();
-    setTLoading(false);
   };
 
   const saveTreatmentEdit = async (id: string) => {
-    await fetch("/api/presets", {
+    if (!tEditForm.name.trim()) { setSaveError("Treatment name is required."); return; }
+    const price = readAmount(tEditForm.price, "Price");
+    if (price.error) { setSaveError(price.error); return; }
+    const err = await presetRequest("treatment preset", "/api/presets", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "treatments", id, name: tEditForm.name.trim(), price: Number(tEditForm.price) || 0 }),
+      body: JSON.stringify({ type: "treatments", id, name: tEditForm.name.trim(), price: price.value }),
     });
+    setSaveError(err || "");
+    if (err) return;
     setTEditId(null);
     fetchTreatments();
   };
 
   const deleteTreatment = async (id: string) => {
     if (!confirm("Delete this treatment preset?")) return;
-    await fetch(`/api/presets?type=treatments&id=${id}`, { method: "DELETE" });
+    const err = await presetRequest("treatment preset", `/api/presets?type=treatments&id=${id}`, { method: "DELETE" });
+    setSaveError(err ? err.replace("save", "delete") : "");
     fetchTreatments();
   };
 
   // Prescription preset actions
   const addPrescription = async () => {
-    if (!pGroupName.trim()) return;
+    if (!pGroupName.trim()) { setSaveError("Group name is required."); return; }
     const validRows = medicineRows.filter(r => r.medicine.trim());
-    if (!validRows.length) return;
+    if (!validRows.length) { setSaveError("Add at least one medicine."); return; }
     setPLoading(true);
-    await fetch("/api/presets", {
+    const err = await presetRequest("prescription preset", "/api/presets", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         type: "prescriptions",
         group_name: pGroupName.trim(),
         rows: validRows.map(r => ({ ...r, medicine: r.medicine.trim() })),
       }),
     });
+    setPLoading(false);
+    setSaveError(err || "");
+    if (err) return;
     setPGroupName("");
     setMedicineRows([{ medicine: "", dosage: "", frequency: "", duration: "", notes: "" }]);
     await fetchPrescriptions();
-    setPLoading(false);
   };
 
   const updateMedicineRow = (idx: number, field: string, val: string) =>
     setMedicineRows(rows => rows.map((r, i) => i === idx ? { ...r, [field]: val } : r));
 
   const savePrescriptionEdit = async (id: string) => {
-    await fetch("/api/presets", {
+    if (!pEditForm.medicine.trim()) { setSaveError("Medicine name is required."); return; }
+    const err = await presetRequest("prescription preset", "/api/presets", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ type: "prescriptions", id, ...pEditForm, group_name: pEditForm.group_name.trim(), medicine: pEditForm.medicine.trim() }),
     });
+    setSaveError(err || "");
+    if (err) return;
     setPEditId(null);
     fetchPrescriptions();
   };
@@ -190,7 +218,8 @@ export default function Settings() {
 
   const deletePrescription = async (id: string) => {
     if (!confirm("Delete this prescription preset?")) return;
-    await fetch(`/api/presets?type=prescriptions&id=${id}`, { method: "DELETE" });
+    const err = await presetRequest("prescription preset", `/api/presets?type=prescriptions&id=${id}`, { method: "DELETE" });
+    setSaveError(err ? err.replace("save", "delete") : "");
     fetchPrescriptions();
   };
 
@@ -215,7 +244,7 @@ export default function Settings() {
         {/* Tabs */}
         <div className="flex gap-1 bg-white border border-brand-200 shadow-sm rounded-xl p-1 mb-6 w-fit overflow-x-auto">
           {TABS.map(t => (
-            <button key={t.key} onClick={() => setTab(t.key)}
+            <button key={t.key} onClick={() => { setTab(t.key); setSaveError(""); }}
               className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t.key ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
               {t.label}
             </button>
@@ -223,6 +252,8 @@ export default function Settings() {
         </div>
 
         {/* ── GENERAL TAB ── */}
+        <FormError message={saveError} />
+
         {tab === "general" && (
           <div className="bg-white rounded-xl p-5 border border-brand-200 shadow-sm w-full md:max-w-2xl">
             <h3 className="text-sm font-semibold text-brand-800 mb-5">Clinic Information</h3>

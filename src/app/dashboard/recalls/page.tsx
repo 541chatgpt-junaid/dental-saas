@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import EmptyState from "@/components/EmptyState";
 import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
+import { saveErrorMessage } from "@/lib/formSave";
 
 type Status = "pending" | "contacted" | "booked" | "done" | "cancelled";
 interface Recall {
@@ -88,7 +89,7 @@ export default function Recalls() {
       reason: form.reason.trim(), due_date: form.due_date, notes: form.notes.trim() || null,
     }]);
     setSaving(false);
-    if (e) { setError(e.message); return; }
+    if (e) { setError(saveErrorMessage(e, "recall")); return; }
     setShowForm(false);
     setForm({ patient_id: "", reason: REASONS[0], due_date: addMonths(todayISO(), 6), notes: "" });
     load();
@@ -96,24 +97,28 @@ export default function Recalls() {
 
   const setStatus = async (r: Recall, status: Status) => {
     setRecalls(list => list.map(x => (x.id === r.id ? { ...x, status } : x)));
-    await createClient().from("recalls").update({ status }).eq("id", r.id);
+    const { error: e } = await createClient().from("recalls").update({ status }).eq("id", r.id);
+    // The list changed optimistically: on failure say so and reload the real state
+    if (e) { setError(saveErrorMessage(e, "recall status")); load(); }
   };
 
   /** Mark done and schedule the same recall again in 6 months */
   const doneAndRepeat = async (r: Recall) => {
     const supabase = createClient();
-    await supabase.from("recalls").update({ status: "done" }).eq("id", r.id);
-    await supabase.from("recalls").insert([{
+    let { error: e } = await supabase.from("recalls").update({ status: "done" }).eq("id", r.id);
+    if (!e) ({ error: e } = await supabase.from("recalls").insert([{
       clinic_id: clinicId, patient_id: r.patient_id, patient_name: r.patient_name, phone: r.phone,
       reason: r.reason, due_date: addMonths(todayISO(), 6), notes: r.notes,
-    }]);
+    }]));
+    if (e) setError(saveErrorMessage(e, "next recall"));
     load();
   };
 
   const remove = async (r: Recall) => {
     if (!confirm(`Delete the recall for ${r.patient_name}?`)) return;
     setRecalls(list => list.filter(x => x.id !== r.id));
-    await createClient().from("recalls").delete().eq("id", r.id);
+    const { error: e } = await createClient().from("recalls").delete().eq("id", r.id);
+    if (e) { setError(saveErrorMessage(e, "recall").replace("save", "delete")); load(); }
   };
 
   const message = (r: Recall) =>

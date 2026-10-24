@@ -5,6 +5,7 @@ import {
   CheckCircle2, ChevronDown, ClipboardList, FileText, MessageCircle, Pencil, Plus, Printer, Trash2, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { firstError, readAmount, saveErrorMessage } from "@/lib/formSave";
 import Sidebar from "@/components/Sidebar";
 import EmptyState from "@/components/EmptyState";
 import { useClinic } from "@/lib/ClinicContext";
@@ -123,6 +124,12 @@ export default function TreatmentPlans() {
     const patient = patients.find(p => String(p.id) === form.patient_id);
     if (!patient) { setError("Please select a patient."); return; }
     if (!formItems.length) { setError("Add at least one procedure."); return; }
+    const invalid = firstError(
+      readAmount(form.discount, "Discount").error,
+      ...formItems.map(i => readAmount(i.fee, `Fee for ${i.procedure.trim()}`).error),
+      (Number(form.discount) || 0) > formSubtotal && "Discount can't be more than the plan total.",
+    );
+    if (invalid) { setError(invalid); return; }
     setBusy(true);
     setError("");
     const supabase = createClient();
@@ -138,11 +145,12 @@ export default function TreatmentPlans() {
     let planId = editingId;
     if (editingId) {
       const { error: e } = await supabase.from("treatment_plans").update(row).eq("id", editingId);
-      if (e) { setError(e.message); setBusy(false); return; }
-      await supabase.from("treatment_plan_items").delete().eq("plan_id", editingId);
+      if (e) { setError(saveErrorMessage(e, "treatment plan")); setBusy(false); return; }
+      const { error: delErr } = await supabase.from("treatment_plan_items").delete().eq("plan_id", editingId);
+      if (delErr) { setError(saveErrorMessage(delErr, "treatment plan")); setBusy(false); return; }
     } else {
       const { data, error: e } = await supabase.from("treatment_plans").insert([row]).select("id").single();
-      if (e || !data) { setError(e?.message || "Could not save the plan."); setBusy(false); return; }
+      if (e || !data) { setError(saveErrorMessage(e || { message: "no record came back" }, "treatment plan")); setBusy(false); return; }
       planId = data.id;
     }
     const { error: itemsErr } = await supabase.from("treatment_plan_items").insert(
@@ -151,7 +159,7 @@ export default function TreatmentPlans() {
         procedure: i.procedure.trim(), fee: Number(i.fee) || 0, done: i.done, position: idx,
       }))
     );
-    if (itemsErr) { setError(itemsErr.message); setBusy(false); return; }
+    if (itemsErr) { setError(saveErrorMessage(itemsErr, "treatment plan procedures")); setBusy(false); return; }
     setBusy(false);
     resetForm();
     load();
@@ -159,7 +167,8 @@ export default function TreatmentPlans() {
 
   const setStatus = async (p: Plan, status: Status) => {
     setPlans(list => list.map(x => (x.id === p.id ? { ...x, status } : x)));
-    await createClient().from("treatment_plans").update({ status }).eq("id", p.id);
+    const { error: e } = await createClient().from("treatment_plans").update({ status }).eq("id", p.id);
+    if (e) { setError(saveErrorMessage(e, "plan status")); load(); }
   };
 
   const toggleItem = async (p: Plan, item: PlanItem) => {
@@ -170,14 +179,17 @@ export default function TreatmentPlans() {
     const status: Status = allDone ? "completed" : p.status === "proposed" || p.status === "accepted" || p.status === "completed" ? "in_progress" : p.status;
     setPlans(list => list.map(x => (x.id === p.id ? { ...x, status, treatment_plan_items: nextItems } : x)));
     const supabase = createClient();
-    await supabase.from("treatment_plan_items").update({ done }).eq("id", item.id);
-    if (status !== p.status) await supabase.from("treatment_plans").update({ status }).eq("id", p.id);
+    let { error: e } = await supabase.from("treatment_plan_items").update({ done }).eq("id", item.id);
+    if (!e && status !== p.status) ({ error: e } = await supabase.from("treatment_plans").update({ status }).eq("id", p.id));
+    // The list was updated optimistically: on failure say so and reload the real state
+    if (e) { setError(saveErrorMessage(e, "procedure")); load(); }
   };
 
   const deletePlan = async (p: Plan) => {
     if (!confirm(`Delete the plan "${p.title}" for ${p.patient_name}?`)) return;
     setPlans(list => list.filter(x => x.id !== p.id));
-    await createClient().from("treatment_plans").delete().eq("id", p.id);
+    const { error: e } = await createClient().from("treatment_plans").delete().eq("id", p.id);
+    if (e) { setError(saveErrorMessage(e, "treatment plan").replace("save", "delete")); load(); }
   };
 
   const createInvoice = async (p: Plan) => {
@@ -207,10 +219,11 @@ export default function TreatmentPlans() {
       }))
     );
     if (itemsErr) { setError(itemsErr.message); setBusy(false); return; }
-    await supabase.from("treatment_plans").update({
+    const { error: linkErr } = await supabase.from("treatment_plans").update({
       invoice_id: String(invoice.id),
       status: p.status === "proposed" ? "accepted" : p.status,
     }).eq("id", p.id);
+    if (linkErr) alert(`Invoice ${invoice.invoice_number} was created, but ${saveErrorMessage(linkErr, "link to this plan").replace(/^C/, "c")}`);
     router.push(`/dashboard/billing/${invoice.id}`);
   };
 

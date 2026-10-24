@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import FormError from "@/components/FormError";
+import { dateOrToday, firstError, readAmount, saveErrorMessage, todayISO } from "@/lib/formSave";
 
 interface Purchase {
   id: number;
@@ -30,9 +32,10 @@ export default function Purchases() {
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [saveError, setSaveError] = useState("");
   const [form, setForm] = useState({
     item_name: "", category: "Consumable", quantity: "",
-    unit: "Box", price_per_unit: "", supplier: "", date: "", notes: "",
+    unit: "Box", price_per_unit: "", supplier: "", date: todayISO(), notes: "",
   });
   const router = useRouter();
   const { symbol } = useCurrency();
@@ -55,52 +58,63 @@ export default function Purchases() {
   }, [router]);
 
   const resetForm = () => {
-    setForm({ item_name: "", category: "Consumable", quantity: "", unit: "Box", price_per_unit: "", supplier: "", date: "", notes: "" });
+    setForm({ item_name: "", category: "Consumable", quantity: "", unit: "Box", price_per_unit: "", supplier: "", date: todayISO(), notes: "" });
     setShowForm(false);
     setEditingId(null);
+    setSaveError("");
+  };
+
+  /** Validated row from the form, or an error message naming the problem */
+  const purchaseRow = () => {
+    const qty = readAmount(form.quantity, "Quantity", { min: 1 });
+    const price = readAmount(form.price_per_unit, "Price per unit");
+    const error = firstError(!form.item_name.trim() && "Item name is required.", qty.error, price.error);
+    if (error) return { error, row: null };
+    return {
+      error: null,
+      row: {
+        item_name: form.item_name.trim(), category: form.category,
+        quantity: qty.value, unit: form.unit,
+        price_per_unit: price.value, total_price: qty.value * price.value,
+        supplier: form.supplier, date: dateOrToday(form.date), notes: form.notes,
+      },
+    };
   };
 
   const handleAdd = async () => {
+    const { error: invalid, row } = purchaseRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    const qty = parseInt(form.quantity) || 0;
-    const price = parseInt(form.price_per_unit) || 0;
-    await supabase.from("purchases").insert([{
-      item_name: form.item_name, category: form.category,
-      quantity: qty, unit: form.unit,
-      price_per_unit: price, total_price: qty * price,
-      supplier: form.supplier, date: form.date,
-      notes: form.notes, clinic_id: clinicId,
-    }]);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("purchases").insert([{ ...row, clinic_id: clinicId }]);
     setLoading(false);
+    // On failure the form stays open with everything typed
+    if (error) { setSaveError(saveErrorMessage(error, "purchase")); return; }
+    resetForm();
     fetchPurchases();
   };
 
   const handleEdit = async () => {
     if (!editingId) return;
+    const { error: invalid, row } = purchaseRow();
+    if (!row) { setSaveError(invalid!); return; }
     setLoading(true);
-    const supabase = createClient();
-    const qty = parseInt(form.quantity) || 0;
-    const price = parseInt(form.price_per_unit) || 0;
-    await supabase.from("purchases").update({
-      item_name: form.item_name, category: form.category,
-      quantity: qty, unit: form.unit,
-      price_per_unit: price, total_price: qty * price,
-      supplier: form.supplier, date: form.date, notes: form.notes,
-    }).eq("id", editingId);
-    resetForm();
+    setSaveError("");
+    const { error } = await createClient().from("purchases").update(row).eq("id", editingId);
     setLoading(false);
+    if (error) { setSaveError(saveErrorMessage(error, "purchase")); return; }
+    resetForm();
     fetchPurchases();
   };
 
   const openEdit = (p: Purchase) => {
     setEditingId(p.id);
+    setSaveError("");
     setForm({
       item_name: p.item_name, category: p.category,
       quantity: p.quantity.toString(), unit: p.unit,
       price_per_unit: p.price_per_unit.toString(),
-      supplier: p.supplier || "", date: p.date, notes: p.notes || "",
+      supplier: p.supplier || "", date: p.date || todayISO(), notes: p.notes || "",
     });
     setShowForm(false);
   };
@@ -108,7 +122,8 @@ export default function Purchases() {
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this purchase?")) return;
     const supabase = createClient();
-    await supabase.from("purchases").delete().eq("id", id);
+    const { error } = await supabase.from("purchases").delete().eq("id", id);
+    if (error) alert(saveErrorMessage(error, "purchase").replace("save", "delete"));
     fetchPurchases();
   };
 
@@ -162,6 +177,7 @@ export default function Purchases() {
         {showAnyForm && (
           <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
             <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingId ? "Edit Purchase" : "New Purchase"}</h3>
+            <FormError message={saveError} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <input placeholder="Item Name" value={form.item_name} onChange={e => setForm({...form, item_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <select value={form.category} onChange={e => setForm({...form, category: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
