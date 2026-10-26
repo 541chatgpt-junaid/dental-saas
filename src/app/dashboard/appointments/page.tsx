@@ -12,9 +12,11 @@ import AppointmentCalendar, { slotKey } from "./AppointmentCalendar";
 import TreatmentSelect from "@/components/TreatmentSelect";
 import FormError from "@/components/FormError";
 import { dateOrToday, firstError, saveErrorMessage, todayISO } from "@/lib/formSave";
+import { effectiveApptStatus, NO_SHOW } from "@/lib/appointments";
 
 interface Appointment {
   id: number;
+  patient_id: number | null;
   patient_name: string;
   doctor_name: string;
   date: string;
@@ -39,8 +41,10 @@ export default function Appointments() {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [saveError, setSaveError] = useState("");
+  const [patientList, setPatientList] = useState<{ id: number; name: string; phone: string | null }[]>([]);
+  const [linkingId, setLinkingId] = useState<number | null>(null);
   const [form, setForm] = useState({
-    patient_name: "", doctor_name: "", date: todayISO(),
+    patient_id: "", patient_name: "", doctor_name: "", date: todayISO(),
     time: "", treatment: "", status: "Scheduled", notes: "",
   });
   const router = useRouter();
@@ -61,7 +65,7 @@ export default function Appointments() {
   const newAt = (date: string, time: string, doctor: string) => {
     setEditingId(null);
     setSaveError("");
-    setForm({ patient_name: "", doctor_name: doctor, date, time, treatment: "", status: "Scheduled", notes: "" });
+    setForm({ patient_id: "", patient_name: "", doctor_name: doctor, date, time, treatment: "", status: "Scheduled", notes: "" });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -84,11 +88,12 @@ export default function Appointments() {
 
   const fetchPhones = async () => {
     const supabase = createClient();
-    const { data } = await supabase.from("patients").select("name, phone");
+    const { data } = await supabase.from("patients").select("id, name, phone").order("name");
     if (data) {
       const map: Record<string, string> = {};
       data.forEach(p => { if (p.name && p.phone) map[p.name.trim().toLowerCase()] = p.phone; });
       setPhones(map);
+      setPatientList(data as { id: number; name: string; phone: string | null }[]);
     }
   };
 
@@ -123,16 +128,18 @@ export default function Appointments() {
     fetchAllergies();
   }, [router]);
 
-  const emptyForm = () => ({ patient_name: "", doctor_name: "", date: todayISO(), time: "", treatment: "", status: "Scheduled", notes: "" });
+  const emptyForm = () => ({ patient_id: "", patient_name: "", doctor_name: "", date: todayISO(), time: "", treatment: "", status: "Scheduled", notes: "" });
 
   /** Validated row from the form, or an error message naming the problem */
   const appointmentRow = () => {
-    const error = firstError(!form.patient_name.trim() && "Patient name is required.", !form.time && "Pick a time for the appointment.");
+    const picked = patientList.find(pt => String(pt.id) === form.patient_id);
+    const error = firstError(!form.patient_id && "Choose a patient for this appointment.", !form.time && "Pick a time for the appointment.");
     if (error) return { error, row: null };
     return {
       error: null,
       row: {
-        patient_name: form.patient_name.trim(), doctor_name: form.doctor_name,
+        patient_id: Number(form.patient_id), patient_name: picked?.name || form.patient_name.trim(),
+        doctor_name: form.doctor_name,
         date: dateOrToday(form.date), time: form.time,
         treatment: form.treatment, status: form.status, notes: form.notes,
       },
@@ -173,6 +180,7 @@ export default function Appointments() {
     setEditingId(a.id);
     setSaveError("");
     setForm({
+      patient_id: a.patient_id ? String(a.patient_id) : "",
       patient_name: a.patient_name,
       doctor_name: a.doctor_name,
       date: a.date, time: a.time,
@@ -182,6 +190,29 @@ export default function Appointments() {
     });
     setShowForm(false);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Rebook a no-show as a NEW appointment (the old record stays as history)
+  const rebook = (a: Appointment) => {
+    setEditingId(null);
+    setSaveError("");
+    setForm({
+      patient_id: a.patient_id ? String(a.patient_id) : "",
+      patient_name: a.patient_name, doctor_name: a.doctor_name,
+      date: todayISO(), time: "", treatment: a.treatment, status: "Scheduled", notes: "",
+    });
+    setShowForm(true);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Attach a patient to a pre-existing unlinked appointment
+  const linkPatient = async (a: Appointment, patientId: string) => {
+    const pt = patientList.find(x => String(x.id) === patientId);
+    if (!pt) return;
+    const { error } = await createClient().from("appointments").update({ patient_id: pt.id, patient_name: pt.name }).eq("id", a.id);
+    if (error) { alert(saveErrorMessage(error, "appointment")); return; }
+    setLinkingId(null);
+    fetchAppointments();
   };
 
   const updateStatus = async (id: number, newStatus: string) => {
@@ -207,42 +238,61 @@ export default function Appointments() {
       status === "Completed" ? "bg-green-100 text-green-700" :
       status === "Scheduled" ? "bg-blue-100 text-blue-700" :
       status === "Requested" ? "bg-gold/20 text-[#8a6d12]" :
+      status === "No-show" ? "bg-orange-100 text-orange-700" :
       "bg-red-100 text-red-700"
     }`}>{status}</span>
   );
 
 
-  const AppointmentCard = ({ a }: { a: Appointment }) => (
+  const AppointmentCard = ({ a }: { a: Appointment }) => {
+    const st = effectiveApptStatus(a);
+    return (
     <div className="p-4">
       <div className="flex justify-between items-start mb-1">
         <p className="font-medium text-brand-800 text-sm">{a.patient_name}</p>
-        <StatusBadge status={a.status} />
+        <StatusBadge status={st} />
       </div>
       {allergyByName[a.patient_name?.trim().toLowerCase()] && (
         <p className="mb-1 inline-block rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[a.patient_name.trim().toLowerCase()]}</p>
       )}
+      {!a.patient_id && <PatientLink a={a} />}
       <p className="text-xs text-brand-600">{a.treatment} · Dr. {a.doctor_name}</p>
       <p className="text-xs text-brand-400 mt-1">{a.date} · {a.time}</p>
       {a.notes && <p className="text-xs text-brand-400">📝 {a.notes}</p>}
       <div className="flex gap-2 mt-2 flex-wrap">
-        {a.status === "Requested" && (
+        {st === "Requested" && (
           <>
             <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold">✓ Confirm</button>
             <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium">💬 Tell patient</a>
             <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Decline</button>
           </>
         )}
-        {a.status === "Scheduled" && (
+        {st === "Scheduled" && (
           <>
             <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
             <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
+            <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>
           </>
         )}
-        {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
+        {st === NO_SHOW && <button onClick={() => rebook(a)} className="text-brand-600 text-xs font-semibold">↻ Rebook</button>}
         <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
         <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
       </div>
     </div>
+    );
+  };
+
+  // Inline "attach a patient" control for a pre-existing unlinked appointment
+  const PatientLink = ({ a }: { a: Appointment }) => (
+    linkingId === a.id ? (
+      <select autoFocus defaultValue="" onChange={e => e.target.value && linkPatient(a, e.target.value)}
+        className="my-1 w-full border border-orange-300 rounded-lg px-2 py-1 text-xs">
+        <option value="">Select a patient to link…</option>
+        {patientList.map(pt => <option key={pt.id} value={pt.id}>{pt.name}{pt.phone ? ` · ${pt.phone}` : ""}</option>)}
+      </select>
+    ) : (
+      <button onClick={() => setLinkingId(a.id)} className="mb-1 inline-block rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700">⚠ No patient linked — Link</button>
+    )
   );
 
   return (
@@ -253,6 +303,11 @@ export default function Appointments() {
           <div>
             <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Appointments</h2>
             <p className="text-sm text-brand-600 mt-1">Total: {appointments.length} appointments</p>
+            {appointments.filter(a => !a.patient_id).length > 0 && (
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                ⚠ {appointments.filter(a => !a.patient_id).length} appointment(s) not linked to a patient — open one to link it
+              </p>
+            )}
             {appointments.some(a => a.status === "Requested") && (
               <p className="mt-2 inline-flex items-center gap-2 rounded-full bg-gold/15 px-3 py-1 text-xs font-semibold text-[#8a6d12]">
                 🌐 {appointments.filter(a => a.status === "Requested").length} online booking request(s) waiting for confirmation
@@ -281,7 +336,10 @@ export default function Appointments() {
             </h3>
             <FormError message={saveError} />
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-              <input placeholder="Patient Name" value={form.patient_name} onChange={e => setForm({...form, patient_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <select value={form.patient_id} onChange={e => { const pt = patientList.find(x => String(x.id) === e.target.value); setForm({ ...form, patient_id: e.target.value, patient_name: pt?.name || "" }); }} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
+                <option value="">Select patient *</option>
+                {patientList.map(pt => <option key={pt.id} value={pt.id}>{pt.name}{pt.phone ? ` · ${pt.phone}` : ""}</option>)}
+              </select>
               <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option value="">Select Doctor</option>
                 {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
@@ -317,7 +375,7 @@ export default function Appointments() {
             view={view}
             date={calDate}
             onDateChange={setCalDate}
-            appointments={appointments}
+            appointments={appointments.map(a => ({ ...a, status: effectiveApptStatus(a) }))}
             doctors={doctors.map(d => d.name)}
             onSelect={a => { const full = appointments.find(x => x.id === a.id); if (full) openEdit(full); }}
             onNew={newAt}
@@ -355,27 +413,28 @@ export default function Appointments() {
                         <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}
                           {allergyByName[a.patient_name?.trim().toLowerCase()] && (
                             <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[a.patient_name.trim().toLowerCase()]}</span>
-                          )}</td>
+                          )}{!a.patient_id && <div className="mt-1"><PatientLink a={a} /></div>}</td>
                         <td className="px-4 py-3 text-brand-700">{a.doctor_name}</td>
                         <td className="px-4 py-3 text-brand-700">{a.time}</td>
                         <td className="px-4 py-3 text-brand-700">{a.treatment}</td>
-                        <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
+                        <td className="px-4 py-3"><StatusBadge status={effectiveApptStatus(a)} /></td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2 flex-wrap">
-                            {a.status === "Requested" && (
+                            {effectiveApptStatus(a) === "Requested" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold">✓ Confirm</button>
                                 <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium">💬 Tell patient</a>
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Decline</button>
                               </>
                             )}
-                            {a.status === "Scheduled" && (
+                            {effectiveApptStatus(a) === "Scheduled" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
-                            {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
+                            {effectiveApptStatus(a) === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
+                                {effectiveApptStatus(a) === NO_SHOW && <button onClick={() => rebook(a)} className="text-brand-600 text-xs font-semibold">↻ Rebook</button>}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>
@@ -422,28 +481,29 @@ export default function Appointments() {
                         <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}
                           {allergyByName[a.patient_name?.trim().toLowerCase()] && (
                             <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[a.patient_name.trim().toLowerCase()]}</span>
-                          )}</td>
+                          )}{!a.patient_id && <div className="mt-1"><PatientLink a={a} /></div>}</td>
                         <td className="px-4 py-3 text-brand-700">{a.doctor_name}</td>
                         <td className="px-4 py-3 text-brand-700">{a.date}</td>
                         <td className="px-4 py-3 text-brand-700">{a.time}</td>
                         <td className="px-4 py-3 text-brand-700">{a.treatment}</td>
-                        <td className="px-4 py-3"><StatusBadge status={a.status} /></td>
+                        <td className="px-4 py-3"><StatusBadge status={effectiveApptStatus(a)} /></td>
                         <td className="px-4 py-3">
                           <div className="flex gap-2 flex-wrap">
-                            {a.status === "Requested" && (
+                            {effectiveApptStatus(a) === "Requested" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold">✓ Confirm</button>
                                 <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium">💬 Tell patient</a>
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Decline</button>
                               </>
                             )}
-                            {a.status === "Scheduled" && (
+                            {effectiveApptStatus(a) === "Scheduled" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
                               </>
                             )}
-                            {a.status === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
+                            {effectiveApptStatus(a) === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium">💬 Remind</a>}
+                                {effectiveApptStatus(a) === NO_SHOW && <button onClick={() => rebook(a)} className="text-brand-600 text-xs font-semibold">↻ Rebook</button>}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
                             <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium">🗑️</button>
                           </div>

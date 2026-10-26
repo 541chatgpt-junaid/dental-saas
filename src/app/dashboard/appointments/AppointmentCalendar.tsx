@@ -38,6 +38,7 @@ const STATUS_CLS: Record<string, string> = {
   Scheduled: "border-l-blue-500 bg-blue-50",
   Requested: "border-l-gold bg-gold/10",
   Completed: "border-l-green-500 bg-green-50",
+  "No-show": "border-l-orange-400 bg-orange-50",
   Cancelled: "border-l-red-400 bg-red-50 opacity-60",
 };
 
