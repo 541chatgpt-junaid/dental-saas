@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import TreatmentSelect from "@/components/TreatmentSelect";
 import {
   CheckCircle2, ChevronDown, ClipboardList, FileText, MessageCircle, Pencil, Plus, Printer, Trash2, X,
 } from "lucide-react";
@@ -38,11 +39,6 @@ const STATUS: Record<Status, { label: string; cls: string }> = {
   declined: { label: "Declined", cls: "bg-red-100 text-red-700" },
 };
 
-const COMMON_PROCEDURES = [
-  "Consultation", "Scaling & polishing", "Composite filling", "Root canal treatment", "Post & core",
-  "Crown (PFM)", "Crown (Zirconia)", "Bridge unit", "Extraction", "Surgical extraction", "Implant",
-  "Denture", "Teeth whitening", "Orthodontic braces", "Night guard",
-];
 
 const emptyItem = (): PlanItem => ({ tooth: "", procedure: "", fee: 0, done: false });
 const planTotal = (p: { treatment_plan_items: PlanItem[]; discount: number }) =>
@@ -298,14 +294,13 @@ export default function TreatmentPlans() {
             </div>
 
             <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-brand-600">Procedures</p>
-            <datalist id="procedures">{COMMON_PROCEDURES.map(p => <option key={p} value={p} />)}</datalist>
             <div className="space-y-2">
               {items.map((it, idx) => (
                 <div key={idx} className="grid grid-cols-[70px_1fr_110px_32px] md:grid-cols-[90px_1fr_140px_36px] gap-2 items-center">
                   <input value={it.tooth} onChange={e => setItems(v => v.map((x, i) => (i === idx ? { ...x, tooth: e.target.value } : x)))}
                     placeholder="Tooth" aria-label="Tooth number" className={inputCls} />
-                  <input list="procedures" value={it.procedure} onChange={e => setItems(v => v.map((x, i) => (i === idx ? { ...x, procedure: e.target.value } : x)))}
-                    placeholder="Procedure" aria-label="Procedure" className={inputCls} />
+                  <TreatmentSelect value={it.procedure} placeholder="Procedure"
+                    onPick={(name, fee) => setItems(v => v.map((x, i) => (i === idx ? { ...x, procedure: name, fee: x.fee || fee } : x)))} />
                   <input type="number" min={0} value={it.fee || ""} onChange={e => setItems(v => v.map((x, i) => (i === idx ? { ...x, fee: Number(e.target.value) } : x)))}
                     placeholder="Fee" aria-label="Fee" className={inputCls} />
                   <button type="button" onClick={() => setItems(v => (v.length > 1 ? v.filter((_, i) => i !== idx) : [emptyItem()]))}

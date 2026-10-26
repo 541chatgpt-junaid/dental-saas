@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import TreatmentSelect from "@/components/TreatmentSelect";
 
 interface Patient { id: number; name: string; phone: string; age: number | null; gender: string; }
 interface Visit { id: number; visit_date: string; treatment: string; }
@@ -293,12 +294,10 @@ export default function NewInvoicePage() {
             <div className="space-y-2">
               {items.map((item, idx) => (
                 <div key={idx} className="grid grid-cols-12 gap-2 items-center">
-                  <input
-                    placeholder="Description"
-                    value={item.description}
-                    onChange={e => updateItem(idx, "description", e.target.value)}
-                    className="col-span-6 border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
-                  />
+                  <div className="col-span-6">
+                    <TreatmentSelect value={item.description} placeholder="Select treatment"
+                      onPick={(name, fee) => setItems(items.map((it, i) => i === idx ? { ...it, description: name, unit_price: it.unit_price || fee } : it))} />
+                  </div>
                   <input
                     type="number" placeholder="1" min="1"
                     value={item.quantity}
