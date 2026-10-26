@@ -9,6 +9,7 @@ import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
 import { CalendarDays, CalendarRange, List } from "lucide-react";
 import AppointmentCalendar, { slotKey } from "./AppointmentCalendar";
+import TreatmentSelect from "@/components/TreatmentSelect";
 import FormError from "@/components/FormError";
 import { dateOrToday, firstError, saveErrorMessage, todayISO } from "@/lib/formSave";
 
@@ -279,7 +280,8 @@ export default function Appointments() {
                 <label className="block text-xs text-brand-600 mb-1">Time</label>
                 <input type="time" value={form.time} onChange={e => setForm({...form, time: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               </div>
-              <input placeholder="Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <TreatmentSelect value={form.treatment} placeholder="Select treatment"
+                onPick={(name) => setForm({ ...form, treatment: name })} />
               <select value={form.status} onChange={e => setForm({...form, status: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option>Scheduled</option>
                 <option>Completed</option>

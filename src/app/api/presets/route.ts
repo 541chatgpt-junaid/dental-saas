@@ -35,6 +35,23 @@ const admin = () => createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
+const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || "treatment";
+
+/** A code unique within the clinic, derived from the name */
+async function uniqueTreatmentCode(
+  db: ReturnType<typeof admin>,
+  clinicId: string,
+  name: string,
+  existing: { name: string }[],
+): Promise<string> {
+  const { data } = await db.from("treatment_presets").select("code").eq("clinic_id", clinicId);
+  const taken = new Set((data || []).map((r: { code: string | null }) => r.code).filter(Boolean));
+  const base = slug(name);
+  let cand = base, n = 1;
+  while (taken.has(cand)) { n += 1; cand = `${base}-${n}`; }
+  return cand;
+}
+
 // GET /api/presets?type=treatments|prescriptions
 export async function GET(request: Request) {
   const clinicId = await getAuthenticatedClinicId();
@@ -75,11 +92,20 @@ export async function POST(request: Request) {
   const { type, ...fields } = body;
 
   if (type === "treatments") {
-    const { error } = await admin()
-      .from("treatment_presets")
-      .insert([{ clinic_id: clinicId, name: fields.name, price: fields.price ?? 0 }]);
+    const name = String(fields.name ?? "").trim();
+    if (!name) return NextResponse.json({ error: "Treatment name is required." }, { status: 400 });
+    const db = admin();
+    // Reject a duplicate (case/spacing-insensitive) so the master list stays canonical
+    const { data: existing } = await db.from("treatment_presets").select("id, name").eq("clinic_id", clinicId);
+    const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
+    if ((existing || []).some(e => key(e.name) === key(name)))
+      return NextResponse.json({ error: "That treatment is already in the list." }, { status: 409 });
+    const code = await uniqueTreatmentCode(db, clinicId, name, existing || []);
+    let { error } = await db.from("treatment_presets").insert([{ clinic_id: clinicId, name, price: fields.price ?? 0, code }]);
+    // Older database without the code column: insert without it
+    if (error && /code/.test(error.message)) ({ error } = await db.from("treatment_presets").insert([{ clinic_id: clinicId, name, price: fields.price ?? 0 }]));
     if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, code });
   }
 
   if (type === "prescriptions") {

@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Receipt from "@/components/Receipt";
+import TreatmentSelect from "@/components/TreatmentSelect";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 import FormError from "@/components/FormError";
@@ -77,7 +78,6 @@ interface Doctor {
 }
 
 type LedgerInvoice = Ledgered<LedgerInvoiceRow>;
-interface TreatmentPreset { id: string; name: string; price: number; }
 
 const upperRight = [18,17,16,15,14,13,12,11];
 const upperLeft = [21,22,23,24,25,26,27,28];
@@ -143,7 +143,6 @@ export default function Patients() {
     fee_total: "", fee_paid: "",
   });
   const [prescriptionPresets, setPrescriptionPresets] = useState<{ id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string }[]>([]);
-  const [treatmentPresets, setTreatmentPresets] = useState<TreatmentPreset[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
@@ -236,9 +235,6 @@ export default function Patients() {
     fetch("/api/presets?type=prescriptions")
       .then(r => r.json())
       .then(json => setPrescriptionPresets(json.data || []));
-    fetch("/api/presets?type=treatments")
-      .then(r => r.json())
-      .then(json => setTreatmentPresets(json.data || []));
   }, []);
 
   const getClinicPatientNumber = (patientId: number) => {
@@ -781,7 +777,8 @@ export default function Patients() {
                     <label className="block text-xs text-brand-600 mb-1">Time</label>
                     <input type="time" value={appointmentForm.time} onChange={e => setAppointmentForm({...appointmentForm, time: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   </div>
-                  <input placeholder="Treatment" value={appointmentForm.treatment} onChange={e => setAppointmentForm({...appointmentForm, treatment: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <TreatmentSelect value={appointmentForm.treatment} placeholder="Select treatment"
+                    onPick={(name) => setAppointmentForm({ ...appointmentForm, treatment: name })} />
                   <input placeholder="Notes (optional)" value={appointmentForm.notes} onChange={e => setAppointmentForm({...appointmentForm, notes: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                 </div>
                 <div className="flex gap-3">
@@ -805,21 +802,8 @@ export default function Patients() {
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
                   <div>
-                    <input placeholder="Treatment done" value={visitForm.treatment} onChange={e => setVisitForm({...visitForm, treatment: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
-                    {treatmentPresets.length > 0 && (
-                      <div className="mt-1.5 flex flex-wrap gap-1.5">
-                        {treatmentPresets.map(t => (
-                          <button
-                            key={t.id}
-                            type="button"
-                            onClick={() => setVisitForm(f => ({ ...f, treatment: t.name, fee: f.fee || String(t.price) }))}
-                            className="text-xs px-2.5 py-1 rounded-lg border border-brand-200 text-brand-700 hover:bg-brand-50 transition-colors"
-                          >
-                            {t.name}{t.price > 0 && <span className="text-brand-400 ml-1">({symbol} {t.price.toLocaleString()})</span>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                    <TreatmentSelect value={visitForm.treatment} placeholder="Select treatment done"
+                      onPick={(name, fee) => setVisitForm(f => ({ ...f, treatment: name, fee: f.fee || (fee ? String(fee) : "") }))} />
                   </div>
                   <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
@@ -1098,7 +1082,10 @@ export default function Patients() {
                     <option value="">Select Doctor</option>
                     {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
                   </select>
-                  <input placeholder="Initial Treatment" value={form.treatment} onChange={e => setForm({...form, treatment: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
+                  <div className="md:col-span-2">
+                    <TreatmentSelect value={form.treatment} placeholder="Initial treatment"
+                      onPick={(name, fee) => setForm(f => ({ ...f, treatment: name, fee_total: f.fee_total || (fee ? String(fee) : "") }))} />
+                  </div>
                 </div>
                 <ToothChart selected={selectedTeeth} onToggle={toggleTooth} />
                 <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4">
