@@ -48,8 +48,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const slot = (await availableSlots(db, ctx, date, doctor)).find(s => s.time === time);
   if (!slot) return NextResponse.json({ error: "Sorry, that time was just taken. Please pick another slot." }, { status: 409 });
 
+  // Every appointment links to a patient: match an existing patient in this
+  // clinic by phone, otherwise create one from the booking (name + phone are
+  // already validated above). A booking can never be left patient-less.
+  const clinicId = ctx.settings.clinic_id;
+  const digits = phone.replace(/\D/g, "");
+  let patientId: number | null = null;
+  const { data: existing } = await db.from("patients").select("id, phone").eq("clinic_id", clinicId);
+  const match = (existing || []).find(p => (p.phone || "").replace(/\D/g, "") === digits && digits.length >= 7);
+  if (match) patientId = match.id;
+  else {
+    const { data: created } = await db.from("patients")
+      .insert([{ clinic_id: clinicId, name, phone, status: "Pending" }]).select("id").single();
+    patientId = created?.id ?? null;
+  }
+  if (!patientId) {
+    console.error("Online booking could not resolve a patient for", slug);
+    return NextResponse.json({ error: "Could not save your booking. Please call the clinic." }, { status: 500 });
+  }
+
   const row = {
-    clinic_id: ctx.settings.clinic_id,
+    clinic_id: clinicId,
+    patient_id: patientId,
     patient_name: name,
     doctor_name: slot.doctor || "",
     date, time,

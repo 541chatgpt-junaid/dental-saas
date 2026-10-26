@@ -9,6 +9,7 @@ import Receipt from "@/components/Receipt";
 import TreatmentSelect from "@/components/TreatmentSelect";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
+import { effectiveApptStatus } from "@/lib/appointments";
 import FormError from "@/components/FormError";
 import { dateOrToday, firstError, readAmount, saveErrorMessage, todayISO } from "@/lib/formSave";
 import {
@@ -1122,8 +1123,8 @@ export default function Patients() {
                             {a.notes && <p className="text-xs text-brand-400 mt-1">{a.notes}</p>}
                           </div>
                           <div className="text-right shrink-0 flex flex-col items-end gap-1">
-                            <StatusBadge status={a.status} />
-                            {a.status === "Scheduled" && (
+                            <StatusBadge status={effectiveApptStatus(a)} />
+                            {effectiveApptStatus(a) === "Scheduled" && (
                               <div className="flex gap-2 mt-1">
                                 <button onClick={() => updateAppointmentStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
                                 <button onClick={() => updateAppointmentStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
