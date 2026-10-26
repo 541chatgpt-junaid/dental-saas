@@ -24,6 +24,12 @@ interface Patient {
   address: string;
   age: number;
   gender: string;
+  dob: string | null;
+  cnic: string | null;
+  email: string | null;
+  blood_group: string | null;
+  emergency_contact: string | null;
+  guardian: string | null;
   treatment: string;
   tooth_number: string;
   doctor_name: string;
@@ -155,6 +161,7 @@ export default function Patients() {
   const [form, setForm] = useState({
     name: "", phone: "", address: "", age: "",
     gender: "Male", treatment: "", doctor_name: "",
+    dob: "", cnic: "", email: "", blood_group: "", emergency_contact: "", guardian: "",
     fee_total: "", fee_paid: "",
   });
   const [prescriptionPresets, setPrescriptionPresets] = useState<{ id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string }[]>([]);
@@ -258,7 +265,7 @@ export default function Patients() {
   };
 
   const resetForm = () => {
-    setForm({ name: "", phone: "", address: "", age: "", gender: "Male", treatment: "", doctor_name: "", fee_total: "", fee_paid: "" });
+    setForm({ name: "", phone: "", address: "", age: "", gender: "Male", treatment: "", doctor_name: "", dob: "", cnic: "", email: "", blood_group: "", emergency_contact: "", guardian: "", fee_total: "", fee_paid: "" });
     setSelectedTeeth([]);
     setShowForm(false);
     setEditingPatientId(null);
@@ -286,8 +293,18 @@ export default function Patients() {
     const fee = readAmount(form.fee_total, "Fee");
     const paid = readAmount(form.fee_paid, "Fee paid");
     const age = readAmount(form.age, "Age");
+    const cnic = form.cnic.trim();
+    const email = form.email.trim();
+    // CNIC: 13 digits, with or without the usual dashes (12345-1234567-1)
+    const cnicOk = !cnic || /^\d{5}-?\d{7}-?\d$/.test(cnic);
+    const emailOk = !email || /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email);
+    const dobFuture = form.dob && form.dob > todayISO();
     return firstError(
       !form.name.trim() && "Patient name is required.",
+      !form.phone.trim() && "Phone number is required.",
+      !cnicOk && "CNIC should be 13 digits, e.g. 12345-1234567-1.",
+      !emailOk && "Please enter a valid email address.",
+      dobFuture && "Date of birth can't be in the future.",
       age.error, fee.error, paid.error,
       paid.value > fee.value && "Fee paid can't be more than the fee.",
     );
@@ -306,14 +323,19 @@ export default function Patients() {
     // fee_total / fee_paid / status are kept only as a record of what was typed at registration;
     // the bill itself is the registration invoice below
     const row = {
-      name: form.name.trim(), phone: form.phone, address: form.address,
+      name: form.name.trim(), phone: form.phone.trim(), address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
+      dob: form.dob || null, cnic: form.cnic.trim() || null, email: form.email.trim() || null,
+      blood_group: form.blood_group.trim() || null, emergency_contact: form.emergency_contact.trim() || null, guardian: form.guardian.trim() || null,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
       doctor_name: form.doctor_name, fee_total, fee_paid, status,
       clinic_id: clinicId,
     };
+    // Older database without the new columns: insert without them so nothing breaks
+    const stripNew = (r: Record<string, unknown>) => { const { dob, cnic, email, blood_group, emergency_contact, guardian, ...rest } = r; void dob; void cnic; void email; void blood_group; void emergency_contact; void guardian; return rest; };
     let { data: patient, error } = await supabase.from("patients").insert([{ ...row, ledger_migrated_at: new Date().toISOString() }]).select().single();
     if (error?.message.includes("ledger_migrated_at")) ({ data: patient, error } = await supabase.from("patients").insert([row]).select().single());
+    if (error && /dob|cnic|email|blood_group|emergency_contact|guardian/.test(error.message)) ({ data: patient, error } = await supabase.from("patients").insert([{ ...stripNew(row), ledger_migrated_at: new Date().toISOString() }]).select().single());
     if (error || !patient) {
       setLoading(false);
       setPatientError(saveErrorMessage(error || { message: "no record came back" }, "patient"));
@@ -353,12 +375,19 @@ export default function Patients() {
     setLoading(true);
     const supabase = createClient();
 
-    const { error } = await supabase.from("patients").update({
-      name: form.name.trim(), phone: form.phone, address: form.address,
+    const baseUpd = {
+      name: form.name.trim(), phone: form.phone.trim(), address: form.address,
       age: parseInt(form.age) || 0, gender: form.gender,
       treatment: form.treatment, tooth_number: selectedTeeth.join(", "),
       doctor_name: form.doctor_name,
-    }).eq("id", editingPatientId);
+    };
+    const newUpd = {
+      dob: form.dob || null, cnic: form.cnic.trim() || null, email: form.email.trim() || null,
+      blood_group: form.blood_group.trim() || null, emergency_contact: form.emergency_contact.trim() || null, guardian: form.guardian.trim() || null,
+    };
+    let { error } = await supabase.from("patients").update({ ...baseUpd, ...newUpd }).eq("id", editingPatientId);
+    // Older database without the new columns: update only the base fields
+    if (error && /dob|cnic|email|blood_group|emergency_contact|guardian/.test(error.message)) ({ error } = await supabase.from("patients").update(baseUpd).eq("id", editingPatientId));
     if (error) { setLoading(false); setPatientError(saveErrorMessage(error, "patient")); return; }
 
     let invoiceId = reg ? String(reg.id) : null;
@@ -398,6 +427,8 @@ export default function Patients() {
       name: p.name, phone: p.phone || "", address: p.address || "",
       age: p.age?.toString() || "", gender: p.gender || "Male",
       treatment: p.treatment || "", doctor_name: p.doctor_name || "",
+      dob: p.dob || "", cnic: p.cnic || "", email: p.email || "",
+      blood_group: p.blood_group || "", emergency_contact: p.emergency_contact || "", guardian: p.guardian || "",
       fee_total: registrationInvoice(p.id)?.total.toString() || "",
       fee_paid: registrationInvoice(p.id)?.amount_paid.toString() || "",
     });
@@ -789,6 +820,16 @@ export default function Patients() {
                   <p className="text-xs text-brand-400 mt-0.5">
                     Registered: {formatDate(selectedPatient.created_at)}
                   </p>
+                  {(selectedPatient.dob || selectedPatient.cnic || selectedPatient.email || selectedPatient.blood_group || selectedPatient.emergency_contact || selectedPatient.guardian) && (
+                    <p className="text-xs text-brand-400 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                      {selectedPatient.dob && <span>DOB: {formatDate(selectedPatient.dob)}</span>}
+                      {selectedPatient.cnic && <span>CNIC: {selectedPatient.cnic}</span>}
+                      {selectedPatient.email && <span>✉ {selectedPatient.email}</span>}
+                      {selectedPatient.blood_group && <span>Blood: {selectedPatient.blood_group}</span>}
+                      {selectedPatient.emergency_contact && <span>Emergency: {selectedPatient.emergency_contact}</span>}
+                      {selectedPatient.guardian && <span>Guardian: {selectedPatient.guardian}</span>}
+                    </p>
+                  )}
                   {selectedPatient.treatment && (
                     <p className="text-xs text-brand-400 mt-0.5">
                       Initial: {selectedPatient.treatment} {selectedPatient.tooth_number ? `· Tooth: ${selectedPatient.tooth_number}` : ""}
@@ -1202,8 +1243,8 @@ export default function Patients() {
                 <h3 className="text-sm font-semibold text-brand-800 mb-4">{editingPatientId ? "Edit Patient" : "New Patient"}</h3>
                 <FormError message={patientError} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
-                  <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
-                  <input placeholder="Phone Number" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Full Name *" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Phone Number *" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <input placeholder="Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <input placeholder="Age" type="number" value={form.age} onChange={e => setForm({...form, age: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <select value={form.gender} onChange={e => setForm({...form, gender: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
@@ -1217,6 +1258,17 @@ export default function Patients() {
                     <TreatmentSelect value={form.treatment} placeholder="Initial treatment"
                       onPick={(name, fee) => setForm(f => ({ ...f, treatment: name, fee_total: f.fee_total || (fee ? String(fee) : "") }))} />
                   </div>
+                  <label className="block text-xs text-brand-500">Date of birth
+                    <input type="date" value={form.dob} max={todayISO()} onChange={e => setForm({...form, dob: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold w-full mt-1" />
+                  </label>
+                  <input placeholder="CNIC (e.g. 12345-1234567-1)" value={form.cnic} onChange={e => setForm({...form, cnic: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Email" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <select value={form.blood_group} onChange={e => setForm({...form, blood_group: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
+                    <option value="">Blood group</option>
+                    {["A+","A-","B+","B-","AB+","AB-","O+","O-"].map(bg => <option key={bg} value={bg}>{bg}</option>)}
+                  </select>
+                  <input placeholder="Emergency contact" value={form.emergency_contact} onChange={e => setForm({...form, emergency_contact: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                  <input placeholder="Guardian / next of kin" value={form.guardian} onChange={e => setForm({...form, guardian: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                 </div>
                 <ToothChart selected={selectedTeeth} onToggle={toggleTooth} />
                 <div className="grid grid-cols-2 gap-3 md:gap-4 mt-4">
