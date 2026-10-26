@@ -46,6 +46,7 @@ export default function Appointments() {
   const router = useRouter();
   const { clinicId, clinicName } = useClinic();
   const [phones, setPhones] = useState<Record<string, string>>({});
+  const [allergyByName, setAllergyByName] = useState<Record<string, string>>({});
   const [view, setView] = useState<"list" | "day" | "week">("list");
   const [calDate, setCalDate] = useState(() => new Date().toLocaleDateString("en-CA"));
 
@@ -72,6 +73,15 @@ export default function Appointments() {
   };
 
   // Patient phone numbers by name, for WhatsApp reminders (appointments only store the name)
+  const fetchAllergies = async () => {
+    const { data } = await createClient().from("medical_history").select("patient_name, allergies");
+    const map: Record<string, string> = {};
+    (data || []).forEach((m: { patient_name: string | null; allergies: string | null }) => {
+      if (m.patient_name && m.allergies?.trim()) map[m.patient_name.trim().toLowerCase()] = m.allergies.trim();
+    });
+    setAllergyByName(map);
+  };
+
   const fetchPhones = async () => {
     const supabase = createClient();
     const { data } = await supabase.from("patients").select("name, phone");
@@ -110,6 +120,7 @@ export default function Appointments() {
     fetchAppointments();
     fetchDoctors();
     fetchPhones();
+    fetchAllergies();
   }, [router]);
 
   const emptyForm = () => ({ patient_name: "", doctor_name: "", date: todayISO(), time: "", treatment: "", status: "Scheduled", notes: "" });
@@ -207,6 +218,9 @@ export default function Appointments() {
         <p className="font-medium text-brand-800 text-sm">{a.patient_name}</p>
         <StatusBadge status={a.status} />
       </div>
+      {allergyByName[a.patient_name?.trim().toLowerCase()] && (
+        <p className="mb-1 inline-block rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[a.patient_name.trim().toLowerCase()]}</p>
+      )}
       <p className="text-xs text-brand-600">{a.treatment} · Dr. {a.doctor_name}</p>
       <p className="text-xs text-brand-400 mt-1">{a.date} · {a.time}</p>
       {a.notes && <p className="text-xs text-brand-400">📝 {a.notes}</p>}
@@ -338,7 +352,10 @@ export default function Appointments() {
                   ) : (
                     todayAppts.map(a => (
                       <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">
-                        <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}</td>
+                        <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}
+                          {allergyByName[a.patient_name?.trim().toLowerCase()] && (
+                            <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[a.patient_name.trim().toLowerCase()]}</span>
+                          )}</td>
                         <td className="px-4 py-3 text-brand-700">{a.doctor_name}</td>
                         <td className="px-4 py-3 text-brand-700">{a.time}</td>
                         <td className="px-4 py-3 text-brand-700">{a.treatment}</td>
@@ -402,7 +419,10 @@ export default function Appointments() {
                   ) : (
                     appointments.map(a => (
                       <tr key={a.id} className="border-t border-brand-50 hover:bg-brand-50">
-                        <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}</td>
+                        <td className="px-4 py-3 font-medium text-brand-800">{a.patient_name}
+                          {allergyByName[a.patient_name?.trim().toLowerCase()] && (
+                            <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[a.patient_name.trim().toLowerCase()]}</span>
+                          )}</td>
                         <td className="px-4 py-3 text-brand-700">{a.doctor_name}</td>
                         <td className="px-4 py-3 text-brand-700">{a.date}</td>
                         <td className="px-4 py-3 text-brand-700">{a.time}</td>

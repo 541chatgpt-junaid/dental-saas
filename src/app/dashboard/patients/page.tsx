@@ -61,6 +61,17 @@ interface Appointment {
   status: string;
 }
 
+interface Prescription {
+  id: string;
+  patient_id: number;
+  visit_id: number | null;
+  medicine: string;
+  dosage: string | null;
+  duration: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
 interface MedicalHistory {
   id: number;
   patient_id: number;
@@ -124,7 +135,11 @@ export default function Patients() {
   const [visitError, setVisitError] = useState("");
   const [medicalError, setMedicalError] = useState("");
   const [apptError, setApptError] = useState("");
-  const [activeTab, setActiveTab] = useState<"visits"|"appointments"|"medical">("visits");
+  const [activeTab, setActiveTab] = useState<"visits"|"chart"|"rx"|"appointments"|"medical">("visits");
+  const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
+  const [rxForm, setRxForm] = useState({ medicine: "", dosage: "", duration: "", visit_id: "" });
+  const [rxError, setRxError] = useState("");
+  const [rxLoading, setRxLoading] = useState(false);
   const [editingVisitId, setEditingVisitId] = useState<number | null>(null);
   const [medicalForm, setMedicalForm] = useState({
     allergies: "", blood_group: "", medical_conditions: "",
@@ -634,12 +649,51 @@ export default function Patients() {
     fetchInvoiceSummaries();
   };
 
+  const fetchPrescriptions = async (patientId: number) => {
+    const { data } = await createClient().from("prescriptions").select("*").eq("patient_id", patientId).order("created_at", { ascending: false });
+    setPrescriptions(data || []);
+  };
+
+  const addPrescription = async () => {
+    if (!selectedPatient) return;
+    if (!rxForm.medicine.trim()) { setRxError("Medicine name is required."); return; }
+    setRxLoading(true);
+    setRxError("");
+    const { error } = await createClient().from("prescriptions").insert([{
+      clinic_id: clinicId, patient_id: selectedPatient.id,
+      visit_id: rxForm.visit_id ? Number(rxForm.visit_id) : null,
+      medicine: rxForm.medicine.trim(), dosage: rxForm.dosage.trim() || null, duration: rxForm.duration.trim() || null,
+    }]);
+    setRxLoading(false);
+    // Clinical saves follow the same rule: a failed save shows an error, never a silent loss
+    if (error) { setRxError(saveErrorMessage(error, "prescription")); return; }
+    setRxForm({ medicine: "", dosage: "", duration: "", visit_id: "" });
+    fetchPrescriptions(selectedPatient.id);
+  };
+
+  const deletePrescription = async (rx: Prescription) => {
+    if (!selectedPatient || !confirm("Delete this prescription?")) return;
+    const { error } = await createClient().from("prescriptions").delete().eq("id", rx.id);
+    if (error) { alert(saveErrorMessage(error, "prescription").replace("save", "delete")); return; }
+    fetchPrescriptions(selectedPatient.id);
+  };
+
+  // Tooth-wise chart history derived from visits (each entry links to its visit + master treatment)
+  const chartEntries = visits.flatMap(v =>
+    (v.tooth_number ? v.tooth_number.split(",").map(t => t.trim()).filter(Boolean) : ["—"]).map(tooth => ({
+      tooth, treatment: v.treatment || "—", date: v.visit_date, doctor: v.doctor_name, notes: v.notes, visitId: v.id,
+    }))
+  ).sort((a, b) => (Number(a.tooth) || 999) - (Number(b.tooth) || 999) || String(b.date).localeCompare(String(a.date)));
+
   const openPatient = (patient: Patient) => {
     setSelectedPatient(patient);
     setActiveTab("visits");
+    setRxForm({ medicine: "", dosage: "", duration: "", visit_id: "" });
+    setRxError("");
     fetchVisits(patient.id);
     fetchAppointments(patient.id);
     fetchMedicalHistory(patient.id);
+    fetchPrescriptions(patient.id);
   };
 
   const filteredPatients = patients.filter(p =>
@@ -712,6 +766,16 @@ export default function Patients() {
             <button onClick={() => setSelectedPatient(null)} className="text-brand-600 text-sm mb-4 hover:underline">← Back to Patients</button>
 
             <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
+              {medicalHistory && (medicalHistory.allergies?.trim() || medicalHistory.medical_conditions?.trim() || medicalHistory.blood_group?.trim()) && (
+                <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3">
+                  <p className="text-xs font-bold uppercase tracking-wide text-red-700">⚠ Medical alert</p>
+                  <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-red-800">
+                    {medicalHistory.allergies?.trim() && <span><strong>Allergies:</strong> {medicalHistory.allergies}</span>}
+                    {medicalHistory.medical_conditions?.trim() && <span><strong>Conditions:</strong> {medicalHistory.medical_conditions}</span>}
+                    {medicalHistory.blood_group?.trim() && <span><strong>Blood group:</strong> {medicalHistory.blood_group}</span>}
+                  </div>
+                </div>
+              )}
               <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
@@ -874,6 +938,12 @@ export default function Patients() {
                 <button onClick={() => setActiveTab("visits")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "visits" ? "bg-brand-50 text-brand-800 border-b-2 border-brand-600" : "text-brand-500"}`}>
                   Visits ({visits.length})
                 </button>
+                <button onClick={() => setActiveTab("chart")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "chart" ? "bg-brand-50 text-brand-800 border-b-2 border-brand-600" : "text-brand-500"}`}>
+                  Chart ({chartEntries.length})
+                </button>
+                <button onClick={() => setActiveTab("rx")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "rx" ? "bg-brand-50 text-brand-800 border-b-2 border-brand-600" : "text-brand-500"}`}>
+                  Rx ({prescriptions.length})
+                </button>
                 <button onClick={() => setActiveTab("appointments")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "appointments" ? "bg-blue-50 text-blue-800 border-b-2 border-blue-600" : "text-brand-500"}`}>
                   Appointments ({appointments.length})
                 </button>
@@ -931,6 +1001,67 @@ export default function Patients() {
                         <span className="text-xs text-green-700">Paid: <strong>{symbol} {visitTotalPaid.toLocaleString()}</strong></span>
                         <span className="text-xs text-orange-600">Pending: <strong>{symbol} {visitTotalPending.toLocaleString()}</strong></span>
                       </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "chart" && (
+                <div className="p-4 md:p-5">
+                  {chartEntries.length === 0 ? (
+                    <p className="text-center py-10 text-sm text-brand-400">No charted work yet. Record a visit with a tooth and treatment.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-xs text-brand-500 mb-2">Tooth-wise history of work done, newest first per tooth.</p>
+                      {chartEntries.map((e, i) => (
+                        <div key={i} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-brand-100 px-3 py-2">
+                          <div className="flex items-center gap-3">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white text-sm font-semibold">{e.tooth}</span>
+                            <div>
+                              <p className="text-sm font-medium text-brand-800">{e.treatment}</p>
+                              <p className="text-xs text-brand-400">Dr. {e.doctor || "—"}{e.notes ? ` · ${e.notes}` : ""}</p>
+                            </div>
+                          </div>
+                          <span className="text-xs text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">📅 {formatDate(e.date)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "rx" && (
+                <div className="p-4 md:p-5">
+                  <div className="mb-4 rounded-lg border border-brand-100 p-3">
+                    <p className="text-xs font-semibold text-brand-700 mb-2">Add prescription</p>
+                    <FormError message={rxError} />
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                      <input placeholder="Medicine *" value={rxForm.medicine} onChange={e => setRxForm({ ...rxForm, medicine: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
+                      <input placeholder="Dosage (e.g. 500mg 2×/day)" value={rxForm.dosage} onChange={e => setRxForm({ ...rxForm, dosage: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                      <input placeholder="Duration (e.g. 5 days)" value={rxForm.duration} onChange={e => setRxForm({ ...rxForm, duration: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                      <select value={rxForm.visit_id} onChange={e => setRxForm({ ...rxForm, visit_id: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-3">
+                        <option value="">Link to a visit (optional)</option>
+                        {visits.map(v => <option key={v.id} value={v.id}>{formatDate(v.visit_date)} — {v.treatment || "Visit"}</option>)}
+                      </select>
+                      <button onClick={addPrescription} disabled={rxLoading} className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{rxLoading ? "Saving…" : "Add"}</button>
+                    </div>
+                  </div>
+                  {prescriptions.length === 0 ? (
+                    <p className="text-center py-8 text-sm text-brand-400">No prescriptions yet.</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {prescriptions.map(rx => {
+                        const v = visits.find(x => x.id === rx.visit_id);
+                        return (
+                          <div key={rx.id} className="flex items-start justify-between gap-2 rounded-lg border border-brand-100 px-3 py-2">
+                            <div>
+                              <p className="text-sm font-medium text-brand-800">{rx.medicine} {rx.dosage && <span className="text-brand-500 font-normal">· {rx.dosage}</span>} {rx.duration && <span className="text-brand-400 font-normal">· {rx.duration}</span>}</p>
+                              <p className="text-xs text-brand-400">{formatDate(rx.created_at)}{v ? ` · from visit ${formatDate(v.visit_date)}${v.treatment ? ` (${v.treatment})` : ""}` : ""}</p>
+                            </div>
+                            <button onClick={() => deletePrescription(rx)} className="text-red-400 text-xs font-medium">🗑️</button>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

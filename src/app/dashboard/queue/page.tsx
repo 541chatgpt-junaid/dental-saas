@@ -27,6 +27,7 @@ export default function QueuePage() {
   const [tokens, setTokens] = useState<Token[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [doctors, setDoctors] = useState<string[]>([]);
+  const [allergyByName, setAllergyByName] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showForm, setShowForm] = useState(true);
@@ -48,6 +49,11 @@ export default function QueuePage() {
     supabase.auth.getUser().then(({ data: { user } }) => { if (!user) router.push("/"); });
     supabase.from("patients").select("id, name, phone").order("name").then(({ data }) => data && setPatients(data as Patient[]));
     supabase.from("doctors").select("name").eq("status", "Active").then(({ data }) => data && setDoctors(data.map(d => d.name as string)));
+    supabase.from("medical_history").select("patient_name, allergies").then(({ data }) => {
+      const map: Record<string, string> = {};
+      (data || []).forEach((m: { patient_name: string | null; allergies: string | null }) => { if (m.patient_name && m.allergies?.trim()) map[m.patient_name.trim().toLowerCase()] = m.allergies.trim(); });
+      setAllergyByName(map);
+    });
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial fetch
     load();
     // Keep in sync with other devices (reception, doctor's room) and refresh wait times
@@ -193,7 +199,11 @@ export default function QueuePage() {
                 <li key={t.id} className={`flex flex-wrap items-center gap-x-4 gap-y-2 p-4 ${t.status === "in_chair" ? "bg-blue-50/60" : ""} ${t.status === "done" || t.status === "skipped" ? "opacity-60" : ""}`}>
                   <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl font-display text-xl font-bold ${t.status === "in_chair" ? "bg-gold text-navy" : "bg-brand-50 text-brand-800 ring-1 ring-brand-100"}`}>{t.token_no}</span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-brand-800">{t.patient_name}</p>
+                    <p className="font-medium text-brand-800">{t.patient_name}
+                      {allergyByName[t.patient_name?.trim().toLowerCase()] && (
+                        <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[t.patient_name.trim().toLowerCase()]}</span>
+                      )}
+                    </p>
                     <p className="text-xs text-brand-500">
                       {t.doctor_name ? `Dr. ${t.doctor_name}` : "Any doctor"}{t.reason ? ` · ${t.reason}` : ""}{t.phone ? ` · ${t.phone}` : ""}
                       {t.status === "waiting" && ` · waiting ${minsSince(t.created_at)} min`}
