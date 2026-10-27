@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { adminClient, verifySuperAdmin } from "@/lib/superAdmin";
 import { invalidateClinic } from "@/lib/clinicCache";
+import { passwordError } from "@/lib/passwordRules";
 
 // GET — list all clinics with counts
 export async function GET() {
@@ -36,6 +37,9 @@ export async function POST(request: Request) {
   const { name, email, phone, address, adminPassword } = await request.json();
   if (!name || !email || !adminPassword)
     return NextResponse.json({ error: "Name, email and admin password are required." }, { status: 400 });
+
+  const pwError = passwordError(adminPassword);
+  if (pwError) return NextResponse.json({ error: pwError }, { status: 400 });
 
   const admin = adminClient();
 

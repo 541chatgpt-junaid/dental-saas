@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/passwordRules";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -26,8 +27,8 @@ export default function ResetPassword() {
       setError("Please enter a new password.");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters.");
+    if (password.length < MIN_PASSWORD_LENGTH) {
+      setError(PASSWORD_TOO_SHORT);
       return;
     }
     if (password !== confirmPassword) {

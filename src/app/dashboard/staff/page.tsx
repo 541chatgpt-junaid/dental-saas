@@ -7,6 +7,7 @@ import { saveErrorMessage } from "@/lib/formSave";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
+import { MIN_PASSWORD_LENGTH, passwordError } from "@/lib/passwordRules";
 
 interface Staff {
   id: number;
@@ -33,7 +34,7 @@ export default function StaffPage() {
   const [addResult, setAddResult] = useState<{success?: boolean; error?: string} | null>(null);
   const [form, setForm] = useState({
     name: "", email: "", role: "Receptionist", status: "Active",
-    password: "DentEase@123",
+    password: "",
   });
   const router = useRouter();
   const { clinicId } = useClinic();
@@ -65,6 +66,11 @@ export default function StaffPage() {
   const handleAdd = async () => {
     if (!form.name || !form.email || !form.password) {
       setAddResult({ error: "Name, email and password are required." });
+      return;
+    }
+    const pwError = passwordError(form.password);
+    if (pwError) {
+      setAddResult({ error: pwError });
       return;
     }
     setLoading(true);
@@ -107,7 +113,7 @@ export default function StaffPage() {
     }
 
     setAddResult({ success: true });
-    setForm({ name: "", email: "", role: "Receptionist", status: "Active", password: "DentEase@123" });
+    setForm({ name: "", email: "", role: "Receptionist", status: "Active", password: "" });
     setSelectedPermissions([]);
     setShowForm(false);
     setLoading(false);
@@ -216,7 +222,7 @@ export default function StaffPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
               <input placeholder="Full Name" value={form.name} onChange={e => setForm({...form, name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <input placeholder="Email Address" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
-              <input placeholder="Password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+              <input placeholder={`Password (min. ${MIN_PASSWORD_LENGTH} characters)`} type="password" autoComplete="new-password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <select value={form.role} onChange={e => setForm({...form, role: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                 <option>Receptionist</option>
                 <option>Doctor</option>
