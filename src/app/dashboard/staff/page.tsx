@@ -64,7 +64,7 @@ export default function StaffPage() {
 
   const handleAdd = async () => {
     if (!form.name || !form.email || !form.password) {
-      setAddResult({ error: "Name, email aur password zaroori hain!" });
+      setAddResult({ error: "Name, email and password are required." });
       return;
     }
     setLoading(true);
@@ -176,7 +176,7 @@ export default function StaffPage() {
               </div>
               <div className="flex gap-3">
                 <button onClick={handleEditPermissions} disabled={loading} className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
-                  {loading ? "Saving..." : "Save Permissions"}
+                  {loading ? "Saving…" : "Save Permissions"}
                 </button>
                 <button onClick={() => setEditingStaff(null)} className="flex-1 border border-brand-200 text-gray-600 py-2.5 rounded-xl text-sm">Cancel</button>
               </div>
@@ -210,7 +210,7 @@ export default function StaffPage() {
             <h3 className="text-sm font-semibold text-brand-800 mb-4">New Staff Member</h3>
 
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
-              <p className="text-xs text-blue-700 font-medium"><Info className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Staff member apni email aur password se login kar sakta hai</p>
+              <p className="text-xs text-blue-700 font-medium"><Info className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Staff members sign in with the email and password you set here.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
@@ -250,7 +250,7 @@ export default function StaffPage() {
 
             <div className="flex gap-3">
               <button onClick={handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Creating account..." : "Add Staff & Create Login"}
+                {loading ? "Creating account…" : "Add Staff & Create Login"}
               </button>
               <button onClick={() => setShowForm(false)} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>

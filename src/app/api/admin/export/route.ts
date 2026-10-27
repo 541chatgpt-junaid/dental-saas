@@ -46,7 +46,7 @@ export async function GET(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const clinicId = searchParams.get("clinicId");
-  if (!clinicId) return NextResponse.json({ error: "clinicId required" }, { status: 400 });
+  if (!clinicId) return NextResponse.json({ error: "clinicId is required." }, { status: 400 });
 
   const admin = adminClient();
   const [{ data: patients }, { data: visits }, { data: labs }] = await Promise.all([

@@ -161,7 +161,7 @@ export default function Expenses() {
           <div className="bg-white rounded-xl p-3 md:p-4 border border-brand-100">
             <p className="text-xs font-medium text-brand-600 mb-1">OTHER</p>
             <p className="text-lg md:text-2xl font-semibold text-brand-800">{symbol} {manualTotal.toLocaleString()}</p>
-            <p className="text-xs text-brand-400 mt-1">Rent, Salary etc</p>
+            <p className="text-xs text-brand-400 mt-1">Rent, salary, etc.</p>
           </div>
           <div className="bg-red-50 rounded-xl p-3 md:p-4 border border-red-100">
             <p className="text-xs font-medium text-red-600 mb-1">TOTAL</p>
@@ -188,7 +188,7 @@ export default function Expenses() {
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : editingId ? "Update Expense" : "Save Expense"}
+                {loading ? "Saving…" : editingId ? "Update Expense" : "Save Expense"}
               </button>
               <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>

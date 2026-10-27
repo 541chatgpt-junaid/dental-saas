@@ -243,7 +243,7 @@ export default function Settings() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white border border-brand-200 shadow-sm rounded-xl p-1 mb-6 w-fit overflow-x-auto">
+        <div className="flex gap-1 bg-white border border-brand-200 shadow-sm rounded-xl p-1 mb-6 w-fit max-w-full overflow-x-auto">
           {TABS.map(t => (
             <button key={t.key} onClick={() => { setTab(t.key); setSaveError(""); }}
               className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-colors ${tab === t.key ? "bg-brand-600 text-white" : "text-gray-600 hover:bg-gray-100"}`}>
@@ -296,7 +296,7 @@ export default function Settings() {
             </div>
             <div className="mt-6 flex items-center gap-4">
               <button onClick={handleSave} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : "Save Settings"}
+                {loading ? "Saving…" : "Save Settings"}
               </button>
               {saved && <span className="text-green-600 text-sm font-medium"><CircleCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Saved!</span>}
             </div>
@@ -406,7 +406,7 @@ export default function Settings() {
                 <label className="text-xs text-gray-500 mb-1 block">Treatment / Group Name *</label>
                 <input
                   list="group-list"
-                  placeholder="e.g. Root Canal Treatment, Extraction, Filling..."
+                  placeholder="e.g. Root Canal Treatment, Extraction, Filling…"
                   value={pGroupName}
                   onChange={e => setPGroupName(e.target.value)}
                   className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
@@ -482,7 +482,7 @@ export default function Settings() {
                   disabled={pLoading || !pGroupName.trim() || !medicineRows.some(r => r.medicine.trim())}
                   className="ml-auto bg-brand-600 hover:bg-brand-700 text-white px-5 py-2.5 rounded-xl text-sm font-medium disabled:opacity-50"
                 >
-                  {pLoading ? "Saving..." : `Save Group (${medicineRows.filter(r => r.medicine.trim()).length} medicine${medicineRows.filter(r => r.medicine.trim()).length !== 1 ? "s" : ""})`}
+                  {pLoading ? "Saving…" : `Save Group (${medicineRows.filter(r => r.medicine.trim()).length} medicine${medicineRows.filter(r => r.medicine.trim()).length !== 1 ? "s" : ""})`}
                 </button>
               </div>
             </div>

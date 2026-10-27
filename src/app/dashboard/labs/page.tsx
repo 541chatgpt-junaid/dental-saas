@@ -164,7 +164,7 @@ function ToothChart({ value, onChange, workType, onUnitsChange }: {
   return (
     <div className="border border-brand-100 rounded-xl p-3 bg-brand-50 md:col-span-2">
       <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-        <p className="text-xs font-semibold text-brand-700">Tooth Chart (FDI) — click tooth to mark / unmark</p>
+        <p className="text-xs font-semibold text-brand-700">Tooth chart (FDI) — click a tooth to mark or unmark it</p>
         <div className="flex items-center gap-2">
           <span className="text-xs text-brand-500">Active work:</span>
           <span
@@ -488,7 +488,7 @@ export default function Labs() {
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : editingId ? "Update Record" : "Save Record"}
+                {loading ? "Saving…" : editingId ? "Update Record" : "Save Record"}
               </button>
               <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>

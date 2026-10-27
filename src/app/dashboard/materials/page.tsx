@@ -211,7 +211,7 @@ export default function Materials() {
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : editingId ? "Update Material" : "Save Material"}
+                {loading ? "Saving…" : editingId ? "Update Material" : "Save Material"}
               </button>
               <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>

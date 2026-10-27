@@ -138,7 +138,7 @@ export default function NewInvoicePage() {
       .single();
 
     if (invErr || !invoice) {
-      setError(invErr?.message || "Failed to create invoice.");
+      setError(invErr?.message || "Could not create the invoice.");
       setLoading(false);
       return;
     }
@@ -179,7 +179,7 @@ export default function NewInvoicePage() {
                   onChange={e => handlePatientChange(e.target.value)}
                   className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 >
-                  <option value="">Select patient...</option>
+                  <option value="">Select patient…</option>
                   {patients.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
@@ -413,7 +413,7 @@ export default function NewInvoicePage() {
               value={notes}
               onChange={e => setNotes(e.target.value)}
               rows={3}
-              placeholder="Any additional notes..."
+              placeholder="Any additional notes…"
               className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold resize-none"
             />
           </div>
@@ -426,7 +426,7 @@ export default function NewInvoicePage() {
               disabled={loading}
               className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
             >
-              {loading ? "Creating..." : "Create Invoice"}
+              {loading ? "Creating…" : "Create Invoice"}
             </button>
             <button
               onClick={() => handleSave(true)}
