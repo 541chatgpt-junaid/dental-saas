@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
-import { CircleCheck, ClipboardList, Globe, X } from "lucide-react";
+import { CircleCheck, ClipboardList, Globe, Hospital, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -51,6 +51,9 @@ export default function Settings() {
   const [saveError, setSaveError] = useState("");
   const [autoDetected, setAutoDetected] = useState("");
   const [form, setForm] = useState({ clinic_name: "", clinic_address: "", clinic_phone: "", clinic_email: "", currency: "PKR" });
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState("");
 
   // Treatment presets
   const [treatments, setTreatments] = useState<TreatmentPreset[]>([]);
@@ -82,8 +85,9 @@ export default function Settings() {
       const { data } = await supabase.from("settings").select("*").maybeSingle();
       // What was entered at signup lives on the clinic record: use it for anything not saved here yet
       const { data: clinic } = clinicId
-        ? await supabase.from("clinics").select("name, email, phone, address").eq("id", clinicId).maybeSingle()
+        ? await supabase.from("clinics").select("name, email, phone, address, logo_url").eq("id", clinicId).maybeSingle()
         : { data: null };
+      setLogoUrl(clinic?.logo_url ?? null);
       setForm({
         clinic_name: data?.clinic_name || clinic?.name || "",
         clinic_address: data?.clinic_address || clinic?.address || "",
@@ -127,6 +131,20 @@ export default function Settings() {
     await refreshClinic(); // expire the server-side clinic cache so the edit shows immediately
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
+  };
+
+  /** Upload or remove the clinic logo (shown on the online booking page) */
+  const changeLogo = async (file: File | null) => {
+    setLogoBusy(true); setLogoError("");
+    try {
+      const res = file
+        ? await fetch("/api/clinic-logo", { method: "POST", body: (() => { const f = new FormData(); f.append("file", file); return f; })() })
+        : await fetch("/api/clinic-logo", { method: "DELETE" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.error) setLogoError(json.error || "Could not change the logo. Please try again.");
+      else setLogoUrl(file ? json.url : null);
+    } catch { setLogoError("Network error. Please check your connection and try again."); }
+    setLogoBusy(false);
   };
 
   /** Call the presets API; returns an error message naming the problem, or null */
@@ -266,6 +284,27 @@ export default function Settings() {
           <div className="bg-white rounded-xl p-5 border border-brand-200 shadow-sm w-full md:max-w-2xl">
             <h3 className="text-sm font-semibold text-brand-800 mb-5">Clinic Information</h3>
             <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Clinic Logo</label>
+                <div className="flex items-center gap-4">
+                  <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-brand-200 bg-brand-50">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    {logoUrl ? <img src={logoUrl} alt="Clinic logo" className="h-full w-full object-contain" /> : <Hospital className="h-7 w-7 text-brand-300" aria-hidden="true" />}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap gap-2">
+                      <label className={`cursor-pointer rounded-lg border border-brand-200 px-3 py-1.5 text-xs font-medium text-brand-700 hover:border-gold ${logoBusy ? "pointer-events-none opacity-60" : ""}`}>
+                        {logoBusy ? "Working…" : logoUrl ? "Change logo" : "Upload logo"}
+                        <input type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" disabled={logoBusy}
+                          onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) changeLogo(f); }} />
+                      </label>
+                      {logoUrl && <button type="button" onClick={() => changeLogo(null)} disabled={logoBusy} className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-500 hover:underline disabled:opacity-60">Remove</button>}
+                    </div>
+                    <p className="mt-1.5 text-xs text-gray-400">PNG, JPG or WebP, up to 1 MB. Shown on your online booking page.</p>
+                  </div>
+                </div>
+                {logoError && <p role="alert" className="mt-2 text-xs font-medium text-red-600">{logoError}</p>}
+              </div>
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">Clinic Name</label>
                 <input placeholder="e.g. Dr. Ahmed Dental Care" value={form.clinic_name} onChange={e => setForm({ ...form, clinic_name: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />

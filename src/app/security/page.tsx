@@ -53,7 +53,7 @@ export default function Security() {
       </Section>
 
       <Section id="public" title="What is open to the public">
-        <p>A clinic&apos;s booking page, if switched on, shows only the clinic&apos;s name, phone and address, its active doctors&apos; names, specialisations and working days, and free times. No patient information appears there. Approved reviews on the home page show the reviewer&apos;s name, clinic name, rating and text.</p>
+        <p>A clinic&apos;s booking page, if switched on, shows only the clinic&apos;s name, logo, phone and address, a Google Maps map of that address, its active doctors&apos; names, specialisations and working days, and free times. No patient information appears there. Logos are kept in a public file area (PNG, JPG or WebP, up to 1 MB), and only the clinic owner can upload or remove one. Approved reviews on the home page show the reviewer&apos;s name, clinic name, rating and text.</p>
       </Section>
 
       <Section id="servers" title="Servers and administrators">

@@ -59,7 +59,7 @@ export default function Privacy() {
           <span key="d">{strong("DentEase administrators")} hold a super-admin role. It lets them list clinics, moderate reviews and demo requests, and download a clinic&apos;s data (patients, visits, invoices, payments and lab records). This is used to run and support the service.</span>,
           <span key="h">{strong("Our hosting providers")} store the data technically (see below).</span>,
         ]} />
-        <p>Two things are public by design: approved reviews (name, clinic name, rating and text), and a clinic&apos;s booking page if the clinic switches it on. The booking page shows the clinic&apos;s name, phone and address, its active doctors&apos; names, specialisations and working days, and free appointment times. It shows no patient information.</p>
+        <p>Two things are public by design: approved reviews (name, clinic name, rating and text), and a clinic&apos;s booking page if the clinic switches it on. The booking page shows the clinic&apos;s name, logo (if the clinic uploaded one), phone and address, a map of that address, its active doctors&apos; names, specialisations and working days, and free appointment times. It shows no patient information. A clinic logo is stored in a public file area, so anyone with the image link can view it.</p>
       </Section>
 
       <Section id="isolation" title="Keeping clinics separate">
@@ -69,7 +69,7 @@ export default function Privacy() {
       <Section id="third-parties" title="Other companies involved">
         <List items={[
           <span key="sb">{strong("Supabase")} provides the database, sign-in and file storage where all records are kept.</span>,
-          <span key="g">{strong("Google.")} Sign in with Google is optional. Our pages also load their fonts from Google Fonts, so Google receives the usual request details (such as your IP address and browser) when a page loads.</span>,
+          <span key="g">{strong("Google.")} Sign in with Google is optional. Our pages also load their fonts from Google Fonts, and a clinic&apos;s booking page shows a Google Maps map of the clinic&apos;s address, so Google receives the usual request details (such as your IP address and browser) when those pages load.</span>,
           <span key="w">{strong("WhatsApp.")} Reminder and receipt buttons open WhatsApp with a ready-made message when a staff member clicks them. The message contains the patient&apos;s name and the appointment or invoice details. DentEase does not send WhatsApp messages by itself.</span>,
           <span key="h">{strong("Web hosting.")} Like any website, the server that delivers the app sees standard request information such as IP address.</span>,
         ]} />

@@ -8,7 +8,7 @@ import { waLink } from "@/lib/whatsapp";
 import { WEEKDAYS, opensOn, worksOn } from "@/lib/weekdays";
 
 interface Info {
-  clinic: { name: string; phone: string | null; address: string | null };
+  clinic: { name: string; phone: string | null; address: string | null; logo_url: string | null };
   doctors: { name: string; specialization: string | null; working_days: string | null }[];
   settings: { slot_minutes: number; days_ahead: number; working_days: string; note: string | null };
 }
@@ -139,11 +139,21 @@ export default function BookingClient({ slug }: { slug: string }) {
     <main className="min-h-screen bg-cream pb-16">
       <header className="bg-navy px-5 pb-24 pt-10 text-white sm:px-8" style={{ backgroundImage: "radial-gradient(rgba(212,175,55,.12) 1px, transparent 1.4px)", backgroundSize: "22px 22px" }}>
         <div className="mx-auto max-w-2xl animate-fade-up">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold">Book an appointment</p>
-          <h1 className="mt-2 font-display text-3xl font-semibold sm:text-4xl">{info?.clinic.name ?? <span className="inline-block h-9 w-56 animate-pulse rounded bg-white/10" />}</h1>
-          <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm text-white/70">
-            {info?.clinic.address && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 text-gold" />{info.clinic.address}</span>}
-            {info?.clinic.phone && <a href={`tel:${info.clinic.phone}`} className="inline-flex items-center gap-1.5 hover:text-gold"><Phone className="h-4 w-4 text-gold" />{info.clinic.phone}</a>}
+          <div className="flex items-center gap-4">
+            <span className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-white p-1.5 shadow-[0_8px_24px_rgba(0,0,0,.25)] sm:h-20 sm:w-20">
+              {info?.clinic.logo_url
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={info.clinic.logo_url} alt={`${info.clinic.name} logo`} className="h-full w-full object-contain" />
+                : <Tooth className="h-10 w-10 text-navy sm:h-12 sm:w-12" />}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold">Book an appointment</p>
+              <h1 className="mt-1.5 font-display text-3xl font-semibold sm:text-4xl">{info?.clinic.name ?? <span className="inline-block h-9 w-56 animate-pulse rounded bg-white/10" />}</h1>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-wrap gap-x-5 gap-y-1 text-sm text-white/70">
+            {info?.clinic.address && <span className="inline-flex items-center gap-1.5"><MapPin className="h-4 w-4 shrink-0 text-gold" />{info.clinic.address}</span>}
+            {info?.clinic.phone && <a href={`tel:${info.clinic.phone.replace(/[^\d+]/g, "")}`} className="inline-flex items-center gap-1.5 hover:text-gold"><Phone className="h-4 w-4 shrink-0 text-gold" />{info.clinic.phone}</a>}
           </div>
         </div>
       </header>
@@ -266,6 +276,16 @@ export default function BookingClient({ slug }: { slug: string }) {
             </>
           )}
         </div>
+        {info?.clinic.address && (
+          <section aria-label="Clinic location" className="mt-6 overflow-hidden rounded-3xl bg-white shadow-[0_20px_50px_rgba(15,29,61,.10)]">
+            <div className="flex flex-wrap items-center justify-between gap-2 px-5 py-4 sm:px-8">
+              <p className="inline-flex items-center gap-2 text-sm font-semibold text-navy"><MapPin className="h-4 w-4 text-gold" />Find us</p>
+              <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(info.clinic.address)}`} target="_blank" rel="noreferrer" className="text-xs font-semibold text-navy/60 underline decoration-gold underline-offset-2 hover:text-gold">Open in Google Maps</a>
+            </div>
+            <iframe title={`Map showing ${info.clinic.name}`} src={`https://www.google.com/maps?q=${encodeURIComponent(info.clinic.address)}&output=embed`}
+              loading="lazy" referrerPolicy="no-referrer-when-downgrade" className="block h-64 w-full border-0 sm:h-72" />
+          </section>
+        )}
         <p className="mt-6 text-center text-xs text-navy/45">Online booking by <Link href="/" className="font-semibold text-navy/60 hover:text-gold">Dent<span className="text-gold">Ease</span></Link></p>
       </div>
     </main>

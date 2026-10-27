@@ -21,13 +21,43 @@ const NAV = [
 ] as const;
 
 const FEATURES = [
-  { icon: CalendarCheck, title: "Appointment Booking", desc: "Book, reschedule and confirm visits in seconds, with the whole day's chair schedule on one calm screen." },
-  { icon: ClipboardList, title: "Patient Records", desc: "Medical history, visit notes, prescriptions and an FDI tooth chart for every patient, searchable instantly." },
-  { icon: Receipt, title: "Billing & Receipts", desc: "Record payments, track balances and print professional receipts the moment treatment is complete." },
-  { icon: Users, title: "Staff Scheduling", desc: "Add doctors and assistants, assign role-based permissions and control exactly who sees what." },
-  { icon: FlaskConical, title: "Lab Case Tracking", desc: "Follow every crown, bridge and aligner from impression to delivery, with due dates you can trust." },
-  { icon: LayoutDashboard, title: "Revenue Reports", desc: "Monthly income, expenses and doctor performance charts that show how your practice is really doing." },
+  { icon: CalendarCheck, title: "Appointment Booking", anchor: "appointments", desc: "Book, reschedule and confirm visits in seconds, with the whole day's chair schedule on one calm screen." },
+  { icon: ClipboardList, title: "Patient Records", anchor: "records", desc: "Medical history, visit notes, prescriptions and an FDI tooth chart for every patient, searchable instantly." },
+  { icon: Receipt, title: "Billing & Receipts", anchor: "billing", desc: "Record payments, track balances and print professional receipts the moment treatment is complete." },
+  { icon: Users, title: "Staff Scheduling", anchor: "staff", desc: "Add doctors and assistants, assign role-based permissions and control exactly who sees what." },
+  { icon: FlaskConical, title: "Lab Case Tracking", anchor: "labs", desc: "Follow every crown, bridge and aligner from impression to delivery, with due dates you can trust." },
+  { icon: LayoutDashboard, title: "Revenue Reports", anchor: "reports", desc: "Monthly income, expenses and doctor performance charts that show how your practice is really doing." },
 ];
+
+/* Real screenshots of the running app, taken with a fictional demo clinic (see public/screens) */
+const DETAILS = [
+  { id: "appointments", eyebrow: "Appointments", title: "A calendar the whole team can read", img: "appointments", alt: "DentEase week calendar with appointments in a column for each day, coloured by doctor and status",
+    points: ["Day and week views, with a column per doctor in the day view.", "Double bookings are flagged before you save them.", "Online booking requests wait for your confirmation.", "Send a WhatsApp reminder from the appointment; missed visits show as No-show automatically."] },
+  { id: "records", eyebrow: "Patient records", title: "Everything about a patient, on one screen", img: "patient-record", alt: "DentEase patient record showing a medical alert, billing totals and a list of visits",
+    points: ["Visits, FDI tooth chart, prescriptions and appointments in one record.", "Allergies and conditions appear as a medical alert on the record and on appointments.", "Store X-rays, photos and PDFs privately for your clinic.", "Date of birth, CNIC, emergency contact and guardian fields."] },
+  { id: "billing", eyebrow: "Billing & receipts", title: "Invoices and payments that always add up", img: "billing", alt: "DentEase invoice with line items, amount paid, balance due and payment history",
+    points: ["Record payments against invoices; balances and status are worked out for you.", "Paid, Partial, Unpaid and Overdue read the same on every screen.", "Split a bill into instalments.", "Print the receipt or share it on WhatsApp."] },
+  { id: "staff", eyebrow: "Staff & doctors", title: "Your team, with the access each person needs", img: "staff", alt: "DentEase staff list showing each member's role and the pages they can open",
+    points: ["Add doctors with working days and hours.", "Choose which pages each staff member can open.", "Track each doctor's commission and record payouts.", "Deactivate a staff member without deleting their record."] },
+  { id: "labs", eyebrow: "Lab case tracking", title: "Know where every crown and bridge is", img: "lab-records", alt: "DentEase lab records list with work type, delivery date, fee, amount paid and status",
+    points: ["One record per case: lab, work type, shade, material and delivery date.", "Mark teeth on the chart; units fill in automatically.", "Follow each case from pending to delivered.", "See what you have paid the lab and what is still due."] },
+  { id: "reports", eyebrow: "Revenue reports", title: "How the practice is really doing", img: "reports", alt: "DentEase reports page with income and expense totals and a monthly income chart",
+    points: ["Income, expenses and net profit for today, this month or all time.", "Monthly income charts over 3, 6 or 12 months.", "Doctor performance and expense breakdown.", "Download everything as an Excel file."] },
+] as const;
+
+/** A screenshot in a simple window frame. Static: no motion. */
+function Shot({ name, alt, priority = false }: { name: string; alt: string; priority?: boolean }) {
+  return (
+    <figure className="overflow-hidden rounded-2xl border border-navy/10 bg-white shadow-[0_24px_60px_rgba(15,29,61,.14)]">
+      <div className="flex items-center gap-1.5 border-b border-navy/10 bg-cream px-4 py-2.5" aria-hidden="true">
+        <span className="h-2.5 w-2.5 rounded-full bg-navy/15" /><span className="h-2.5 w-2.5 rounded-full bg-navy/15" /><span className="h-2.5 w-2.5 rounded-full bg-navy/15" />
+      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={`/screens/${name}.webp`} alt={alt} width={1440} height={900} loading={priority ? "eager" : "lazy"} decoding="async" className="block h-auto w-full" />
+      <figcaption className="border-t border-navy/10 bg-cream px-4 py-2 text-[11px] text-navy/50">Screenshot of DentEase with sample data</figcaption>
+    </figure>
+  );
+}
 
 const PRINCIPLES = [
   { icon: BadgeCheck, title: "Reliable", desc: "Cloud-hosted and always available, so your front desk never waits on a server in the back room. Your schedule is ready the moment the clinic opens." },
@@ -134,42 +164,10 @@ function PaperRecords() {
 }
 
 function DashboardView() {
-  const appts = [
-    ["09:00", "Farah Naveed", "Scaling & polish", "Confirmed"],
-    ["09:30", "Ali Hassan", "Root canal · #36", "In chair"],
-    ["10:15", "Bilal Ahmed", "Crown fitting", "Lab ready"],
-    ["11:00", "Sana Iqbal", "Extraction · #48", "Confirmed"],
-  ];
   return (
-    <div className="absolute inset-0 bg-navy p-5 sm:p-8">
-      <div className="flex h-full flex-col rounded-xl bg-cream-2 p-4 shadow-2xl sm:p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-gold">Today</p>
-            <p className="font-display text-lg font-semibold text-navy sm:text-xl">Clinic Overview</p>
-          </div>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-[10px] font-semibold text-emerald-700">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Synced
-          </span>
-        </div>
-        <div className="mb-4 grid grid-cols-3 gap-2 sm:gap-3">
-          {[["14", "Appointments"], ["3", "Lab cases due"], ["86%", "Chairs booked"]].map(([n, l]) => (
-            <div key={l} className="rounded-lg border border-navy/5 bg-white p-2 sm:p-3">
-              <p className="font-display text-lg font-bold text-navy sm:text-2xl">{n}</p>
-              <p className="text-[9px] text-navy/60 sm:text-[11px]">{l}</p>
-            </div>
-          ))}
-        </div>
-        <ul className="flex-1 space-y-1.5 overflow-hidden sm:space-y-2">
-          {appts.map(([t, n, p, s]) => (
-            <li key={t} className="flex items-center gap-3 rounded-lg bg-white px-3 py-2 text-[11px] sm:text-xs">
-              <span className="w-10 font-semibold text-navy">{t}</span>
-              <span className="flex-1 truncate"><span className="font-medium text-navy">{n}</span> <span className="text-navy/50">· {p}</span></span>
-              <span className="hidden rounded-full bg-gold/15 px-2 py-0.5 text-[10px] font-semibold text-[#8a6d12] sm:inline">{s}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div className="absolute inset-0 bg-navy">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/screens/appointments.webp" alt="The DentEase appointments calendar" loading="lazy" decoding="async" className="h-full w-full object-cover object-left-top" />
     </div>
   );
 }
@@ -406,7 +404,7 @@ function DemoForm() {
 
       {/* Live summary */}
       <aside className="relative overflow-hidden bg-navy p-6 text-white sm:p-10">
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 animate-float-up rounded-full border border-gold/20" aria-hidden="true" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full border border-gold/20" aria-hidden="true" />
         <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold">Your summary</p>
         <h3 className="mt-2 font-display text-2xl font-semibold">Tailored for your clinic</h3>
         <dl className="mt-8 space-y-5 text-sm">
@@ -418,7 +416,7 @@ function DemoForm() {
           ].map(([k, v]) => (
             <div key={k} className="border-b border-white/10 pb-4">
               <dt className="text-xs uppercase tracking-wider text-white/45">{k}</dt>
-              <dd key={v ?? "empty"} className={`mt-1 animate-fade-in ${v ? "text-white" : "text-shimmer"}`}>{v ?? "Waiting for your choice…"}</dd>
+              <dd key={v ?? "empty"} className={`mt-1 animate-fade-in ${v ? "text-white" : "text-white/40"}`}>{v ?? "Waiting for your choice…"}</dd>
             </div>
           ))}
         </dl>
@@ -523,8 +521,7 @@ export default function LandingPage() {
         <span className="relative flex h-11 w-11 items-center justify-center rounded-full bg-gold text-navy">
           <MessageCircle className="h-5 w-5" />
           <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex h-3.5 w-3.5 animate-pulse rounded-full border-2 border-navy bg-emerald-500" />
+            <span className="relative inline-flex h-3.5 w-3.5 rounded-full border-2 border-navy bg-emerald-500" />
           </span>
         </span>
         <span className="hidden text-sm font-semibold sm:block">Live support</span>
@@ -566,22 +563,17 @@ export default function LandingPage() {
 
       <main>
         {/* ── HERO ── */}
-        <section aria-label="Hero" className="relative flex min-h-[calc(100svh-72px)] items-center overflow-hidden bg-navy">
-          <div className="absolute inset-0 animate-fade-in">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/patient-records.webp" alt="" className="h-full w-full animate-ken-burns object-cover" />
-          </div>
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,29,61,.82)_0%,rgba(15,29,61,.72)_45%,rgba(15,29,61,.96)_100%)]" aria-hidden="true" />
-          <div className="pointer-events-none absolute left-[8%] top-[22%] hidden h-24 w-24 animate-float-up rounded-full border border-gold/30 md:block" aria-hidden="true" />
-          <div className="pointer-events-none absolute bottom-[18%] right-[10%] hidden h-3 w-3 animate-float-up rounded-full bg-gold md:block" style={{ animationDelay: "1s" }} aria-hidden="true" />
+        <section aria-label="Hero" className="relative overflow-hidden bg-navy">
+          <div className="absolute inset-0 opacity-70" aria-hidden="true" style={{ backgroundImage: "radial-gradient(rgba(212,175,55,.14) 1px, transparent 1.4px)", backgroundSize: "26px 26px" }} />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,29,61,0)_0%,rgba(15,29,61,.55)_100%)]" aria-hidden="true" />
 
-          <div className="relative mx-auto w-full max-w-4xl px-4 py-24 text-center sm:px-6">
+          <div className="relative mx-auto w-full max-w-4xl px-4 pb-10 pt-20 text-center sm:px-6 sm:pt-24">
             <LogoMark draw className="mx-auto mb-8 h-20 w-20 text-white sm:h-24 sm:w-24" />
             <div className="animate-fade-up" style={{ animationDelay: "200ms" }}>
               <Eyebrow light>Dental clinic management software</Eyebrow>
             </div>
             <h1 className="mt-6 animate-fade-up text-[clamp(2.5rem,7vw,5rem)] font-semibold leading-[1.05] tracking-tight text-white" style={{ animationDelay: "350ms" }}>
-              Run your practice with <span className="text-shimmer italic">quiet confidence</span>
+              Run your practice with <span className="italic text-gold">quiet confidence</span>
             </h1>
             <p className="mx-auto mt-6 max-w-2xl animate-fade-up text-base font-light leading-relaxed text-white/75 sm:text-lg" style={{ animationDelay: "500ms" }}>
               Appointments, patient records, billing and staff schedules brought together in one elegant, cloud-based workspace, built for the way modern dental clinics operate.
@@ -602,6 +594,9 @@ export default function LandingPage() {
               })}
             </div>
           </div>
+          <div className="relative mx-auto max-w-5xl px-4 pb-16 sm:px-6 sm:pb-24">
+            <Shot name="dashboard" alt="The DentEase dashboard with today's figures and recent patients" priority />
+          </div>
         </section>
 
         {/* ── FEATURES ── */}
@@ -616,17 +611,40 @@ export default function LandingPage() {
               {FEATURES.map((f, i) => (
                 <article key={f.title} {...rv(i * 110)} className="group relative overflow-hidden rounded-2xl border border-navy/8 bg-cream-2 p-8 transition-all duration-700 hover:-translate-y-1.5 hover:bg-white hover:shadow-[0_24px_60px_rgba(15,29,61,.10)]">
                   <span className="absolute inset-x-0 top-0 h-[3px] origin-left scale-x-0 bg-gold transition-transform duration-700 group-hover:scale-x-100" aria-hidden="true" />
-                  <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-navy text-gold transition-transform duration-700 group-hover:-rotate-6 group-hover:scale-110">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-xl bg-navy text-gold transition-transform duration-700 group-hover:scale-105">
                     <f.icon className="h-6 w-6" strokeWidth={1.75} />
                   </span>
                   <h3 className="mt-6 text-lg font-semibold text-navy">{f.title}</h3>
                   <p className="mt-2 text-[15px] leading-relaxed text-navy/65">{f.desc}</p>
-                  <a href="#demo" className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-navy transition-colors duration-300 hover:text-gold">
+                  <a href={`#feat-${f.anchor}`} className="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-navy transition-colors duration-300 hover:text-gold">
                     Learn more <ArrowRight className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-1" />
                   </a>
                 </article>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* ── FEATURE DETAILS ── */}
+        <section id="feature-details" aria-label="Feature details" className="scroll-mt-20 bg-cream-2 py-20 sm:py-28">
+          <div className="mx-auto max-w-7xl space-y-20 px-4 sm:space-y-28 sm:px-6">
+            {DETAILS.map((d, i) => (
+              <article key={d.id} id={`feat-${d.id}`} className="grid scroll-mt-24 items-center gap-10 lg:grid-cols-2 lg:gap-16">
+                <div {...rv()} className={i % 2 ? "lg:order-2" : ""}>
+                  <Eyebrow>{d.eyebrow}</Eyebrow>
+                  <h3 className="mt-4 font-display text-[clamp(1.6rem,3vw,2.25rem)] font-semibold leading-tight text-navy">{d.title}</h3>
+                  <ul className="mt-6 space-y-3.5">
+                    {d.points.map(p => (
+                      <li key={p} className="flex items-start gap-3 text-[15px] leading-relaxed text-navy/80">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gold text-navy"><Check className="h-3 w-3" strokeWidth={3} /></span>
+                        {p}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div {...rv(100, "fade")} className={i % 2 ? "lg:order-1" : ""}><Shot name={d.img} alt={d.alt} /></div>
+              </article>
+            ))}
           </div>
         </section>
 
@@ -683,11 +701,10 @@ export default function LandingPage() {
           </div>
           {/* Only real, approved reviews from /api/reviews are shown; nothing is rendered until some exist */}
           {testimonials.length > 0 && (
-          <div {...rv(200, "fade")} className="relative mt-16 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
-            <div className="marquee-track flex w-max animate-marquee gap-6">
-              {/* Repeat an even number of times so the -50% marquee loop is seamless and the strip is never short */}
-              {Array.from({ length: 2 * Math.max(2, Math.ceil(6 / testimonials.length)) }, () => testimonials).flat().map((t, i) => (
-                <article key={i} aria-hidden={i >= testimonials.length} className="w-[320px] shrink-0 rounded-2xl border border-navy/8 bg-white p-8 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:w-[380px]">
+          <div {...rv(200, "fade")} className="relative mt-16">
+            <div className="flex snap-x gap-6 overflow-x-auto px-4 pb-4 sm:px-6">
+              {testimonials.map((t, i) => (
+                <article key={i} className="w-[320px] shrink-0 snap-start rounded-2xl border border-navy/8 bg-white p-8 shadow-[0_10px_30px_rgba(15,29,61,.06)] sm:w-[380px]">
                   <div className="flex items-center justify-between">
                     <div className="flex gap-0.5" aria-label={`${t.rating} out of 5 stars`}>
                       {Array.from({ length: 5 }).map((_, s) => <Star key={s} className={`h-4 w-4 ${s < t.rating ? "fill-gold text-gold" : "text-navy/15"}`} />)}
@@ -755,7 +772,7 @@ export default function LandingPage() {
 
         {/* ── DEMO / CTA ── */}
         <section id="demo" aria-label="Book a demo" className="relative scroll-mt-20 overflow-hidden bg-white py-24 sm:py-32">
-          <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 animate-float-up rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
+          <div className="pointer-events-none absolute -left-24 top-24 h-72 w-72 rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
           <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
             <div className="mx-auto max-w-2xl text-center">
               <div {...rv()}><Eyebrow>Get started</Eyebrow></div>
