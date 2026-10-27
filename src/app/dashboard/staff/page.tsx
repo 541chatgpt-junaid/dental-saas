@@ -24,6 +24,9 @@ const allPages = [
   "Lab Records", "Billing", "Materials", "Purchases", "Expenses", "Reports", "Staff", "Settings", "Online Booking",
 ];
 
+// The database lets only a clinic admin change staff rows; a blocked write changes 0 rows without an error
+const NOT_ADMIN = "Only the clinic owner (admin) can change staff accounts. Nothing was changed.";
+
 export default function StaffPage() {
   const [staff, setStaff] = useState<Staff[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -124,9 +127,10 @@ export default function StaffPage() {
     if (!editingStaff) return;
     setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.from("staff").update({ permissions: editPermissions.join(",") }).eq("id", editingStaff.id);
+    const { data, error } = await supabase.from("staff").update({ permissions: editPermissions.join(",") }).eq("id", editingStaff.id).select("id");
     setLoading(false);
     if (error) { alert(saveErrorMessage(error, "permissions")); return; }
+    if (!data?.length) { alert(NOT_ADMIN); return; }
     setEditingStaff(null);
     setEditPermissions([]);
     setLoading(false);
@@ -140,16 +144,18 @@ export default function StaffPage() {
 
   const toggleStatus = async (s: Staff) => {
     const supabase = createClient();
-    const { error } = await supabase.from("staff").update({ status: s.status === "Active" ? "Inactive" : "Active" }).eq("id", s.id);
+    const { data, error } = await supabase.from("staff").update({ status: s.status === "Active" ? "Inactive" : "Active" }).eq("id", s.id).select("id");
     if (error) alert(saveErrorMessage(error, "staff status"));
+    else if (!data?.length) alert(NOT_ADMIN);
     fetchStaff();
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm("Delete this staff member?")) return;
     const supabase = createClient();
-    const { error } = await supabase.from("staff").delete().eq("id", id);
+    const { data, error } = await supabase.from("staff").delete().eq("id", id).select("id");
     if (error) alert(saveErrorMessage(error, "staff member").replace("save", "delete"));
+    else if (!data?.length) alert(NOT_ADMIN);
     fetchStaff();
   };
 
