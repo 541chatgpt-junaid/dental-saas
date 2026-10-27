@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { doctorName, titleCase } from "@/lib/personName";
 import EmptyState from "@/components/EmptyState";
 import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -24,7 +25,7 @@ const badge = (s: string) =>
   s === "Paid" ? "bg-green-100 text-green-700" : s === "Partial" ? "bg-yellow-100 text-yellow-700" : s === "Overdue" ? "bg-red-100 text-red-700" : s === "—" ? "bg-gray-100 text-gray-500" : "bg-orange-100 text-orange-700";
 
 export default function Dashboard() {
-  const [userEmail, setUserEmail] = useState("");
+  const [userName, setUserName] = useState("");
   const [todayPatients, setTodayPatients] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
   const [pendingLabs, setPendingLabs] = useState(0);
@@ -48,7 +49,11 @@ export default function Dashboard() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/"); return; }
-      setUserEmail(user.email || "");
+      // Greeting name: staff row name, else auth metadata, else the email's local part
+      const { data: staffRow } = await supabase.from("staff").select("name").eq("user_id", user.id).maybeSingle();
+      const meta = (user.user_metadata || {}) as Record<string, unknown>;
+      const raw = String(staffRow?.name || meta.full_name || meta.name || (user.email || "").split("@")[0] || "").trim();
+      setUserName(titleCase(raw.replace(/[._]+/g, " ")));
 
       const tomorrow = new Date(`${today}T00:00:00Z`);
       tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
@@ -119,7 +124,7 @@ export default function Dashboard() {
         <div className="mb-6">
           <p className="text-[11px] font-semibold uppercase tracking-[0.25em] text-gold">Overview</p>
           <h2 className="mt-1 text-2xl md:text-3xl font-semibold text-brand-800 tracking-tight">Dashboard</h2>
-          <p className="text-sm text-gray-500 mt-1">Welcome back, {userEmail}</p>
+          <p className="text-sm text-gray-500 mt-1">Welcome back{userName ? `, ${userName}` : ""}</p>
         </div>
 
         {bookingRequests > 0 && (
@@ -216,7 +221,7 @@ export default function Dashboard() {
                     </div>
                     <p className="text-xs text-gray-600">{p.treatment}</p>
                     <div className="flex justify-between mt-1">
-                      <p className="text-xs text-gray-500">Dr. {p.doctor_name || "-"}</p>
+                      <p className="text-xs text-gray-500">{doctorName(p.doctor_name) || "-"}</p>
                       <p className="text-xs font-semibold text-gray-700">{symbol} {p.billing.totalPaid.toLocaleString()}</p>
                     </div>
                   </div>
@@ -237,7 +242,7 @@ export default function Dashboard() {
                     {recentPatients.map(p => (
                       <tr key={p.id} className="border-t border-brand-100 hover:bg-brand-50">
                         <td className="px-4 py-3 font-semibold text-brand-800">{p.name}</td>
-                        <td className="px-4 py-3 text-gray-600">{p.doctor_name || "-"}</td>
+                        <td className="px-4 py-3 text-gray-600">{doctorName(p.doctor_name) || "-"}</td>
                         <td className="px-4 py-3 text-gray-600">{p.treatment}</td>
                         <td className="px-4 py-3 font-medium text-gray-700">{symbol} {p.billing.totalPaid.toLocaleString()}</td>
                         <td className="px-4 py-3">

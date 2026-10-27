@@ -5,7 +5,7 @@ export type MasterTreatment = { id: string; name: string; price: number; code?: 
 
 /**
  * The only way to choose a treatment anywhere in the app: a dropdown backed
- * by the clinic's treatment master list (Settings → Treatment Presets).
+ * by the clinic's treatment master list (Settings > Treatment Presets).
  * There is no free-text entry — a treatment that isn't on the list is added
  * to the master list first (via "Add new treatment…"), then selected.
  *
@@ -83,7 +83,7 @@ export default function TreatmentSelect({
       {list.map(t => (
         <option key={t.id} value={t.name}>{t.name}{t.price > 0 ? ` — Rs ${t.price.toLocaleString()}` : ""}</option>
       ))}
-      <option value="__add__">➕ Add new treatment…</option>
+      <option value="__add__">+ Add new treatment…</option>
     </select>
   );
 }

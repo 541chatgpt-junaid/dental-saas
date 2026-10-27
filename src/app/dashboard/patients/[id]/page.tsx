@@ -1,7 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
-import { Receipt } from "lucide-react";
+import { ArrowLeft, ArrowRight, Phone, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -41,8 +43,6 @@ interface Payment {
   invoices: { invoice_number: string } | null;
 }
 
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 // Colours for the shared ledger statuses (getInvoiceStatus)
 const statusColor = (s: string) => {
@@ -111,7 +111,7 @@ export default function PatientHistoryPage() {
       <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.push("/dashboard/patients")} className="text-brand-500 hover:text-brand-700 text-sm">← Back</button>
+          <button onClick={() => router.push("/dashboard/patients")} className="text-brand-500 hover:text-brand-700 text-sm"><ArrowLeft className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Back</button>
           <div>
             <h2 className="text-xl font-semibold text-brand-800">{patient.name}</h2>
             <p className="text-xs text-gray-500 mt-0.5">Financial History</p>
@@ -121,10 +121,10 @@ export default function PatientHistoryPage() {
         {/* Patient Info Bar */}
         <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-4 mb-5">
           <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
-            {patient.phone && <span className="text-gray-600">📞 {patient.phone}</span>}
+            {patient.phone && <span className="text-gray-600"><Phone className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{patient.phone}</span>}
             {patient.age && <span className="text-gray-500">{patient.age} yrs</span>}
             {patient.gender && <span className="text-gray-500">{patient.gender}</span>}
-            {patient.doctor_name && <span className="text-gray-500">Dr. {patient.doctor_name}</span>}
+            {patient.doctor_name && <span className="text-gray-500">{doctorName(patient.doctor_name)}</span>}
             {patient.treatment && <span className="text-gray-500">{patient.treatment}</span>}
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function PatientHistoryPage() {
                         <span className="text-emerald-600">Paid: {symbol} {inv.amount_paid.toLocaleString()}</span>
                         {inv.balance > 0 && <span className="text-orange-600 font-semibold">Bal: {symbol} {inv.balance.toLocaleString()}</span>}
                       </div>
-                      <button onClick={() => router.push(`/dashboard/billing/${inv.id}`)} className="mt-2 text-xs text-brand-600 font-semibold hover:underline">View Invoice →</button>
+                      <button onClick={() => router.push(`/dashboard/billing/${inv.id}`)} className="mt-2 text-xs text-brand-600 font-semibold hover:underline">View Invoice <ArrowRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" /></button>
                     </div>
                   ))}
                 </div>

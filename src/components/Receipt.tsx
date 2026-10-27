@@ -1,5 +1,8 @@
 "use client";
 import { useEffect, useState } from "react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
+import { CircleCheck, Hourglass, Printer } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useCurrency } from "@/lib/useCurrency";
 import type { PatientBilling } from "@/lib/ledger";
@@ -49,9 +52,7 @@ export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
 
   const remaining = billing.outstanding;
   const fullyPaid = billing.status === "Paid";
-  const date = new Date(patient.created_at).toLocaleDateString("en-PK", {
-    day: "numeric", month: "long", year: "numeric"
-  });
+  const date = formatDate(patient.created_at);
 
   const handlePrint = () => window.print();
 
@@ -62,7 +63,7 @@ export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
         {/* Action Buttons */}
         <div className="flex gap-2 p-3 bg-brand-50 border-b rounded-t-2xl print:hidden">
           <button onClick={handlePrint} className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2 rounded-xl text-xs font-medium">
-            🖨️ Print
+            <Printer className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Print
           </button>
           <button onClick={onClose} className="flex-1 border border-brand-200 text-gray-600 hover:bg-gray-100 py-2 rounded-xl text-xs font-medium">
             Close
@@ -111,7 +112,7 @@ export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
               </div>
               <div className="flex justify-between">
                 <span className="text-xs text-gray-500">Doctor</span>
-                <span className="text-xs font-semibold text-gray-700">{patient.doctor_name || "-"}</span>
+                <span className="text-xs font-semibold text-gray-700">{doctorName(patient.doctor_name) || "-"}</span>
               </div>
             </div>
           </div>
@@ -149,7 +150,7 @@ export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
           {/* Status Badge */}
           <div className={`rounded-xl p-2.5 text-center mb-3 ${fullyPaid ? "bg-green-50" : "bg-orange-50"}`}>
             <p className={`text-xs font-bold ${fullyPaid ? "text-green-600" : "text-orange-500"}`}>
-              {fullyPaid ? "✅ FULLY PAID" : "⏳ PAYMENT PENDING"}
+              {fullyPaid ? <><CircleCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />FULLY PAID</> : <><Hourglass className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />PAYMENT PENDING</>}
             </p>
           </div>
 

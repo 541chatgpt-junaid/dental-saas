@@ -1,10 +1,10 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import { Check, EyeOff, Star, Trash2 } from "lucide-react";
 
 type Review = { id: string; name: string; clinic: string | null; rating: number; review: string; is_approved: boolean; created_at: string };
 
-const formatDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function ReviewsTab() {
   const [reviews, setReviews] = useState<Review[]>([]);

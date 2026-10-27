@@ -1,5 +1,7 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
 import { useRouter } from "next/navigation";
 import TreatmentSelect from "@/components/TreatmentSelect";
 import {
@@ -284,7 +286,7 @@ export default function TreatmentPlans() {
                 <span className="mb-1 block text-xs text-brand-600">Doctor</span>
                 <select value={form.doctor_name} onChange={e => setForm({ ...form, doctor_name: e.target.value })} className={inputCls}>
                   <option value="">Select doctor</option>
-                  {doctors.map(d => <option key={d} value={d}>{d}</option>)}
+                  {doctors.map(d => <option key={d} value={d}>{doctorName(d)}</option>)}
                 </select>
               </label>
               <label className="block">
@@ -369,7 +371,7 @@ export default function TreatmentPlans() {
                     className="no-print flex w-full flex-wrap items-center gap-x-4 gap-y-2 p-4 text-left md:p-5">
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-brand-800">{p.title}</p>
-                      <p className="text-xs text-brand-500">{p.patient_name}{p.doctor_name ? ` · Dr. ${p.doctor_name}` : ""} · {new Date(p.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}</p>
+                      <p className="text-xs text-brand-500">{p.patient_name}{p.doctor_name ? ` · ${doctorName(p.doctor_name)}` : ""} · {formatDate(p.created_at)}</p>
                     </div>
                     <div className="w-32">
                       <div className="h-1.5 overflow-hidden rounded-full bg-brand-100">
@@ -386,7 +388,7 @@ export default function TreatmentPlans() {
                     <div className="animate-fade-in border-t border-brand-100 p-4 md:p-5">
                       <div className="print-only mb-4">
                         <h1 className="text-2xl font-semibold">{clinicName || "Dental Clinic"}</h1>
-                        <p className="text-sm">Treatment estimate for {p.patient_name}{p.doctor_name ? ` · Dr. ${p.doctor_name}` : ""} · {new Date().toLocaleDateString("en-GB")}</p>
+                        <p className="text-sm">Treatment estimate for {p.patient_name}{p.doctor_name ? ` · ${doctorName(p.doctor_name)}` : ""} · {formatDate(new Date())}</p>
                         <h2 className="mt-3 text-lg font-semibold">{p.title}</h2>
                       </div>
                       <table className="w-full text-sm">

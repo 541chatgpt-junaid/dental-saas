@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
-import { Wallet } from "lucide-react";
+import { Pencil, Trash2, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -217,10 +218,10 @@ export default function Expenses() {
                     <p className="text-red-600 font-medium text-sm">{symbol} {e.amount?.toLocaleString()}</p>
                   </div>
                   <div className="flex justify-between mt-2">
-                    <p className="text-xs text-brand-400">{e.notes} · {e.date}</p>
+                    <p className="text-xs text-brand-400">{e.notes} · {formatDate(e.date)}</p>
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(e)} className="text-brand-600 text-xs font-medium">✏️</button>
-                      <button onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                      <button aria-label="Edit" title="Edit" onClick={() => openEdit(e)} className="text-brand-600 text-xs font-medium"><Pencil className="inline h-4 w-4" aria-hidden="true" /></button>
+                      <button aria-label="Delete" title="Delete" onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                     </div>
                   </div>
                 </div>
@@ -248,12 +249,12 @@ export default function Expenses() {
                       <td className="px-4 py-3 font-medium text-brand-800">{e.title}</td>
                       <td className="px-4 py-3"><span className="bg-brand-100 text-brand-700 text-xs px-2 py-1 rounded-full">{e.category}</span></td>
                       <td className="px-4 py-3 text-red-600 font-medium">{symbol} {e.amount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 text-brand-700">{e.date}</td>
+                      <td className="px-4 py-3 text-brand-700">{formatDate(e.date)}</td>
                       <td className="px-4 py-3 text-brand-400">{e.notes}</td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => openEdit(e)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
-                          <button onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                          <button onClick={() => openEdit(e)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
+                          <button aria-label="Delete" title="Delete" onClick={() => handleDelete(e.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                         </div>
                       </td>
                     </tr>

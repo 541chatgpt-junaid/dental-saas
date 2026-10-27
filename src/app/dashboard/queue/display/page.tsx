@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { doctorName } from "@/lib/personName";
 import { Volume2, VolumeX } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useClinic } from "@/lib/ClinicContext";
@@ -51,7 +52,7 @@ export default function QueueDisplay() {
         o.start(ctx.currentTime + i * 0.35); o.stop(ctx.currentTime + i * 0.35 + 0.3);
       });
       fresh.forEach(t => {
-        const u = new SpeechSynthesisUtterance(`Token number ${t.token_no}${t.doctor_name ? `, please proceed to Doctor ${t.doctor_name}` : ", please proceed"}`);
+        const u = new SpeechSynthesisUtterance(`Token number ${t.token_no}${t.doctor_name ? `, please proceed to ${doctorName(t.doctor_name)}` : ", please proceed"}`);
         u.rate = 0.9;
         window.speechSynthesis?.speak(u);
       });
@@ -82,7 +83,7 @@ export default function QueueDisplay() {
                 <div key={`${t.id}:${t.called_at}`} className="animate-scale-in rounded-3xl border border-gold/40 bg-white/5 p-8 text-center shadow-[0_0_60px_rgba(212,175,55,.15)]">
                   <p className="text-sm uppercase tracking-[0.25em] text-white/60">Token</p>
                   <p className="font-display text-8xl font-bold leading-none text-gold md:text-9xl">{t.token_no}</p>
-                  <p className="mt-4 text-xl text-white/85">{t.doctor_name ? `Dr. ${t.doctor_name}` : "Please proceed"}</p>
+                  <p className="mt-4 text-xl text-white/85">{t.doctor_name ? doctorName(t.doctor_name) : "Please proceed"}</p>
                 </div>
               ))}
             </div>
@@ -96,7 +97,7 @@ export default function QueueDisplay() {
             {next.map((t, i) => (
               <li key={t.id} className="flex animate-fade-up items-center gap-5 rounded-2xl border border-white/10 bg-white/5 px-6 py-4" style={{ animationDelay: `${i * 60}ms` }}>
                 <span className="font-display text-4xl font-bold text-white">{t.token_no}</span>
-                <span className="text-lg text-white/70">{t.doctor_name ? `Dr. ${t.doctor_name}` : "Any doctor"}</span>
+                <span className="text-lg text-white/70">{t.doctor_name ? doctorName(t.doctor_name) : "Any doctor"}</span>
               </li>
             ))}
           </ul>

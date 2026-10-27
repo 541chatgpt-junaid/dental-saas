@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
-import { FlaskConical } from "lucide-react";
+import { FlaskConical, Pencil, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -515,14 +516,14 @@ export default function Labs() {
                   </div>
                   <p className="text-xs text-brand-600">{l.work_type} x{l.units} · {l.shade} · {l.material}</p>
                   {l.tooth_chart && <p className="text-xs text-brand-400 mt-0.5">Teeth: {getChartSummary(l.tooth_chart)}</p>}
-                  <p className="text-xs text-brand-400 mt-1">Delivery: {l.delivery_date}</p>
+                  <p className="text-xs text-brand-400 mt-1">Delivery: {formatDate(l.delivery_date)}</p>
                   <div className="flex justify-between items-center mt-2">
                     <p className="text-xs text-brand-600">Paid: {symbol} {l.fee_paid} / {symbol} {l.fee}</p>
                     <div className="flex gap-2">
-                      <button onClick={() => openEdit(l)} className="text-brand-600 text-xs font-medium">✏️</button>
+                      <button aria-label="Edit" title="Edit" onClick={() => openEdit(l)} className="text-brand-600 text-xs font-medium"><Pencil className="inline h-4 w-4" aria-hidden="true" /></button>
                       {l.fee_paid < l.fee && <button onClick={() => { const a = prompt(`Payment:`); if (a) handlePayment(l, parseInt(a)); }} className="text-brand-600 text-xs font-medium">Pay</button>}
                       {l.status !== "Delivered" && <button onClick={() => updateStatus(l, "Delivered")} className="text-green-600 text-xs font-medium">Delivered</button>}
-                      <button onClick={() => handleDelete(l.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                      <button aria-label="Delete" title="Delete" onClick={() => handleDelete(l.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                     </div>
                   </div>
                 </div>
@@ -558,7 +559,7 @@ export default function Labs() {
                         <p className="text-xs text-brand-400">{l.shade} · {l.material}</p>
                       </td>
                       <td className="px-4 py-3 text-brand-500 text-xs max-w-24">{getChartSummary(l.tooth_chart)}</td>
-                      <td className="px-4 py-3 text-brand-700">{l.delivery_date}</td>
+                      <td className="px-4 py-3 text-brand-700">{formatDate(l.delivery_date)}</td>
                       <td className="px-4 py-3 text-brand-700">{symbol} {l.fee}</td>
                       <td className="px-4 py-3 text-brand-700">{symbol} {l.fee_paid}</td>
                       <td className="px-4 py-3">
@@ -571,10 +572,10 @@ export default function Labs() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2 flex-wrap">
-                          <button onClick={() => openEdit(l)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => openEdit(l)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
                           {l.fee_paid < l.fee && <button onClick={() => { const a = prompt(`Payment for ${l.patient_name}:`); if (a) handlePayment(l, parseInt(a)); }} className="text-brand-600 text-xs font-medium">Pay</button>}
                           {l.status !== "Delivered" && <button onClick={() => updateStatus(l, "Delivered")} className="text-green-600 text-xs font-medium">Delivered</button>}
-                          <button onClick={() => handleDelete(l.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                          <button aria-label="Delete" title="Delete" onClick={() => handleDelete(l.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                         </div>
                       </td>
                     </tr>

@@ -1,5 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
 import { useRouter } from "next/navigation";
 import { HandCoins, Info, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -119,7 +121,7 @@ export default function Commissions() {
   };
 
   const deletePayout = async (p: Payout) => {
-    if (!confirm(`Delete the ${money(p.amount)} payout to Dr. ${p.doctor_name}?`)) return;
+    if (!confirm(`Delete the ${money(p.amount)} payout to ${doctorName(p.doctor_name)}?`)) return;
     const { error } = await createClient().from("doctor_payouts").delete().eq("id", p.id);
     if (error) alert(saveErrorMessage(error, "payout").replace("save", "delete"));
     load();
@@ -176,7 +178,7 @@ export default function Commissions() {
                   {rows.map(r => (
                     <tr key={r.doctor.id} className="border-t border-brand-100 hover:bg-brand-50">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-brand-800">Dr. {r.doctor.name}</p>
+                        <p className="font-medium text-brand-800">{doctorName(r.doctor.name)}</p>
                         <p className="text-[11px] text-brand-500">Visits {money(r.visits)} · Registration &amp; other {money(r.registrations)}</p>
                       </td>
                       <td className="px-4 py-3 text-right text-brand-800">{money(r.collected)}</td>
@@ -185,7 +187,7 @@ export default function Commissions() {
                           defaultValue={Number(r.doctor.commission_percent) || 0}
                           onBlur={e => savePercent(r.doctor, e.target.value)}
                           onKeyDown={e => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
-                          aria-label={`Commission percent for Dr. ${r.doctor.name}`}
+                          aria-label={`Commission percent for ${doctorName(r.doctor.name)}`}
                           className="w-20 rounded-lg border border-brand-200 px-2 py-1 text-center text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                       </td>
                       <td className="px-4 py-3 text-right font-semibold text-brand-800">{money(r.commission)}</td>
@@ -215,7 +217,7 @@ export default function Commissions() {
           <div className="modal-backdrop fixed inset-0 z-50 flex items-center justify-center bg-navy/60 p-4 backdrop-blur-sm" onClick={() => setPayFor(null)}>
             <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={e => e.stopPropagation()}>
               <h3 className="font-display text-lg font-semibold text-brand-800">Record payout</h3>
-              <p className="mt-1 text-sm text-brand-500">Dr. {payFor} · {monthLabel}</p>
+              <p className="mt-1 text-sm text-brand-500">{doctorName(payFor)} · {monthLabel}</p>
               <label className="mt-4 block">
                 <span className="mb-1 block text-xs text-brand-600">Amount ({symbol})</span>
                 <input type="number" min={1} autoFocus value={payAmount} onChange={e => setPayAmount(e.target.value)}
@@ -242,8 +244,8 @@ export default function Commissions() {
             <ul className="divide-y divide-brand-100">
               {payouts.map(p => (
                 <li key={p.id} className="flex items-center gap-3 py-2 text-sm">
-                  <span className="w-24 text-brand-500">{new Date(p.paid_on).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}</span>
-                  <span className="flex-1 text-brand-800">Dr. {p.doctor_name}{p.note ? <span className="text-brand-500"> · {p.note}</span> : null}</span>
+                  <span className="w-24 text-brand-500">{formatDate(p.paid_on)}</span>
+                  <span className="flex-1 text-brand-800">{doctorName(p.doctor_name)}{p.note ? <span className="text-brand-500"> · {p.note}</span> : null}</span>
                   <span className="font-medium text-green-600">{money(Number(p.amount))}</span>
                   <button onClick={() => deletePayout(p)} aria-label="Delete payout" className="rounded-lg p-1.5 text-red-400 hover:bg-red-50"><Trash2 className="h-4 w-4" /></button>
                 </li>

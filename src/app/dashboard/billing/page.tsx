@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
-import { Receipt } from "lucide-react";
+import { ArrowLeft, ArrowRight, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -47,8 +48,6 @@ const statusColor = (s: string) => {
   return "bg-orange-100 text-orange-700";
 };
 
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function BillingPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
@@ -285,9 +284,9 @@ export default function BillingPage() {
               </span>
               <div className="flex gap-2">
                 <button onClick={goPrev} disabled={pageIdx === 0 || loading}
-                  className="rounded-lg border border-brand-200 px-3 py-1.5 font-medium disabled:opacity-40">← Previous</button>
+                  className="rounded-lg border border-brand-200 px-3 py-1.5 font-medium disabled:opacity-40"><ArrowLeft className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Previous</button>
                 <button onClick={goNext} disabled={nextOffset == null || loading}
-                  className="rounded-lg border border-brand-200 px-3 py-1.5 font-medium disabled:opacity-40">Next →</button>
+                  className="rounded-lg border border-brand-200 px-3 py-1.5 font-medium disabled:opacity-40">Next <ArrowRight className="ml-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" /></button>
               </div>
             </div>
           </>

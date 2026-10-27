@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
-import { Wallet } from "lucide-react";
+import { ArrowLeft, Check, Printer, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { saveErrorMessage } from "@/lib/formSave";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
@@ -56,8 +57,6 @@ const statusColor = (s: string) => {
 
 const statusLabel = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function InvoiceDetailPage() {
   const params = useParams();
@@ -217,7 +216,7 @@ export default function InvoiceDetailPage() {
         {/* Screen-only action bar */}
         <div className="print-hide flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <button onClick={() => router.push("/dashboard/billing")} className="text-brand-500 hover:text-brand-700 text-sm">← Back</button>
+            <button onClick={() => router.push("/dashboard/billing")} className="text-brand-500 hover:text-brand-700 text-sm"><ArrowLeft className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Back</button>
             <h2 className="text-xl font-semibold text-brand-800">{invoice.invoice_number}</h2>
             <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${statusColor(effStatus)}`}>{statusLabel(effStatus)}</span>
           </div>
@@ -245,7 +244,7 @@ export default function InvoiceDetailPage() {
             )}
             <button onClick={() => window.print()}
               className="border border-brand-200 text-brand-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-50">
-              🖨️ Print
+              <Printer className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Print
             </button>
             {invoice.state !== "Paid" && invoice.state !== "Cancelled" && (
               <button onClick={() => { setShowPayModal(true); setPayError(""); }}
@@ -366,7 +365,7 @@ export default function InvoiceDetailPage() {
                       isFullyPaid ? "text-green-700" :
                       invoice.state === "Partial" ? "text-orange-700" : "text-red-700"
                     }`}>
-                      {isFullyPaid ? "✓ Fully Paid" : "Balance Due"}
+                      {isFullyPaid ? <><Check className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Fully Paid</> : "Balance Due"}
                     </span>
                     <span className={`text-2xl font-black ${
                       isFullyPaid ? "text-green-700" :

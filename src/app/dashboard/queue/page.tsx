@@ -1,7 +1,9 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
 import { useRouter } from "next/navigation";
-import { ArrowUpRight, Check, ListOrdered, MessageCircle, Monitor, Plus, SkipForward, Undo2, UserRoundCheck, X } from "lucide-react";
+import { ArrowUpRight, Check, ListOrdered, MessageCircle, Monitor, Plus, SkipForward, TriangleAlert, Undo2, UserRoundCheck, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { saveErrorMessage } from "@/lib/formSave";
 import Sidebar from "@/components/Sidebar";
@@ -119,7 +121,7 @@ export default function QueuePage() {
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
             <h2 className="text-xl md:text-2xl font-semibold text-brand-800 tracking-tight">Walk-in Queue</h2>
-            <p className="text-sm text-brand-500 mt-1">{new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })} · tokens restart every day</p>
+            <p className="text-sm text-brand-500 mt-1">{formatDate(new Date(), { weekday: true })} · tokens restart every day</p>
           </div>
           <div className="flex gap-2">
             <a href="/dashboard/queue/display" target="_blank" rel="noreferrer"
@@ -162,7 +164,7 @@ export default function QueuePage() {
                 <span className="mb-1 block text-xs text-brand-600">Doctor</span>
                 <select value={form.doctor_name} onChange={e => setForm({ ...form, doctor_name: e.target.value })} className={inputCls}>
                   <option value="">Any doctor</option>
-                  {doctors.map(d => <option key={d} value={d}>{d}</option>)}
+                  {doctors.map(d => <option key={d} value={d}>{doctorName(d)}</option>)}
                 </select>
               </label>
               <label className="block">
@@ -180,7 +182,7 @@ export default function QueuePage() {
           <select value={doctorFilter} onChange={e => setDoctorFilter(e.target.value)} aria-label="Doctor"
             className="rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm text-brand-700 focus:outline-none focus:ring-2 focus:ring-gold/50">
             <option value="">All doctors</option>
-            {doctors.map(d => <option key={d} value={d}>Dr. {d}</option>)}
+            {doctors.map(d => <option key={d} value={d}>{doctorName(d)}</option>)}
           </select>
           <button onClick={callNext} disabled={!waiting.length}
             className="inline-flex items-center gap-2 rounded-lg bg-gold px-5 py-2 text-sm font-semibold text-navy hover:brightness-95 disabled:opacity-40">
@@ -201,11 +203,11 @@ export default function QueuePage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-brand-800">{t.patient_name}
                       {allergyByName[t.patient_name?.trim().toLowerCase()] && (
-                        <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">⚠ Allergy: {allergyByName[t.patient_name.trim().toLowerCase()]}</span>
+                        <span className="ml-2 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700"><TriangleAlert className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Allergy: {allergyByName[t.patient_name.trim().toLowerCase()]}</span>
                       )}
                     </p>
                     <p className="text-xs text-brand-500">
-                      {t.doctor_name ? `Dr. ${t.doctor_name}` : "Any doctor"}{t.reason ? ` · ${t.reason}` : ""}{t.phone ? ` · ${t.phone}` : ""}
+                      {t.doctor_name ? doctorName(t.doctor_name) : "Any doctor"}{t.reason ? ` · ${t.reason}` : ""}{t.phone ? ` · ${t.phone}` : ""}
                       {t.status === "waiting" && ` · waiting ${minsSince(t.created_at)} min`}
                     </p>
                   </div>

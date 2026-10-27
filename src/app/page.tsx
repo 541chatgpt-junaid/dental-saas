@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import {
-  ArrowLeftRight, ArrowRight, BadgeCheck, Building2, CalendarCheck, Check, ChevronDown, ClipboardList,
+  ArrowLeft, ArrowLeftRight, ArrowRight, BadgeCheck, Building2, CalendarCheck, Check, ChevronDown, ClipboardList,
   Clock, Cloud, FlaskConical, LayoutDashboard, LoaderCircle, Lock, LogIn, Menu, MessageCircle, Phone,
   Quote, Receipt, Send, ShieldCheck, Sparkles, Star, Users, X,
 } from "lucide-react";
@@ -389,7 +389,7 @@ function DemoForm() {
 
         <div className="mt-8 flex items-center justify-between gap-4">
           <button type="button" onClick={() => setStep(s => Math.max(0, s - 1))} disabled={step === 0} className="text-sm font-semibold text-navy/60 transition-colors duration-300 hover:text-navy disabled:invisible">
-            ← Back
+            <ArrowLeft className="mr-1 inline h-4 w-4 align-[-3px]" aria-hidden="true" />Back
           </button>
           {step < steps.length - 1 ? (
             <button type="button" disabled={!canNext} onClick={() => setStep(s => s + 1)} className="inline-flex items-center gap-2 rounded-full bg-navy px-7 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-30">

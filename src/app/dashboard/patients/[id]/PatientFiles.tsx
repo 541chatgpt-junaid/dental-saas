@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import { Columns2, ExternalLink, FileText, ImagePlus, LoaderCircle, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { saveErrorMessage } from "@/lib/formSave";
@@ -178,7 +179,7 @@ export default function PatientFiles({ patientId, clinicId }: { patientId: numbe
               </div>
               <div className="p-2.5">
                 <p className="truncate text-xs font-medium text-brand-800">{f.note || f.file_name}</p>
-                <p className="text-[10px] text-brand-500">{new Date(f.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })} · {fmtSize(f.size_bytes)}</p>
+                <p className="text-[10px] text-brand-500">{formatDate(f.created_at)} · {fmtSize(f.size_bytes)}</p>
               </div>
             </button>
           ))}
@@ -214,7 +215,7 @@ export default function PatientFiles({ patientId, clinicId }: { patientId: numbe
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={f.url} alt={f.file_name} className="aspect-[4/3] w-full rounded-xl bg-black object-contain" />
                   <figcaption className="mt-1.5 text-center text-xs text-brand-600">
-                    <span className="font-semibold">{catLabel(f.category)}</span> · {new Date(f.created_at).toLocaleDateString("en-GB")}
+                    <span className="font-semibold">{catLabel(f.category)}</span> · {formatDate(f.created_at)}
                   </figcaption>
                 </figure>
               ))}

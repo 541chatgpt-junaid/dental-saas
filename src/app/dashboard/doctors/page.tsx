@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { doctorName } from "@/lib/personName";
 import EmptyState from "@/components/EmptyState";
-import { Stethoscope } from "lucide-react";
+import { Calendar, Clock, Pencil, Stethoscope, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import FormError from "@/components/FormError";
 import { firstError, saveErrorMessage } from "@/lib/formSave";
@@ -177,7 +178,7 @@ export default function Doctors() {
 
             {/* Timing Section */}
             <div className="mt-4 p-4 bg-brand-50 rounded-xl border border-brand-100">
-              <p className="text-sm font-semibold text-brand-800 mb-3">⏰ Timing & Schedule</p>
+              <p className="text-sm font-semibold text-brand-800 mb-3"><Clock className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Timing & Schedule</p>
               <div className="grid grid-cols-2 gap-3 mb-4">
                 <div>
                   <label className="block text-xs text-brand-600 mb-1">Start Time</label>
@@ -228,7 +229,7 @@ export default function Doctors() {
                 <div key={d.id} className="p-4">
                   <div className="flex justify-between items-start mb-1">
                     <div>
-                      <p className="font-medium text-brand-800 text-sm">{d.name}</p>
+                      <p className="font-medium text-brand-800 text-sm">{doctorName(d.name)}</p>
                       <p className="text-xs text-brand-500">{d.specialization}</p>
                     </div>
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${d.status === "Active" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
@@ -237,15 +238,15 @@ export default function Doctors() {
                   </div>
                   <p className="text-xs text-brand-400 mt-1">{d.phone} · {d.email}</p>
                   {(d.timing_start || d.timing_end) && (
-                    <p className="text-xs text-brand-500 mt-1">⏰ {d.timing_start} — {d.timing_end}</p>
+                    <p className="text-xs text-brand-500 mt-1"><Clock className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{d.timing_start} — {d.timing_end}</p>
                   )}
                   {d.working_days && (
-                    <p className="text-xs text-brand-500 mt-0.5">📅 {d.working_days}</p>
+                    <p className="text-xs text-brand-500 mt-0.5"><Calendar className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{d.working_days}</p>
                   )}
                   <div className="flex gap-3 mt-2">
-                    <button onClick={() => openEdit(d)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
+                    <button onClick={() => openEdit(d)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
                     <button onClick={() => toggleStatus(d)} className="text-brand-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
-                    <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium">🗑️ Delete</button>
+                    <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium"><Trash2 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Delete</button>
                   </div>
                 </div>
               ))
@@ -272,14 +273,14 @@ export default function Doctors() {
                   doctors.map(d => (
                     <tr key={d.id} className="border-t border-brand-50 hover:bg-brand-50">
                       <td className="px-4 py-3">
-                        <p className="font-medium text-brand-800">{d.name}</p>
+                        <p className="font-medium text-brand-800">{doctorName(d.name)}</p>
                         <p className="text-xs text-brand-400">{d.email}</p>
                       </td>
                       <td className="px-4 py-3 text-brand-700">{d.specialization}</td>
                       <td className="px-4 py-3 text-brand-700">{d.phone}</td>
                       <td className="px-4 py-3 text-brand-700">
                         {d.timing_start && d.timing_end ? (
-                          <p className="text-sm">⏰ {d.timing_start} — {d.timing_end}</p>
+                          <p className="text-sm"><Clock className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{d.timing_start} — {d.timing_end}</p>
                         ) : <p className="text-brand-300 text-xs">Not set</p>}
                         {d.off_days && <p className="text-xs text-brand-400 mt-0.5">Off: {d.off_days}</p>}
                       </td>
@@ -299,9 +300,9 @@ export default function Doctors() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => openEdit(d)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
+                          <button onClick={() => openEdit(d)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
                           <button onClick={() => toggleStatus(d)} className="text-brand-600 text-xs font-medium">{d.status === "Active" ? "Deactivate" : "Activate"}</button>
-                          <button onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                          <button aria-label="Delete" title="Delete" onClick={() => handleDelete(d.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                         </div>
                       </td>
                     </tr>

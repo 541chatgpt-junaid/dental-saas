@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import { MessageCircle, Phone } from "lucide-react";
 import { waLink } from "@/lib/whatsapp";
 
@@ -14,7 +15,6 @@ const STATUS_STYLE: Record<DemoRequest["status"], string> = {
   done: "bg-green-100 text-green-700",
 };
 
-const formatDate = (d: string) => new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function DemoRequestsTab() {
   const [rows, setRows] = useState<DemoRequest[]>([]);

@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { ArrowLeft, Info, Settings, TriangleAlert, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -162,7 +163,7 @@ export default function NewInvoicePage() {
       <Sidebar />
       <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex items-center gap-3 mb-6">
-          <button onClick={() => router.push("/dashboard/billing")} className="text-brand-500 hover:text-brand-700 text-sm">← Back</button>
+          <button onClick={() => router.push("/dashboard/billing")} className="text-brand-500 hover:text-brand-700 text-sm"><ArrowLeft className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Back</button>
           <h2 className="text-xl font-semibold text-brand-800">New Invoice</h2>
         </div>
 
@@ -216,12 +217,12 @@ export default function NewInvoicePage() {
                   </div>
                   {patientBilling.totalBilled > 0 && (
                     <div className="px-4 py-2 bg-blue-50 border-t border-blue-100 text-xs text-blue-700">
-                      ℹ This patient already has a registration receipt. Only create a new invoice here for additional treatments, lab charges, or installment plans.
+                      <Info className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />This patient already has a registration receipt. Only create a new invoice here for additional treatments, lab charges, or installment plans.
                     </div>
                   )}
                   {patientBilling.outstanding > 0 && (
                     <div className="px-4 py-2 bg-orange-50 border-t border-orange-100 text-xs text-orange-700">
-                      ⚠ Patient has an existing outstanding balance of {symbol} {patientBilling.outstanding.toLocaleString()}. This new invoice will be created separately.
+                      <TriangleAlert className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Patient has an existing outstanding balance of {symbol} {patientBilling.outstanding.toLocaleString()}. This new invoice will be created separately.
                     </div>
                   )}
                 </div>
@@ -257,12 +258,12 @@ export default function NewInvoicePage() {
           <div className="bg-white rounded-xl border border-brand-200 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-semibold text-brand-800">Quick Add Treatment</h3>
-              <a href="/dashboard/settings" className="text-xs text-brand-500 hover:underline">⚙ Manage Presets</a>
+              <a href="/dashboard/settings" className="text-xs text-brand-500 hover:underline"><Settings className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Manage Presets</a>
             </div>
             {treatmentPresets.length === 0 ? (
               <div className="text-center py-4 text-sm text-gray-400">
                 No treatment presets configured.{" "}
-                <a href="/dashboard/settings" className="text-brand-500 underline">Add in Settings → Treatment Presets</a>
+                <a href="/dashboard/settings" className="text-brand-500 underline">Add in Settings › Treatment Presets</a>
               </div>
             ) : (
               <div className="flex flex-wrap gap-2">
@@ -313,8 +314,9 @@ export default function NewInvoicePage() {
                   <button
                     onClick={() => removeItem(idx)}
                     className="col-span-1 text-red-400 hover:text-red-600 text-xl font-bold flex items-center justify-center h-9"
+                    aria-label="Remove item" title="Remove item"
                   >
-                    ×
+                    <X className="h-4 w-4" aria-hidden="true" />
                   </button>
                 </div>
               ))}
@@ -385,7 +387,8 @@ export default function NewInvoicePage() {
                     <button
                       onClick={() => setInstallments(installments.filter((_, i) => i !== idx))}
                       className="col-span-1 text-red-400 hover:text-red-600 text-xl font-bold flex items-center justify-center h-9"
-                    >×</button>
+                      aria-label="Remove installment" title="Remove installment"
+                    ><X className="h-4 w-4" aria-hidden="true" /></button>
                   </div>
                 ))}
                 <div className="flex items-center justify-between pt-1">

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
-import { ClipboardList } from "lucide-react";
+import { CircleCheck, ClipboardList, Globe, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -279,7 +279,7 @@ export default function Settings() {
                 <label className="block text-xs font-medium text-gray-600 mb-1">Currency</label>
                 {autoDetected && (
                   <div className="mb-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2 flex items-center justify-between">
-                    <p className="text-xs text-blue-600">🌍 Auto-detected: <span className="font-medium">{autoCurrencyName} ({autoDetected})</span></p>
+                    <p className="text-xs text-blue-600"><Globe className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Auto-detected: <span className="font-medium">{autoCurrencyName} ({autoDetected})</span></p>
                     <button onClick={() => setForm({ ...form, currency: autoDetected })} className="text-xs text-blue-600 font-medium hover:underline">Use This</button>
                   </div>
                 )}
@@ -298,7 +298,7 @@ export default function Settings() {
               <button onClick={handleSave} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
                 {loading ? "Saving..." : "Save Settings"}
               </button>
-              {saved && <span className="text-green-600 text-sm font-medium">✅ Saved!</span>}
+              {saved && <span className="text-green-600 text-sm font-medium"><CircleCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Saved!</span>}
             </div>
           </div>
         )}
@@ -367,7 +367,7 @@ export default function Settings() {
                             className="w-28 border border-brand-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                           />
                           <button onClick={() => saveTreatmentEdit(t.id)} className="text-xs bg-brand-600 text-white px-3 py-1.5 rounded-lg font-medium">Save</button>
-                          <button onClick={() => setTEditId(null)} className="text-xs text-gray-500 hover:text-gray-700 px-2">✕</button>
+                          <button aria-label="X" title="X" onClick={() => setTEditId(null)} className="text-xs text-gray-500 hover:text-gray-700 px-2"><X className="inline h-4 w-4" aria-hidden="true" /></button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between">
