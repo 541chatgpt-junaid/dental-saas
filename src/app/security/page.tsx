@@ -63,6 +63,16 @@ export default function Security() {
         ]} />
       </Section>
 
+      <Section id="portal" title="Forms and the patient portal">
+        <List items={[
+          "A history or consent link carries a long random token, expires, can be revoked and can be used once. It opens only the one form it was made for.",
+          "Portal logins are created by the server and marked as patient logins. The database lets such a login read only rows that belong to its own patient record and its own clinic's name and contact details, and gives it no way to add, change or delete anything. In our tests, a second patient saw none of the first patient's rows.",
+          "A patient login is sent to the portal and away from the clinic dashboard.",
+          "A signed consent is saved by the server only. It has no update or delete rule, so it cannot be edited through the database interface. It stores the wording, typed name, drawn signature, timestamp, a sha256 tamper-check value and a hashed IP address.",
+          "These forms are an electronic record of agreement. DentEase does not claim they meet any specific e-signature law.",
+        ]} />
+      </Section>
+
       <Section id="public" title="What is open to the public">
         <p>A clinic&apos;s booking page, if switched on, shows only the clinic&apos;s name, logo, phone and address, a Google Maps map of that address, its active doctors&apos; names, specialisations and working days, and free times. No patient information appears there. Logos are kept in a public file area (PNG, JPG or WebP, up to 1 MB), and only the clinic owner can upload or remove one. Approved reviews on the home page show the reviewer&apos;s name, clinic name, rating and text.</p>
       </Section>

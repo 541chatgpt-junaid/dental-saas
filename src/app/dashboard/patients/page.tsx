@@ -6,6 +6,7 @@ import EmptyState from "@/components/EmptyState";
 import { SkeletonRows } from "@/components/Skeleton";
 import { ArrowLeft, Calendar, Check, Clock, Mail, Pencil, Printer, Trash2, TriangleAlert, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import PatientFormsPanel from "./PatientFormsPanel";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Receipt from "@/components/Receipt";
@@ -139,7 +140,7 @@ export default function Patients() {
   const [visitError, setVisitError] = useState("");
   const [medicalError, setMedicalError] = useState("");
   const [apptError, setApptError] = useState("");
-  const [activeTab, setActiveTab] = useState<"visits"|"chart"|"rx"|"appointments"|"medical">("visits");
+  const [activeTab, setActiveTab] = useState<"visits"|"chart"|"rx"|"appointments"|"medical"|"forms">("visits");
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
   const [rxForm, setRxForm] = useState({ medicine: "", dosage: "", duration: "", visit_id: "" });
   const [rxError, setRxError] = useState("");
@@ -165,7 +166,7 @@ export default function Patients() {
   const [prescriptionPresets, setPrescriptionPresets] = useState<{ id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string }[]>([]);
   const router = useRouter();
   const { symbol } = useCurrency();
-  const { clinicId } = useClinic();
+  const { clinicId, clinicName } = useClinic();
 
   const [listLoading, setListLoading] = useState(true);
 
@@ -992,6 +993,9 @@ export default function Patients() {
                 <button onClick={() => setActiveTab("medical")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "medical" ? "bg-red-50 text-red-800 border-b-2 border-red-400" : "text-brand-500"}`}>
                   Medical
                 </button>
+                <button onClick={() => setActiveTab("forms")} className={`flex-1 py-3 text-xs md:text-sm font-medium whitespace-nowrap px-2 ${activeTab === "forms" ? "bg-brand-50 text-brand-800 border-b-2 border-gold" : "text-brand-500"}`}>
+                  Forms
+                </button>
               </div>
 
               {activeTab === "visits" && (
@@ -1136,6 +1140,10 @@ export default function Patients() {
                     ))
                   )}
                 </div>
+              )}
+
+              {activeTab === "forms" && selectedPatient && (
+                <PatientFormsPanel patientId={selectedPatient.id} patientName={selectedPatient.name} phone={selectedPatient.phone} clinicName={clinicName || "Our clinic"} onHistoryChanged={() => fetchMedicalHistory(selectedPatient.id)} />
               )}
 
               {activeTab === "medical" && (

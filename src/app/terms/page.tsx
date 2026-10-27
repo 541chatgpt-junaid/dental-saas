@@ -52,6 +52,15 @@ export default function Terms() {
         ]} />
       </Section>
 
+      <Section id="forms" title="Digital forms, consent and the patient portal">
+        <List items={[
+          "Consent wording is written by the clinic. DentEase supplies no legal text and does not check that a form is valid or enough for your purposes or your area; that is for the clinic and its advisers.",
+          "A signature drawn on a screen with a typed name is stored with the wording shown, a timestamp and a tamper-check value. Whether it is accepted as proof of consent is a matter for the law that applies to the clinic.",
+          "A form link is private to the patient it was sent to and works once. The clinic should send it only to that patient, and can revoke it.",
+          "The clinic decides which patients get a portal login and is responsible for sending an invitation to the right person.",
+        ]} />
+      </Section>
+
       <Section id="booking" title="Online booking">
         <p>If you switch on your booking page, patients can send appointment requests. A request is not a confirmed appointment until your clinic confirms it. You are responsible for answering requests and for the working days, hours and doctors you publish.</p>
       </Section>

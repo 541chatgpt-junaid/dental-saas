@@ -29,6 +29,7 @@ export default function Privacy() {
           "Billing and running costs: invoices, payments, expenses, purchases, materials, lab work and doctor commissions.",
           "Online payments, if the clinic switches them on: for each attempt, the amount, the payment provider used, the status and the provider's reference. Card and wallet details are typed on the provider's own page and never reach DentEase.",
         ]} />
+        <p>{strong("Forms and the patient portal, if the clinic uses them.")} A clinic can send a patient a link to fill in a medical history form or to sign a consent form. A history answer (allergies, conditions, medicines, surgeries, blood group) is added to that patient&apos;s record. A signed consent stores the wording the patient saw, the name they typed, their drawn signature (an image), the date and time, and a one-way hash of their IP address. A patient can also be invited to create a portal login (an email address and a password handled by Supabase Auth).</p>
         <p>{strong("Online booking.")} When a patient books through a clinic&apos;s public booking page, we receive their name, phone number, reason for visit and the chosen date and time. This becomes an appointment request in that clinic. If the phone number matches an existing patient it is linked to that patient; otherwise a new patient record is created for that clinic.</p>
         <p>{strong("Website forms.")} A demo request holds your name, phone number, clinic name and your answers to the form. A review holds your name, optional clinic name, rating and text; it is shown on our home page only after it has been approved.</p>
         <p>{strong("Technical data.")} A sign-in cookie keeps you signed in. If you untick &ldquo;Remember me&rdquo;, a small flag on your device ends the session when the browser is closed. If you switch the dashboard to dark mode, that preference is saved on your device. To limit repeated form submissions we use your IP address, but we store it only as a one-way hash with a timestamp, never in readable form.</p>
@@ -57,6 +58,7 @@ export default function Privacy() {
           <span key="s">{strong("Clinic staff")} can open the pages the owner has enabled for them. See <Link href="/security#permissions" className="underline decoration-gold underline-offset-2 hover:text-gold">Data security</Link> for exactly how that is enforced.</span>,
           <span key="c">{strong("Other clinics")} cannot see or change your clinic&apos;s data.</span>,
           <span key="p">{strong("Patients who book online")} see only the confirmation of their own request. They cannot see any record.</span>,
+          <span key="pp">{strong("Patients with a portal login")} can read their own record only: their details, appointments, visits, prescriptions, medical history and signed consents, plus their clinic&apos;s name and contact details. They cannot change anything, and the database refuses to show them any other patient&apos;s rows.</span>,
           <span key="d">{strong("DentEase administrators")} hold a super-admin role. It lets them list clinics, moderate reviews and demo requests, and download a clinic&apos;s data (patients, visits, invoices, payments and lab records). This is used to run and support the service.</span>,
           <span key="h">{strong("Our hosting providers")} store the data technically (see below).</span>,
         ]} />
@@ -80,7 +82,7 @@ export default function Privacy() {
       <Section id="retention" title="How long it is kept, and deletion">
         <List items={[
           "Records stay until the clinic deletes them or the clinic account is removed. DentEase does not delete records automatically.",
-          "Clinics can delete records from inside the app, for example patients, visits, appointments, prescriptions, files and staff.",
+          "Clinics can delete records from inside the app, for example patients, visits, appointments, prescriptions, files and staff. A signed consent cannot be edited or deleted from inside the app; it is removed only if its patient is deleted.",
           "There is no self-service account deletion yet. To have a whole clinic account and its data removed, contact us.",
           "Clinics can download an Excel report of patients, invoices, payments, expenses and doctors from the Reports page. It is not a full export; ask us if you need everything.",
           "DentEase does not run its own backups. Any backups are made by our database provider under the plan we use, so a deleted record may remain in those backups for a time.",

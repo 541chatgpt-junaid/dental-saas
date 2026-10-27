@@ -10,6 +10,7 @@ import { useCurrency } from "@/lib/useCurrency";
 import FormError from "@/components/FormError";
 import { readAmount, saveErrorMessage } from "@/lib/formSave";
 import OnlinePayments from "./OnlinePayments";
+import ConsentForms from "./ConsentForms";
 
 const currencies = [
   { code: "PKR", symbol: "Rs", name: "Pakistani Rupee" },
@@ -40,7 +41,7 @@ const getAutoCurrency = (): string => {
 interface TreatmentPreset { id: string; name: string; price: number; }
 interface PrescriptionPreset { id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string; }
 
-type Tab = "general" | "treatments" | "prescriptions" | "payments";
+type Tab = "general" | "treatments" | "prescriptions" | "payments" | "consent";
 
 export default function Settings() {
   const [tab, setTab] = useState<Tab>("general");
@@ -258,6 +259,7 @@ export default function Settings() {
     { key: "treatments", label: "Treatment Presets" },
     { key: "prescriptions", label: "Prescription Presets" },
     { key: "payments", label: "Online payments" },
+    { key: "consent", label: "Consent forms" },
   ] as const;
 
   return (
@@ -283,6 +285,8 @@ export default function Settings() {
         <FormError message={saveError} />
 
         {tab === "payments" && <OnlinePayments />}
+
+        {tab === "consent" && <ConsentForms />}
 
         {tab === "general" && (
           <div className="bg-white rounded-xl p-5 border border-brand-200 shadow-sm w-full md:max-w-2xl">
