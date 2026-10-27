@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isRateLimited, TOO_MANY } from "@/lib/rateLimit";
+import { passwordError } from "@/lib/passwordRules";
 
 export async function POST(request: Request) {
   const admin = createClient(
@@ -16,8 +17,8 @@ export async function POST(request: Request) {
   if (!clinicName || !email || !password)
     return NextResponse.json({ error: "Clinic name, email and password are required." }, { status: 400 });
 
-  if (password.length < 6)
-    return NextResponse.json({ error: "Password must be at least 6 characters." }, { status: 400 });
+  const pwError = passwordError(password);
+  if (pwError) return NextResponse.json({ error: pwError }, { status: 400 });
 
   // 1. Create auth user
   const { data: authData, error: authErr } = await admin.auth.admin.createUser({

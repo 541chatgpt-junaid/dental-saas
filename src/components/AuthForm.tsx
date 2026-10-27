@@ -3,6 +3,7 @@ import { useState, useRef, type FormEvent, type ReactNode, type ComponentType, t
 import Link from "next/link";
 import { Building2, Eye, EyeOff, LoaderCircle, Lock, Mail, User } from "lucide-react";
 import styles from "./AuthForm.module.css";
+import { MIN_PASSWORD_LENGTH, PASSWORD_TOO_SHORT } from "@/lib/passwordRules";
 
 export type AuthMode = "login" | "signup";
 export type LoginValues = { email: string; password: string; remember: boolean };
@@ -202,7 +203,7 @@ export default function AuthForm({
     if (!s.email.trim()) errs.email = "Email is required.";
     else if (!EMAIL_RE.test(s.email.trim())) errs.email = "Enter a valid email address.";
     if (!s.password) errs.password = "Password is required.";
-    else if (s.password.length < 8) errs.password = "Use at least 8 characters.";
+    else if (s.password.length < MIN_PASSWORD_LENGTH) errs.password = PASSWORD_TOO_SHORT;
     if (!s.confirm) errs.confirm = "Please confirm your password.";
     else if (s.confirm !== s.password) errs.confirm = "Passwords do not match.";
     if (!s.terms) errs.terms = "Please accept the terms to continue.";
@@ -291,7 +292,7 @@ export default function AuthForm({
               </Field>
               <div className={styles.row}>
                 <Field id="su-password" label="Password" icon={Lock} error={signupErrors.password}>
-                  <PasswordInput id="su-password" autoComplete="new-password" placeholder="Min. 8 characters" error={signupErrors.password}
+                  <PasswordInput id="su-password" autoComplete="new-password" placeholder={`Min. ${MIN_PASSWORD_LENGTH} characters`} error={signupErrors.password}
                     value={signup.password} onChange={v => updateSignup("password", v)} />
                 </Field>
                 <Field id="su-confirm" label="Confirm password" icon={Lock} error={signupErrors.confirm}>
