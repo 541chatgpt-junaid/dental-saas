@@ -42,7 +42,7 @@ const FAQS = [
   { q: "Is DentEase really free to start?", a: "Yes. You can create your clinic account and start managing patients, appointments and billing without a credit card or setup fee." },
   { q: "Can multiple doctors and staff use one clinic account?", a: "Absolutely. Add as many team members as you need and give each one role-based permissions, so receptionists, assistants and doctors only see the modules relevant to them." },
   { q: "How is patient data kept secure?", a: "All data is encrypted and stored in the cloud with strict per-clinic isolation. Only the staff you invite, with the permissions you grant, can access your records." },
-  { q: "Does DentEase work on phones and tablets?", a: "Yes. DentEase runs in any modern browser on desktop, tablet and mobile, and can be installed as an app on your device without an app store." },
+  { q: "Does DentEase work on phones and tablets?", a: "Yes. DentEase runs in any modern browser on desktop, tablet and mobile, with no software needed on your device." },
   { q: "Can I move my existing paper records over?", a: "Yes. You can add patients as they visit, or enter historical records at your own pace. Book a demo and we will walk you through the quickest way to migrate." },
 ];
 
