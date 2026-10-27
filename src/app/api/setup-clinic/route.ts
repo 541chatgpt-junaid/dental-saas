@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { seedClinicSettings } from "@/lib/clinicSetup";
 
 export async function POST(request: Request) {
   const { clinicName, phone, address } = await request.json();
@@ -64,6 +65,9 @@ export async function POST(request: Request) {
     await admin.from("clinics").delete().eq("id", clinic.id);
     return NextResponse.json({ error: staffErr.message }, { status: 400 });
   }
+
+  const settingsErr = await seedClinicSettings(admin, clinic.id, { name: clinicName, email: user.email, phone, address });
+  if (settingsErr) console.error("Could not seed settings for new clinic:", settingsErr.message);
 
   return NextResponse.json({ success: true });
 }

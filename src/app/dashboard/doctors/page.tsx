@@ -9,6 +9,7 @@ import { firstError, saveErrorMessage } from "@/lib/formSave";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
+import { fullDayNames } from "@/lib/weekdays";
 
 interface Doctor {
   id: number;
@@ -125,7 +126,7 @@ export default function Doctors() {
       timing_end: d.timing_end || "17:00",
       off_days: d.off_days || "",
     });
-    setSelectedWorkingDays(d.working_days ? d.working_days.split(", ") : []);
+    setSelectedWorkingDays(fullDayNames(d.working_days, days));
     setShowForm(false);
   };
 
@@ -287,7 +288,7 @@ export default function Doctors() {
                       <td className="px-4 py-3 text-brand-700">
                         {d.working_days ? (
                           <div className="flex flex-wrap gap-1">
-                            {d.working_days.split(", ").map(day => (
+                            {fullDayNames(d.working_days, days).map(day => (
                               <span key={day} className="bg-brand-100 text-brand-700 text-xs px-2 py-0.5 rounded-full">{day.slice(0,3)}</span>
                             ))}
                           </div>

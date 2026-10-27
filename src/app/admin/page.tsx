@@ -74,8 +74,18 @@ export default function AdminPanel() {
     fetchClinics();
   };
 
-  const handleExport = (clinicId: string) => {
-    window.open(`/api/admin/export?clinicId=${clinicId}`, "_blank");
+  const handleExport = async (clinicId: string) => {
+    const res = await fetch(`/api/admin/export?clinicId=${encodeURIComponent(clinicId)}`).catch(() => null);
+    if (!res?.ok) {
+      const json = res ? await res.json().catch(() => ({})) : {};
+      alert(`Could not export this clinic: ${json.error || res?.statusText || "no connection to the server."}`);
+      return;
+    }
+    const file = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") || "")?.[1] || "dentease-clinic.xlsx";
+    const url = URL.createObjectURL(await res.blob());
+    const a = document.createElement("a");
+    a.href = url; a.download = file; a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleAddClinic = async () => {
@@ -183,7 +193,7 @@ export default function AdminPanel() {
                       {clinic.is_active ? "Deactivate" : "Activate"}
                     </button>
                     <button onClick={() => handleExport(clinic.id)} className="text-xs px-3 py-1.5 rounded-lg border border-brand-200 text-gray-600 font-medium">
-                      Export CSV
+                      Export Excel
                     </button>
                   </div>
                 </div>
@@ -228,7 +238,7 @@ export default function AdminPanel() {
                         </td>
                         <td className="px-5 py-3">
                           <button onClick={() => handleExport(clinic.id)} className="text-brand-600 text-xs font-medium hover:underline">
-                            Export CSV
+                            Export Excel
                           </button>
                         </td>
                       </tr>

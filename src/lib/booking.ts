@@ -26,7 +26,8 @@ export interface BookingContext {
   doctors: BookingDoctor[];
 }
 
-export const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+import { WEEKDAYS, opensOn, worksOn } from "@/lib/weekdays";
+export { WEEKDAYS };
 
 const toMin = (t: string | null | undefined) => {
   const [h, m] = (t || "").split(":").map(Number);
@@ -34,7 +35,6 @@ const toMin = (t: string | null | undefined) => {
 };
 const toTime = (min: number) => `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
 const norm = (s: string | null | undefined) => (s || "").trim().toLowerCase();
-const dayList = (s: string | null | undefined) => (s || "").split(",").map(d => d.trim().toLowerCase()).filter(Boolean);
 
 export const isISODate = (s: unknown): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(`${s}T00:00:00Z`));
 export const weekdayOf = (iso: string) => WEEKDAYS[new Date(`${iso}T00:00:00Z`).getUTCDay()];
@@ -64,8 +64,8 @@ export function dateInWindow(ctx: BookingContext, iso: string) {
 
 /** Doctors who work on this date (all doctors if their working days aren't set) */
 function doctorsOn(ctx: BookingContext, iso: string) {
-  const wd = weekdayOf(iso).toLowerCase();
-  return ctx.doctors.filter(d => { const days = dayList(d.working_days); return !days.length || days.includes(wd); });
+  const wd = weekdayOf(iso);
+  return ctx.doctors.filter(d => worksOn(d.working_days, wd));
 }
 
 function hoursFor(ctx: BookingContext, doctor?: BookingDoctor) {
@@ -81,8 +81,7 @@ function hoursFor(ctx: BookingContext, doctor?: BookingDoctor) {
 export async function availableSlots(admin: SupabaseClient, ctx: BookingContext, date: string, doctorName: string) {
   const { settings } = ctx;
   if (!dateInWindow(ctx, date)) return [];
-  const wd = weekdayOf(date).toLowerCase();
-  if (!dayList(settings.working_days).includes(wd)) return [];
+  if (!opensOn(settings.working_days, weekdayOf(date))) return [];
 
   const step = settings.slot_minutes;
   const { data: appts } = await admin.from("appointments").select("doctor_name, time, status")
