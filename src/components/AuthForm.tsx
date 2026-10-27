@@ -306,7 +306,7 @@ export default function AuthForm({
                   <input type="checkbox" checked={signup.terms} aria-invalid={!!signupErrors.terms}
                     aria-describedby={signupErrors.terms ? "su-terms-error" : undefined}
                     onChange={e => updateSignup("terms", e.target.checked)} />
-                  I agree to the Terms of Service and Privacy Policy
+                  I agree to the <a href="/terms" target="_blank" rel="noreferrer">Terms of Service</a> and <a href="/privacy" target="_blank" rel="noreferrer">Privacy Policy</a>
                 </label>
                 {signupErrors.terms && <p id="su-terms-error" className={styles.error} role="alert">{signupErrors.terms}</p>}
               </div>

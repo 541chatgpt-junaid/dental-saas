@@ -293,6 +293,8 @@
   cursor: pointer;
 }
 .terms { margin: 4px 0 4px; }
+.terms a { font-weight: 600; color: var(--navy); text-decoration: underline; text-decoration-color: var(--gold); text-underline-offset: 2px; }
+.terms a:hover { color: var(--gold-dark); }
 
 .link {
   padding: 0;
