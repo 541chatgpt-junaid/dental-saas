@@ -41,6 +41,11 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Patient portal logins (flagged in app_metadata, which users cannot edit) never get the clinic dashboard
+  if (user?.app_metadata?.portal === true && (request.nextUrl.pathname.startsWith("/dashboard") || request.nextUrl.pathname.startsWith("/admin"))) {
+    return NextResponse.redirect(new URL("/portal", request.url));
+  }
+
   // Not logged in — login page par bhejo
   if (!user && request.nextUrl.pathname.startsWith("/dashboard")) {
     return NextResponse.redirect(new URL("/", request.url));
