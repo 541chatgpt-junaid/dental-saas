@@ -1,7 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
-import { Boxes } from "lucide-react";
+import { Boxes, Pencil, Trash2, TriangleAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -26,7 +27,7 @@ interface Material {
 const daysUntil = (iso: string) => Math.round((new Date(`${iso}T00:00:00`).getTime() - new Date(`${todayISO()}T00:00:00`).getTime()) / 86400000);
 /** expired / expiring within 30 days / ok */
 const expiryState = (m: Material) => !m.expiry_date ? "none" : daysUntil(m.expiry_date) < 0 ? "expired" : daysUntil(m.expiry_date) <= 30 ? "soon" : "ok";
-const fmtExpiry = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+const fmtExpiry = (iso: string) => formatDate(iso);
 
 function StockBadge({ m, small }: { m: Material; small?: boolean }) {
   const exp = expiryState(m);
@@ -177,7 +178,7 @@ export default function Materials() {
               ["Expiring in 30 days", expiringSoon, "border-orange-200 bg-orange-50 text-orange-700", (m: Material) => `in ${daysUntil(m.expiry_date!)} days`],
             ] as const).filter(([, list]) => list.length > 0).map(([title, list, cls, detail]) => (
               <div key={title} className={`rounded-xl border p-4 ${cls}`}>
-                <p className="mb-2 text-sm font-semibold">⚠️ {title} ({list.length})</p>
+                <p className="mb-2 text-sm font-semibold"><TriangleAlert className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{title} ({list.length})</p>
                 <ul className="space-y-1 text-xs">
                   {list.slice(0, 6).map(m => <li key={m.id}><span className="font-medium">{m.name}</span> · {detail(m)}</li>)}
                   {list.length > 6 && <li>+{list.length - 6} more</li>}
@@ -236,8 +237,8 @@ export default function Materials() {
                     <div className="flex gap-2">
                       <button onClick={() => updateQuantity(m, 1)} className="bg-brand-100 text-brand-700 px-2 py-1 rounded text-xs font-medium">+1</button>
                       <button onClick={() => updateQuantity(m, -1)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-medium">-1</button>
-                      <button onClick={() => openEdit(m)} className="text-brand-600 text-xs font-medium">✏️</button>
-                      <button onClick={() => handleDelete(m.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                      <button aria-label="Edit" title="Edit" onClick={() => openEdit(m)} className="text-brand-600 text-xs font-medium"><Pencil className="inline h-4 w-4" aria-hidden="true" /></button>
+                      <button aria-label="Delete" title="Delete" onClick={() => handleDelete(m.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                     </div>
                   </div>
                 </div>
@@ -277,8 +278,8 @@ export default function Materials() {
                         <div className="flex gap-2">
                           <button onClick={() => updateQuantity(m, 1)} className="bg-brand-100 text-brand-700 px-2 py-1 rounded text-xs">+1</button>
                           <button onClick={() => updateQuantity(m, -1)} className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs">-1</button>
-                          <button onClick={() => openEdit(m)} className="text-brand-600 text-xs font-medium">✏️ Edit</button>
-                          <button onClick={() => handleDelete(m.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                          <button onClick={() => openEdit(m)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
+                          <button aria-label="Delete" title="Delete" onClick={() => handleDelete(m.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                         </div>
                       </td>
                     </tr>

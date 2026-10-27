@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
 import Link from "next/link";
 import { CalendarCheck, Check, Clock, LoaderCircle, MapPin, MessageCircle, Phone, Stethoscope, UserRound } from "lucide-react";
 import { waLink } from "@/lib/whatsapp";
@@ -15,7 +17,7 @@ const pad = (n: number) => String(n).padStart(2, "0");
 const isoOf = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 const dayList = (s: string | null | undefined) => (s || "").split(",").map(d => d.trim().toLowerCase()).filter(Boolean);
 const fmtTime = (t: string) => { const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}:${pad(m)} ${h < 12 ? "AM" : "PM"}`; };
-const fmtDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
+const fmtDate = (iso: string) => formatDate(iso, { weekday: true });
 
 function Tooth({ className }: { className?: string }) {
   return (
@@ -178,7 +180,7 @@ export default function BookingClient({ slug }: { slug: string }) {
                           {d.name ? <Stethoscope className="h-5 w-5" /> : <UserRound className="h-5 w-5" />}
                         </span>
                         <span>
-                          <span className="block font-semibold text-navy">{d.name ? `Dr. ${d.name}` : "Any doctor"}</span>
+                          <span className="block font-semibold text-navy">{d.name ? doctorName(d.name) : "Any doctor"}</span>
                           <span className="block text-xs text-navy/55">{d.specialization || "Dentist"}</span>
                         </span>
                       </button>
@@ -231,7 +233,7 @@ export default function BookingClient({ slug }: { slug: string }) {
               {time && date && (
                 <Step n={info.doctors.length > 1 ? 4 : 3} title="Your details">
                   <p className="mb-4 flex items-center gap-2 rounded-xl bg-cream px-4 py-3 text-sm text-navy">
-                    <CalendarCheck className="h-4 w-4 text-gold" /> {fmtDate(date)} · {fmtTime(time)}{doctor ? ` · Dr. ${doctor}` : ""}
+                    <CalendarCheck className="h-4 w-4 text-gold" /> {fmtDate(date)} · {fmtTime(time)}{doctor ? ` · ${doctorName(doctor)}` : ""}
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <label className="block">

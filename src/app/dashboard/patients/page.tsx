@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
 import { SkeletonRows } from "@/components/Skeleton";
-import { Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, Clock, Mail, Pencil, Printer, Trash2, TriangleAlert, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
@@ -106,12 +108,6 @@ const lowerLeft = [31,32,33,34,35,36,37,38];
 /** A visit-day payment is dated on the visit day (noon, so the day survives any timezone) */
 const visitDateTime = (d: string) => (d && d !== new Date().toISOString().split("T")[0] ? `${d}T12:00:00.000Z` : new Date().toISOString());
 
-const formatDate = (dateStr: string) => {
-  if (!dateStr) return "—";
-  try {
-    return new Date(dateStr).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-  } catch { return dateStr; }
-};
 
 export default function Patients() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -799,12 +795,12 @@ export default function Patients() {
 
         {selectedPatient ? (
           <div>
-            <button onClick={() => setSelectedPatient(null)} className="text-brand-600 text-sm mb-4 hover:underline">← Back to Patients</button>
+            <button onClick={() => setSelectedPatient(null)} className="text-brand-600 text-sm mb-4 hover:underline"><ArrowLeft className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Back to Patients</button>
 
             <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
               {medicalHistory && (medicalHistory.allergies?.trim() || medicalHistory.medical_conditions?.trim() || medicalHistory.blood_group?.trim()) && (
                 <div className="mb-4 rounded-lg border border-red-300 bg-red-50 px-4 py-3">
-                  <p className="text-xs font-bold uppercase tracking-wide text-red-700">⚠ Medical alert</p>
+                  <p className="text-xs font-bold uppercase tracking-wide text-red-700"><TriangleAlert className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Medical alert</p>
                   <div className="mt-1 flex flex-wrap gap-x-5 gap-y-1 text-sm text-red-800">
                     {medicalHistory.allergies?.trim() && <span><strong>Allergies:</strong> {medicalHistory.allergies}</span>}
                     {medicalHistory.medical_conditions?.trim() && <span><strong>Conditions:</strong> {medicalHistory.medical_conditions}</span>}
@@ -829,7 +825,7 @@ export default function Patients() {
                     <p className="text-xs text-brand-400 mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5">
                       {selectedPatient.dob && <span>DOB: {formatDate(selectedPatient.dob)}</span>}
                       {selectedPatient.cnic && <span>CNIC: {selectedPatient.cnic}</span>}
-                      {selectedPatient.email && <span>✉ {selectedPatient.email}</span>}
+                      {selectedPatient.email && <span><Mail className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{selectedPatient.email}</span>}
                       {selectedPatient.blood_group && <span>Blood: {selectedPatient.blood_group}</span>}
                       {selectedPatient.emergency_contact && <span>Emergency: {selectedPatient.emergency_contact}</span>}
                       {selectedPatient.guardian && <span>Guardian: {selectedPatient.guardian}</span>}
@@ -842,7 +838,7 @@ export default function Patients() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-brand-300 text-brand-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-brand-50">🖨️ Receipt</button>
+                  <button onClick={() => { setReceiptPatient(selectedPatient); setShowReceipt(true); }} className="border border-brand-300 text-brand-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-brand-50"><Printer className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Receipt</button>
                   <button onClick={() => { setShowAppointmentForm(!showAppointmentForm); setShowVisitForm(false); }} className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Appointment</button>
                   <button onClick={() => { resetVisitForm(); setShowVisitForm(!showVisitForm); setShowAppointmentForm(false); }} className="bg-brand-600 hover:bg-brand-700 text-white px-3 py-2 rounded-lg text-xs font-medium">+ Visit</button>
                 </div>
@@ -909,7 +905,7 @@ export default function Patients() {
                   </div>
                   <select value={visitForm.doctor_name} onChange={e => setVisitForm({...visitForm, doctor_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                     <option value="">Select Doctor</option>
-                    {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                    {doctors.map(d => <option key={d.id} value={d.name}>{doctorName(d.name)}</option>)}
                   </select>
                   <div>
                     <TreatmentSelect value={visitForm.treatment} placeholder="Select treatment done"
@@ -1014,12 +1010,12 @@ export default function Patients() {
                               <p className="text-sm font-semibold text-brand-800">Visit {visits.length - i}</p>
                               <StatusBadge status={visitBill(v).status} />
                               <span className="text-xs text-brand-400 bg-brand-50 px-2 py-0.5 rounded-full">
-                                📅 {formatDate(v.visit_date)}
+                                <Calendar className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{formatDate(v.visit_date)}
                               </span>
                             </div>
                             <p className="text-sm text-brand-700">{v.treatment}</p>
                             <p className="text-xs text-brand-500 mt-0.5">
-                              Dr. {v.doctor_name || "—"} {v.tooth_number ? `· Tooth: ${v.tooth_number}` : ""}
+                              {doctorName(v.doctor_name) || "—"} {v.tooth_number ? `· Tooth: ${v.tooth_number}` : ""}
                             </p>
                             {v.notes && <p className="text-xs text-brand-400 mt-1 italic">{v.notes}</p>}
                           </div>
@@ -1031,8 +1027,8 @@ export default function Patients() {
                               {visitBill(v).due > 0 && (
                                 <button onClick={() => handleVisitPayment(v)} className="text-brand-600 text-xs font-medium hover:underline">Pay</button>
                               )}
-                              <button onClick={() => openEditVisit(v)} className="text-brand-600 text-xs font-medium">✏️</button>
-                              <button onClick={() => handleDeleteVisit(v)} className="text-red-400 text-xs font-medium">🗑️</button>
+                              <button aria-label="Edit" title="Edit" onClick={() => openEditVisit(v)} className="text-brand-600 text-xs font-medium"><Pencil className="inline h-4 w-4" aria-hidden="true" /></button>
+                              <button aria-label="Delete" title="Delete" onClick={() => handleDeleteVisit(v)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                             </div>
                           </div>
                         </div>
@@ -1065,10 +1061,10 @@ export default function Patients() {
                             <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-white text-sm font-semibold">{e.tooth}</span>
                             <div>
                               <p className="text-sm font-medium text-brand-800">{e.treatment}</p>
-                              <p className="text-xs text-brand-400">Dr. {e.doctor || "—"}{e.notes ? ` · ${e.notes}` : ""}</p>
+                              <p className="text-xs text-brand-400">{doctorName(e.doctor) || "—"}{e.notes ? ` · ${e.notes}` : ""}</p>
                             </div>
                           </div>
-                          <span className="text-xs text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full">📅 {formatDate(e.date)}</span>
+                          <span className="text-xs text-brand-500 bg-brand-50 px-2 py-0.5 rounded-full"><Calendar className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{formatDate(e.date)}</span>
                         </div>
                       ))}
                     </div>
@@ -1104,7 +1100,7 @@ export default function Patients() {
                               <p className="text-sm font-medium text-brand-800">{rx.medicine} {rx.dosage && <span className="text-brand-500 font-normal">· {rx.dosage}</span>} {rx.duration && <span className="text-brand-400 font-normal">· {rx.duration}</span>}</p>
                               <p className="text-xs text-brand-400">{formatDate(rx.created_at)}{v ? ` · from visit ${formatDate(v.visit_date)}${v.treatment ? ` (${v.treatment})` : ""}` : ""}</p>
                             </div>
-                            <button onClick={() => deletePrescription(rx)} className="text-red-400 text-xs font-medium">🗑️</button>
+                            <button aria-label="Delete" title="Delete" onClick={() => deletePrescription(rx)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                           </div>
                         );
                       })}
@@ -1123,15 +1119,15 @@ export default function Patients() {
                         <div className="flex justify-between items-start gap-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-brand-800">Appointment {i + 1} — {a.treatment || "General"}</p>
-                            <p className="text-xs text-brand-500 mt-0.5">📅 {formatDate(a.date)} · ⏰ {a.time}</p>
+                            <p className="text-xs text-brand-500 mt-0.5"><Calendar className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{formatDate(a.date)} · <Clock className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{a.time}</p>
                             {a.notes && <p className="text-xs text-brand-400 mt-1">{a.notes}</p>}
                           </div>
                           <div className="text-right shrink-0 flex flex-col items-end gap-1">
                             <StatusBadge status={effectiveApptStatus(a)} />
                             {effectiveApptStatus(a) === "Scheduled" && (
                               <div className="flex gap-2 mt-1">
-                                <button onClick={() => updateAppointmentStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium">✓ Done</button>
-                                <button onClick={() => updateAppointmentStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium">✗ Cancel</button>
+                                <button onClick={() => updateAppointmentStatus(a.id, "Completed")} className="text-green-600 text-xs font-medium"><Check className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Done</button>
+                                <button onClick={() => updateAppointmentStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium"><X className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Cancel</button>
                               </div>
                             )}
                           </div>
@@ -1147,7 +1143,7 @@ export default function Patients() {
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-sm font-semibold text-brand-800">Medical History</h3>
                     <button onClick={() => setShowMedicalForm(!showMedicalForm)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                      {medicalHistory ? "✏️ Edit" : "+ Add"}
+                      {medicalHistory ? <><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</> : "+ Add"}
                     </button>
                   </div>
                   {showMedicalForm && (
@@ -1257,7 +1253,7 @@ export default function Patients() {
                   </select>
                   <select value={form.doctor_name} onChange={e => setForm({...form, doctor_name: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold">
                     <option value="">Select Doctor</option>
-                    {doctors.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                    {doctors.map(d => <option key={d.id} value={d.name}>{doctorName(d.name)}</option>)}
                   </select>
                   <div className="md:col-span-2">
                     <TreatmentSelect value={form.treatment} placeholder="Initial treatment"
@@ -1308,15 +1304,15 @@ export default function Patients() {
                         </div>
                         <StatusBadge status={invSummary(p.id).status} />
                       </div>
-                      <p className="text-xs text-brand-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· Dr. ${p.doctor_name}` : ""}</p>
+                      <p className="text-xs text-brand-600 mb-1" onClick={() => openPatient(p)}>{p.treatment} {p.doctor_name ? `· ${doctorName(p.doctor_name)}` : ""}</p>
                       <div className="flex justify-between items-center">
                         <p className="text-xs text-brand-500">
                           Billed: {symbol} {invSummary(p.id).totalBilled.toLocaleString()} · Paid: {symbol} {invSummary(p.id).totalPaid.toLocaleString()}
                           {invSummary(p.id).outstanding > 0 && <span className="text-orange-500"> · Due: {symbol} {invSummary(p.id).outstanding.toLocaleString()}</span>}
                         </p>
                         <div className="flex gap-2">
-                          <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-brand-600 text-xs">🖨️</button>
-                          <button onClick={() => openEditPatient(p)} className="text-brand-600 text-xs font-medium">✏️</button>
+                          <button aria-label="Print" title="Print" onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-brand-600 text-xs"><Printer className="inline h-4 w-4" aria-hidden="true" /></button>
+                          <button aria-label="Edit" title="Edit" onClick={() => openEditPatient(p)} className="text-brand-600 text-xs font-medium"><Pencil className="inline h-4 w-4" aria-hidden="true" /></button>
                           <button onClick={() => router.push(`/dashboard/patients/${p.id}`)} className="text-purple-600 text-xs font-medium">History</button>
                           {invSummary(p.id).outstanding > 0 && (
                             <button onClick={() => openPayModal(p)} className="text-white bg-brand-600 hover:bg-brand-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>
@@ -1361,7 +1357,7 @@ export default function Patients() {
                           <td className="px-4 py-3 text-brand-500 text-xs cursor-pointer" onClick={() => openPatient(p)}>
                             {formatDate(p.created_at)}
                           </td>
-                          <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{p.doctor_name || "-"}</td>
+                          <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{doctorName(p.doctor_name) || "-"}</td>
                           <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{p.treatment}</td>
                           <td className="px-4 py-3 text-brand-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalBilled.toLocaleString()}</td>
                           <td className="px-4 py-3 text-green-700 cursor-pointer" onClick={() => openPatient(p)}>{symbol} {invSummary(p.id).totalPaid.toLocaleString()}</td>
@@ -1369,8 +1365,8 @@ export default function Patients() {
                           <td className="px-4 py-3 cursor-pointer" onClick={() => openPatient(p)}><StatusBadge status={invSummary(p.id).status} /></td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
-                              <button onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-brand-600 text-xs font-medium">🖨️</button>
-                              <button onClick={() => openEditPatient(p)} className="text-brand-600 text-xs font-medium">✏️</button>
+                              <button aria-label="Print" title="Print" onClick={() => { setReceiptPatient(p); setShowReceipt(true); }} className="text-brand-600 text-xs font-medium"><Printer className="inline h-4 w-4" aria-hidden="true" /></button>
+                              <button aria-label="Edit" title="Edit" onClick={() => openEditPatient(p)} className="text-brand-600 text-xs font-medium"><Pencil className="inline h-4 w-4" aria-hidden="true" /></button>
                               <button onClick={() => router.push(`/dashboard/patients/${p.id}`)} className="text-purple-600 text-xs font-semibold hover:underline">History</button>
                               {invSummary(p.id).outstanding > 0 && (
                                 <button onClick={() => openPayModal(p)} className="text-white bg-brand-600 hover:bg-brand-700 text-xs font-medium px-2 py-1 rounded-lg">Pay</button>

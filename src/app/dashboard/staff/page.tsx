@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
-import { UserCog } from "lucide-react";
+import { CircleCheck, CircleX, Info, Pencil, Trash2, UserCog } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { saveErrorMessage } from "@/lib/formSave";
 import { useRouter } from "next/navigation";
@@ -196,12 +196,12 @@ export default function StaffPage() {
 
         {addResult?.success && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-green-700 font-medium">✅ Staff member added successfully! Login credentials have been set.</p>
+            <p className="text-sm text-green-700 font-medium"><CircleCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Staff member added successfully! Login credentials have been set.</p>
           </div>
         )}
         {addResult?.error && (
           <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <p className="text-sm text-red-700 font-medium">❌ Error: {addResult.error}</p>
+            <p className="text-sm text-red-700 font-medium"><CircleX className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Error: {addResult.error}</p>
           </div>
         )}
 
@@ -210,7 +210,7 @@ export default function StaffPage() {
             <h3 className="text-sm font-semibold text-brand-800 mb-4">New Staff Member</h3>
 
             <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4">
-              <p className="text-xs text-blue-700 font-medium">ℹ️ Staff member apni email aur password se login kar sakta hai</p>
+              <p className="text-xs text-blue-700 font-medium"><Info className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Staff member apni email aur password se login kar sakta hai</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4 mb-4">
@@ -288,11 +288,11 @@ export default function StaffPage() {
                     )}
                   </div>
                   <div className="flex gap-3 mt-2">
-                    <button onClick={() => openEdit(s)} className="text-brand-600 text-xs font-medium">✏️ Permissions</button>
+                    <button onClick={() => openEdit(s)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Permissions</button>
                     <button onClick={() => toggleStatus(s)} className="text-xs font-medium text-gray-500">
                       {s.status === "Active" ? "Deactivate" : "Activate"}
                     </button>
-                    <button onClick={() => handleDelete(s.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                    <button aria-label="Delete" title="Delete" onClick={() => handleDelete(s.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                   </div>
                 </div>
               ))
@@ -338,11 +338,11 @@ export default function StaffPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex gap-2">
-                          <button onClick={() => openEdit(s)} className="text-brand-600 text-xs font-medium">✏️ Permissions</button>
+                          <button onClick={() => openEdit(s)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Permissions</button>
                           <button onClick={() => toggleStatus(s)} className="text-xs font-medium text-gray-500">
                             {s.status === "Active" ? "Deactivate" : "Activate"}
                           </button>
-                          <button onClick={() => handleDelete(s.id)} className="text-red-400 text-xs font-medium">🗑️</button>
+                          <button aria-label="Delete" title="Delete" onClick={() => handleDelete(s.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                         </div>
                       </td>
                     </tr>

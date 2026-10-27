@@ -1,6 +1,8 @@
 "use client";
 import { useMemo } from "react";
-import { AlertTriangle, ChevronLeft, ChevronRight } from "lucide-react";
+import { doctorName } from "@/lib/personName";
+import { formatDate } from "@/lib/dateFormat";
+import { AlertTriangle, ChevronLeft, ChevronRight, TriangleAlert } from "lucide-react";
 
 export interface CalAppointment {
   id: number;
@@ -72,7 +74,7 @@ export default function AppointmentCalendar({
   }, [doctors, visible]);
 
   const columns = view === "day"
-    ? doctorCols.map(doc => ({ key: `doc-${doc}`, title: doc ? `Dr. ${doc}` : "Unassigned", date, doctor: doc }))
+    ? doctorCols.map(doc => ({ key: `doc-${doc}`, title: doc ? doctorName(doc) : "Unassigned", date, doctor: doc }))
     : days.map(d => ({ key: d, title: fromISO(d).toLocaleDateString("en-GB", { weekday: "short", day: "numeric" }), date: d, doctor: "" }));
 
   // Hours shown: 8 AM – 9 PM, stretched to include any appointment outside that
@@ -92,8 +94,8 @@ export default function AppointmentCalendar({
   const shift = (n: number) => { const d = fromISO(date); d.setDate(d.getDate() + n * (view === "day" ? 1 : 7)); onDateChange(toISO(d)); };
   const today = toISO(new Date());
   const heading = view === "day"
-    ? fromISO(date).toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
-    : `${fromISO(days[0]).toLocaleDateString("en-GB", { day: "numeric", month: "short" })} – ${fromISO(days[6]).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`;
+    ? formatDate(date, { weekday: true })
+    : `${formatDate(days[0])} – ${formatDate(days[6])}`;
 
   return (
     <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
@@ -149,11 +151,11 @@ export default function AppointmentCalendar({
                   const width = 100 / group.length;
                   return (
                     <button key={a.id} type="button" onClick={() => onSelect(a)}
-                      title={`${a.time} · ${a.patient_name}${a.treatment ? ` · ${a.treatment}` : ""}${a.doctor_name ? ` · Dr. ${a.doctor_name}` : ""}`}
+                      title={`${a.time} · ${a.patient_name}${a.treatment ? ` · ${a.treatment}` : ""}${a.doctor_name ? ` · ${doctorName(a.doctor_name)}` : ""}`}
                       style={{ top: slot * ROW_H + 2, height: ROW_H - 4, left: `calc(${i * width}% + 3px)`, width: `calc(${width}% - 6px)` }}
                       className={`absolute z-[1] animate-scale-in overflow-hidden rounded-md border-l-4 px-1.5 py-1 text-left shadow-sm transition-transform hover:z-[2] hover:scale-[1.02] ${STATUS_CLS[a.status] || STATUS_CLS.Scheduled} ${clash ? "ring-2 ring-red-500" : ""}`}>
-                      <p className="truncate text-[11px] font-semibold text-brand-800">{clash && "⚠ "}{a.time?.slice(0, 5)} {a.patient_name}</p>
-                      <p className="truncate text-[10px] text-brand-500">{view === "week" && a.doctor_name ? `Dr. ${a.doctor_name}` : a.treatment}</p>
+                      <p className="truncate text-[11px] font-semibold text-brand-800">{clash && <TriangleAlert className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />}{a.time?.slice(0, 5)} {a.patient_name}</p>
+                      <p className="truncate text-[10px] text-brand-500">{view === "week" && a.doctor_name ? doctorName(a.doctor_name) : a.treatment}</p>
                     </button>
                   );
                 }))}

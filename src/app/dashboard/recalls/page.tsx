@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatDate } from "@/lib/dateFormat";
 import { useRouter } from "next/navigation";
 import { BellRing, CalendarCheck, Check, MessageCircle, Plus, RotateCw, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -37,7 +38,7 @@ const addMonths = (iso: string, months: number) => {
 };
 const daysFromToday = (iso: string) =>
   Math.round((new Date(`${iso}T00:00:00`).getTime() - new Date(`${todayISO()}T00:00:00`).getTime()) / 86400000);
-const fmtDate = (iso: string) => new Date(`${iso}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+const fmtDate = (iso: string) => formatDate(iso, { weekday: true });
 
 function dueLabel(iso: string) {
   const d = daysFromToday(iso);

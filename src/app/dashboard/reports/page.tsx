@@ -1,5 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
+import { doctorName } from "@/lib/personName";
+import { todayISO } from "@/lib/formSave";
+import { formatDate } from "@/lib/dateFormat";
+import { Banknote, BarChart3, ChartPie, Stethoscope, TrendingUp, Users, Wallet } from "lucide-react";
 import { useTheme } from "@/lib/useTheme";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -163,7 +167,7 @@ export default function Reports() {
       Gender: p.gender, Doctor: p.doctor_name, Treatment: p.treatment,
       "Total Billed": p.billing.totalBilled, Paid: p.billing.totalPaid,
       Remaining: p.billing.outstanding, Status: p.billing.status,
-      Date: new Date(p.created_at).toLocaleDateString(),
+      Date: formatDate(p.created_at),
     }));
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(patientsData), "Patients");
     const expensesData = allExpenses.map(e => ({
@@ -186,7 +190,7 @@ export default function Reports() {
       { Category: "Net Profit", Value: profit },
     ];
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Summary");
-    const date = new Date().toLocaleDateString().replace(/\//g, "-");
+    const date = todayISO();
     XLSX.writeFile(wb, `DentEase-Report-${date}.xlsx`);
   };
 
@@ -216,7 +220,7 @@ export default function Reports() {
             <p className="text-sm text-brand-600 mt-1">Profit & Loss Summary</p>
           </div>
           <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
-            📊 Export
+            <BarChart3 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Export
           </button>
         </div>
 
@@ -251,7 +255,7 @@ export default function Reports() {
         {/* Income & Expense Summary */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
-            <h3 className="text-sm font-semibold text-brand-800 mb-4">💰 Income</h3>
+            <h3 className="text-sm font-semibold text-brand-800 mb-4"><Wallet className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Income</h3>
             <div className="space-y-2">
               <div className="flex justify-between py-2 border-b border-brand-50">
                 <span className="text-sm text-brand-700">Patient Fees</span>
@@ -264,7 +268,7 @@ export default function Reports() {
             </div>
           </div>
           <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
-            <h3 className="text-sm font-semibold text-brand-800 mb-4">💸 Expenses</h3>
+            <h3 className="text-sm font-semibold text-brand-800 mb-4"><Banknote className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Expenses</h3>
             <div className="space-y-2">
               <div className="flex justify-between py-2 border-b border-brand-50">
                 <span className="text-sm text-brand-700">Lab Costs</span>
@@ -299,7 +303,7 @@ export default function Reports() {
 
         {/* Chart 1 — Monthly Income */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100 mb-6">
-          <h3 className="text-sm font-semibold text-brand-800 mb-4">📈 Monthly Income — Last {chartRange} Months</h3>
+          <h3 className="text-sm font-semibold text-brand-800 mb-4"><TrendingUp className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Monthly Income — Last {chartRange} Months</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -317,7 +321,7 @@ export default function Reports() {
 
         {/* Chart 2 — Monthly Patients */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100 mb-6">
-          <h3 className="text-sm font-semibold text-brand-800 mb-4">👥 Monthly Patients — Last {chartRange} Months</h3>
+          <h3 className="text-sm font-semibold text-brand-800 mb-4"><Users className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Monthly Patients — Last {chartRange} Months</h3>
           <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>
@@ -334,7 +338,7 @@ export default function Reports() {
         {/* Chart 3 & 4 — Pie + Treatments */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
-            <h3 className="text-sm font-semibold text-brand-800 mb-4">🥧 Expense Breakdown</h3>
+            <h3 className="text-sm font-semibold text-brand-800 mb-4"><ChartPie className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Expense Breakdown</h3>
             {expensePieData.length === 0 ? (
               <p className="text-center text-brand-400 text-sm py-8">No expense data</p>
             ) : (
@@ -356,7 +360,7 @@ export default function Reports() {
           </div>
 
           <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100">
-            <h3 className="text-sm font-semibold text-brand-800 mb-4">🦷 Top Treatments</h3>
+            <h3 className="text-sm font-semibold text-brand-800 mb-4"><Stethoscope className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Top Treatments</h3>
             {treatmentData.length === 0 ? (
               <p className="text-center text-brand-400 text-sm py-8">No treatment data</p>
             ) : (
@@ -377,7 +381,7 @@ export default function Reports() {
 
         {/* Doctor Performance */}
         <div className="bg-white rounded-xl p-4 md:p-5 border border-brand-100 mb-6">
-          <h3 className="text-sm font-semibold text-brand-800 mb-4">👨‍⚕️ Doctor Performance</h3>
+          <h3 className="text-sm font-semibold text-brand-800 mb-4"><Stethoscope className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Doctor Performance</h3>
           {doctorData.length === 0 ? (
             <p className="text-center text-brand-400 text-sm py-8">No doctor data</p>
           ) : (
@@ -410,7 +414,7 @@ export default function Reports() {
                   <tbody>
                     {doctorData.map((d, i) => (
                       <tr key={i} className="border-t border-brand-50 hover:bg-brand-50">
-                        <td className="px-4 py-2 font-medium text-brand-800 text-xs">👨‍⚕️ {d.name}</td>
+                        <td className="px-4 py-2 font-medium text-brand-800 text-xs"><Stethoscope className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{d.name === "Unassigned" ? d.name : doctorName(d.name)}</td>
                         <td className="px-4 py-2 text-xs">
                           <span className="bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full font-medium">{d.patients}</span>
                         </td>

@@ -1,5 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
+import { formatDate } from "@/lib/dateFormat";
+import { Calendar, CircleCheck, CircleX, Stethoscope, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import ReviewsTab from "./ReviewsTab";
@@ -17,8 +19,6 @@ interface Clinic {
   visit_count: number;
 }
 
-const formatDate = (d: string) =>
-  new Date(d).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 
 export default function AdminPanel() {
   const [clinics, setClinics] = useState<Clinic[]>([]);
@@ -131,7 +131,7 @@ export default function AdminPanel() {
 
         {formSuccess && (
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-green-700 text-sm font-medium">
-            ✅ {formSuccess}
+            <CircleCheck className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{formSuccess}
           </div>
         )}
 
@@ -145,7 +145,7 @@ export default function AdminPanel() {
               <input placeholder="Admin Password *" type="password" value={form.adminPassword} onChange={e => setForm({ ...form, adminPassword: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
               <input placeholder="Address" value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold md:col-span-2" />
             </div>
-            {formError && <p className="text-red-600 text-sm mb-3">❌ {formError}</p>}
+            {formError && <p className="text-red-600 text-sm mb-3"><CircleX className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{formError}</p>}
             <div className="flex gap-3">
               <button onClick={handleAddClinic} disabled={formLoading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
                 {formLoading ? "Creating..." : "Create Clinic"}
@@ -174,9 +174,9 @@ export default function AdminPanel() {
                     </span>
                   </div>
                   <div className="flex gap-3 text-xs text-gray-500 mb-3">
-                    <span>👥 {clinic.patient_count} patients</span>
-                    <span>🩺 {clinic.visit_count} visits</span>
-                    <span>📅 {formatDate(clinic.created_at)}</span>
+                    <span><Users className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{clinic.patient_count} patients</span>
+                    <span><Stethoscope className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{clinic.visit_count} visits</span>
+                    <span><Calendar className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{formatDate(clinic.created_at)}</span>
                   </div>
                   <div className="flex gap-2">
                     <button onClick={() => toggleActive(clinic)} className={`text-xs px-3 py-1.5 rounded-lg border font-medium ${clinic.is_active ? "border-red-200 text-red-600" : "border-green-200 text-green-600"}`}>
