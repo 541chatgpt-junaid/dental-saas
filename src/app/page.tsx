@@ -15,6 +15,7 @@ const NAV = [
   ["#features", "Features"],
   ["#workflow", "Workflow"],
   ["#why", "Why DentEase"],
+  ["/pricing", "Pricing"],
   ["#reviews", "Reviews"],
   ["#faq", "FAQ"],
 ] as const;
