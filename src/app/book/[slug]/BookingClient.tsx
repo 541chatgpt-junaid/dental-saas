@@ -11,6 +11,7 @@ interface Info {
   clinic: { name: string; phone: string | null; address: string | null; logo_url: string | null };
   doctors: { name: string; specialization: string | null; working_days: string | null }[];
   settings: { slot_minutes: number; days_ahead: number; working_days: string; note: string | null };
+  advance?: { fee: number; currency: string; symbol: string } | null;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -52,7 +53,7 @@ export default function BookingClient({ slug }: { slug: string }) {
   const [form, setForm] = useState({ name: "", phone: "", reason: "", website: "" });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [booked, setBooked] = useState<{ date: string; time: string; doctor: string | null } | null>(null);
+  const [booked, setBooked] = useState<{ date: string; time: string; doctor: string | null; pay: { url: string; fee: number; symbol: string } | null } | null>(null);
 
   useEffect(() => {
     fetch(`/api/public/booking/${encodeURIComponent(slug)}`)
@@ -109,7 +110,7 @@ export default function BookingClient({ slug }: { slug: string }) {
         if (res.status === 409) { setTime(null); setSlots(s => s?.filter(x => x !== time) ?? null); }
         return;
       }
-      setBooked({ date: data.date, time: data.time, doctor: data.doctor });
+      setBooked({ date: data.date, time: data.time, doctor: data.doctor, pay: data.pay ?? null });
     } catch {
       setError("Network error. Please check your connection and try again.");
     } finally {
@@ -170,6 +171,13 @@ export default function BookingClient({ slug }: { slug: string }) {
                 {info.clinic.name} has received your request for <strong>{fmtDate(booked.date)}</strong> at <strong>{fmtTime(booked.time)}</strong>
                 {booked.doctor ? <> with <strong>Dr. {booked.doctor}</strong></> : null}. They will contact you on {form.phone} to confirm.
               </p>
+              {booked.pay && (
+                <div className="mt-6 w-full max-w-sm rounded-2xl border border-gold/40 bg-gold/10 p-5 text-left">
+                  <p className="text-sm font-semibold text-navy">Pay the advance booking fee</p>
+                  <p className="mt-1 text-xs text-navy/65">{info.clinic.name} asks for an advance fee of <strong>{booked.pay.symbol} {booked.pay.fee.toLocaleString()}</strong>. It is deducted from your bill later.</p>
+                  <a href={booked.pay.url} className="mt-4 inline-flex w-full items-center justify-center rounded-full bg-gold px-5 py-3 text-sm font-semibold text-navy">Pay {booked.pay.symbol} {booked.pay.fee.toLocaleString()} now</a>
+                </div>
+              )}
               {info.clinic.phone && (
                 <a href={waLink(info.clinic.phone, `Assalam o Alaikum, I just requested an appointment online for ${fmtDate(booked.date)} at ${fmtTime(booked.time)}. My name is ${form.name}.`)}
                   target="_blank" rel="noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-2.5 text-sm font-semibold text-white">
@@ -270,7 +278,7 @@ export default function BookingClient({ slug }: { slug: string }) {
                     {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CalendarCheck className="h-4 w-4" />}
                     {submitting ? "Sending…" : "Request appointment"}
                   </button>
-                  <p className="mt-2 text-center text-xs text-navy/50">The clinic will confirm your appointment by phone or WhatsApp. Your name and phone number are shared with this clinic; see the <Link href="/privacy" className="underline hover:text-gold">Privacy Policy</Link>.</p>
+                  <p className="mt-2 text-center text-xs text-navy/50">The clinic will confirm your appointment by phone or WhatsApp.{info.advance ? ` After you send the request you can pay the advance fee of ${info.advance.symbol} ${info.advance.fee.toLocaleString()} online; it is deducted from your bill.` : ""} Your name and phone number are shared with this clinic; see the <Link href="/privacy" className="underline hover:text-gold">Privacy Policy</Link>.</p>
                 </Step>
               )}
             </>

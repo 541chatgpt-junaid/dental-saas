@@ -8,6 +8,7 @@ import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
 import { fullDayNames, worksOn } from "@/lib/weekdays";
 import Link from "next/link";
+import { useCurrency } from "@/lib/useCurrency";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
@@ -16,6 +17,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$/;
 export default function OnlineBookingSettings() {
   const router = useRouter();
   const { clinicId, clinicName } = useClinic();
+  const { symbol } = useCurrency();
   const [loaded, setLoaded] = useState(false);
   const [exists, setExists] = useState(false);
   const [doctorDays, setDoctorDays] = useState<(string | null)[]>([]);
@@ -26,7 +28,7 @@ export default function OnlineBookingSettings() {
   const [origin, setOrigin] = useState("");
   const [form, setForm] = useState({
     slug: "", enabled: true, slot_minutes: 30, open_time: "10:00", close_time: "20:00",
-    working_days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], days_ahead: 14, note: "",
+    working_days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], days_ahead: 14, note: "", advance_fee: "",
   });
 
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function OnlineBookingSettings() {
         setForm({
           slug: data.slug, enabled: data.enabled, slot_minutes: data.slot_minutes, open_time: data.open_time, close_time: data.close_time,
           working_days: fullDayNames(String(data.working_days), DAYS),
-          days_ahead: data.days_ahead, note: data.note || "",
+          days_ahead: data.days_ahead, note: data.note || "", advance_fee: data.advance_fee ? String(Number(data.advance_fee)) : "",
         });
       } else if (clinicName) {
         setForm(f => ({ ...f, slug: slugify(clinicName) }));
@@ -62,13 +64,15 @@ export default function OnlineBookingSettings() {
     if (!SLUG_RE.test(slug)) { setError("The link name needs 3–40 letters, numbers or dashes."); return; }
     if (!form.working_days.length) { setError("Choose at least one working day."); return; }
     if (form.close_time <= form.open_time) { setError("Closing time must be after opening time."); return; }
+    const fee = form.advance_fee.trim() === "" ? null : Number(form.advance_fee);
+    if (fee !== null && (!Number.isFinite(fee) || fee < 0 || fee > 10_000_000)) { setError("Enter the advance booking fee as an amount of 0 or more, or leave it empty."); return; }
     setSaving(true);
     setError("");
     const { error: e } = await createClient().from("booking_settings").upsert({
       clinic_id: clinicId, slug, enabled: form.enabled, slot_minutes: form.slot_minutes,
       open_time: form.open_time, close_time: form.close_time,
       working_days: DAYS.filter(d => form.working_days.includes(d)).join(", "),
-      days_ahead: form.days_ahead, note: form.note.trim() || null, updated_at: new Date().toISOString(),
+      days_ahead: form.days_ahead, note: form.note.trim() || null, advance_fee: fee && fee > 0 ? fee : null, updated_at: new Date().toISOString(),
     }, { onConflict: "clinic_id" });
     setSaving(false);
     if (e) {
@@ -179,6 +183,16 @@ export default function OnlineBookingSettings() {
                   Add {unstaffed.length > 1 ? "them" : "it"} to a doctor&apos;s working days on the <Link href="/dashboard/doctors" className="font-medium underline">Doctors page</Link>.
                 </p>
               )}
+
+              <label className="mt-5 block">
+                <span className="mb-1 block text-xs text-brand-600">Advance booking fee (optional)</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-brand-600">{symbol}</span>
+                  <input type="number" min="0" step="1" inputMode="decimal" value={form.advance_fee} placeholder="No advance fee"
+                    onChange={e => setForm({ ...form, advance_fee: e.target.value })} className={inputCls} />
+                </div>
+                <span className="mt-1 block text-xs text-brand-400">Patients pay this online when they book. It is added to their record as a payment and deducted from their treatment invoice later. Leave empty to charge nothing. It only applies once you have connected a payment provider in Settings &gt; Online payments.</span>
+              </label>
 
               <label className="mt-5 block">
                 <span className="mb-1 block text-xs text-brand-600">Note for patients (optional)</span>

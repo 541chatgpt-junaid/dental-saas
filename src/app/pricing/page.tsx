@@ -91,8 +91,8 @@ export default function Pricing() {
 
       <Section id="billing" title="How billing works">
         <ul className="list-none space-y-2">
-          <li>DentEase does not take payments from you today. There is no card form, subscription or invoice from DentEase inside the app.</li>
-          <li>The Billing pages in DentEase are for your own patients: invoices and payments you record for your clinic.</li>
+          <li>DentEase does not charge you through the app: there is no subscription, card form or invoice from DentEase.</li>
+          <li>The Billing pages are for your own patients: invoices and payments you record for your clinic. If you connect your own JazzCash, Easypaisa or Stripe account, patients can also pay you online; that money goes to your merchant account and the provider&apos;s own fees apply.</li>
           <li>If you have a pricing question, ask us and we will answer it directly.</li>
         </ul>
         <p>WhatsApp: <a href={WHATSAPP} target="_blank" rel="noreferrer" className={link}>{PHONE_DISPLAY}</a>. Also see our <Link href="/terms" className={link}>Terms of Service</Link>.</p>

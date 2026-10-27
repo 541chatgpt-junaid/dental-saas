@@ -24,3 +24,20 @@ export async function clinicOwner() {
   if (!data?.clinic_id || (role !== "admin" && role !== "superadmin")) return null;
   return { db, clinicId: data.clinic_id as string, email: user.email ?? "" };
 }
+
+/**
+ * The signed-in staff member with their clinic and what they may do, plus a
+ * service-role client. `billing` is true for owners and for staff granted the
+ * Billing module. Null when signed out or not part of a clinic. Server only.
+ */
+export async function staffContext() {
+  const user = await currentUser();
+  if (!user) return null;
+  const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+  const { data } = await db.from("staff").select("clinic_id, role, status, permissions").eq("user_id", user.id).maybeSingle();
+  if (!data?.clinic_id || data.status === "Inactive") return null;
+  const role = String(data.role || "").toLowerCase();
+  const owner = role === "admin" || role === "superadmin";
+  const perms = String(data.permissions || "").split(",").map((p: string) => p.trim());
+  return { db, userId: user.id, clinicId: data.clinic_id as string, owner, billing: owner || perms.includes("Billing") };
+}

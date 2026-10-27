@@ -3,9 +3,21 @@ import { NextResponse } from "next/server";
 import { clean } from "@/lib/formInput";
 import { isRateLimited, TOO_MANY } from "@/lib/rateLimit";
 import { availableSlots, isISODate, loadBookingContext } from "@/lib/booking";
+import { ADVANCE_NOTE } from "@/lib/ledger";
+import { appOrigin, clinicCurrency, linkForInvoice } from "@/lib/payments/engine";
+import { enabledProviders } from "@/lib/payments/config";
+import { symbolFor } from "@/lib/currency";
 
 const admin = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
 const NOT_FOUND = NextResponse.json({ error: "This booking page is not available." }, { status: 404 });
+
+/** The advance fee is only asked for when the clinic has set one AND can actually take online payments */
+async function advanceOffer(db: ReturnType<typeof admin>, clinicId: string, fee: number) {
+  if (fee <= 0) return null;
+  const currency = await clinicCurrency(db, clinicId);
+  if (!(await enabledProviders(db, clinicId, currency)).length) return null;
+  return { fee, currency, symbol: symbolFor(currency) };
+}
 
 // GET — public clinic info for the booking page
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
@@ -13,7 +25,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
   const ctx = await loadBookingContext(admin(), slug);
   if (!ctx) return NOT_FOUND;
   const { settings, clinic, doctors } = ctx;
+  const advance = await advanceOffer(admin(), ctx.settings.clinic_id, Number(settings.advance_fee) || 0);
   return NextResponse.json({
+    advance,
     clinic,
     doctors: doctors.map(d => ({ name: d.name, specialization: d.specialization, working_days: d.working_days })),
     settings: { slot_minutes: settings.slot_minutes, days_ahead: settings.days_ahead, working_days: settings.working_days, note: settings.note },
@@ -77,12 +91,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     status: "Requested",
     notes: `Online booking · ${phone}`,
   };
-  let { error } = await db.from("appointments").insert([{ ...row, phone, source: "online" }]);
+  let { data: appt, error } = await db.from("appointments").insert([{ ...row, phone, source: "online" }]).select("id").single();
   // Older schemas without the phone/source columns: phone is still kept in notes
-  if (error && /phone|source/.test(error.message)) ({ error } = await db.from("appointments").insert([row]));
-  if (error) {
-    console.error("Online booking insert failed:", error.message);
+  if (error && /phone|source/.test(error.message)) ({ data: appt, error } = await db.from("appointments").insert([row]).select("id").single());
+  if (error || !appt) {
+    console.error("Online booking insert failed:", error?.message);
     return NextResponse.json({ error: "Could not save your booking. Please call the clinic." }, { status: 500 });
   }
-  return NextResponse.json({ success: true, date, time, doctor: slot.doctor || null });
+
+  // Advance booking fee: a hidden (draft) invoice plus a payment link. The invoice
+  // only joins the ledger when the payment is confirmed; the booking stands either way.
+  let pay: { url: string; fee: number; symbol: string } | null = null;
+  const offer = await advanceOffer(db, clinicId, Number(ctx.settings.advance_fee) || 0);
+  if (offer) {
+    try {
+      const { data: num } = await db.rpc("generate_invoice_number", { p_clinic_id: clinicId });
+      const { data: inv } = await db.from("invoices").insert([{
+        clinic_id: clinicId, patient_id: patientId, invoice_number: num, status: "draft", subtotal: offer.fee, discount: 0, total: offer.fee,
+        amount_paid: 0, notes: `${ADVANCE_NOTE} Advance booking fee for ${date} ${time}`,
+      }]).select("id").single();
+      if (inv) {
+        await db.from("invoice_items").insert([{ invoice_id: inv.id, clinic_id: clinicId, description: "Advance booking fee", quantity: 1, unit_price: offer.fee }]);
+        await db.from("appointments").update({ advance_invoice_id: inv.id }).eq("id", appt.id);
+        const link = await linkForInvoice(db, { clinicId, invoiceId: inv.id, userId: null, hours: 48 });
+        pay = { url: `${appOrigin(request)}/pay/${link.token}`, fee: offer.fee, symbol: offer.symbol };
+      }
+    } catch (e) {
+      console.error("Advance fee setup failed:", e instanceof Error ? e.message : e);
+    }
+  }
+  return NextResponse.json({ success: true, date, time, doctor: slot.doctor || null, pay });
 }
