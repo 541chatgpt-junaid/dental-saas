@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef, useCallback, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
+import { PHONE_DISPLAY, PHONE_TEL, WHATSAPP } from "@/lib/siteContact";
 import {
   ArrowLeft, ArrowLeftRight, ArrowRight, BadgeCheck, Building2, CalendarCheck, Check, ChevronDown, ClipboardList,
   Clock, Cloud, FlaskConical, LayoutDashboard, LoaderCircle, Lock, LogIn, Menu, MessageCircle, Phone,
@@ -8,9 +9,6 @@ import {
 } from "lucide-react";
 
 /* ─── CONTACT ───────────────────────────────────────────── */
-const PHONE_DISPLAY = "+92 313 0709941";
-const PHONE_TEL = "tel:+923130709941";
-const WHATSAPP = "https://wa.me/923130709941";
 
 /* ─── DATA ─────────────────────────────────────────────── */
 const NAV = [
@@ -41,7 +39,7 @@ type Testimonial = { name: string; clinic: string; rating: number; text: string 
 const FAQS = [
   { q: "Is DentEase really free to start?", a: "Yes. You can create your clinic account and start managing patients, appointments and billing without a credit card or setup fee." },
   { q: "Can multiple doctors and staff use one clinic account?", a: "Absolutely. Add as many team members as you need and give each one role-based permissions, so receptionists, assistants and doctors only see the modules relevant to them." },
-  { q: "How is patient data kept secure?", a: "All data is encrypted and stored in the cloud with strict per-clinic isolation. Only the staff you invite, with the permissions you grant, can access your records." },
+  { q: "How is patient data kept secure?", a: "Records are stored in the cloud and every clinic's data is kept separate from every other clinic's at the database level. You choose which pages each staff member can open. Our Data security page explains exactly how this works, including its limits." },
   { q: "Does DentEase work on phones and tablets?", a: "Yes. DentEase runs in any modern browser on desktop, tablet and mobile, with no software needed on your device." },
   { q: "Can I move my existing paper records over?", a: "Yes. You can add patients as they visit, or enter historical records at your own pace. Book a demo and we will walk you through the quickest way to migrate." },
 ];
@@ -811,6 +809,11 @@ export default function LandingPage() {
           </div>
           <div className="mt-16 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-8 text-xs sm:flex-row">
             <p>© {new Date().getFullYear()} DentEase. All rights reserved.</p>
+            <nav aria-label="Legal" className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+              <Link href="/privacy" className="transition-colors duration-300 hover:text-white">Privacy Policy</Link>
+              <Link href="/terms" className="transition-colors duration-300 hover:text-white">Terms of Service</Link>
+              <Link href="/security" className="transition-colors duration-300 hover:text-white">Data security</Link>
+            </nav>
             <p>Developed by <a href={WHATSAPP} target="_blank" rel="noreferrer" className="text-gold transition-colors duration-300 hover:text-gold-soft">Junaid Mazhar</a></p>
           </div>
         </div>

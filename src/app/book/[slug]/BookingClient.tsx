@@ -260,7 +260,7 @@ export default function BookingClient({ slug }: { slug: string }) {
                     {submitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <CalendarCheck className="h-4 w-4" />}
                     {submitting ? "Sending…" : "Request appointment"}
                   </button>
-                  <p className="mt-2 text-center text-xs text-navy/50">The clinic will confirm your appointment by phone or WhatsApp.</p>
+                  <p className="mt-2 text-center text-xs text-navy/50">The clinic will confirm your appointment by phone or WhatsApp. Your name and phone number are shared with this clinic; see the <Link href="/privacy" className="underline hover:text-gold">Privacy Policy</Link>.</p>
                 </Step>
               )}
             </>
