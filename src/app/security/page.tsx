@@ -47,6 +47,7 @@ export default function Security() {
         <List items={[
           <span key="a">{strong("In the app,")} every module page is checked on each visit. A staff member without the permission is sent to an Access denied page, and a deactivated staff member is refused on every module page. The Dashboard home page is open to every signed-in member of the clinic.</span>,
           <span key="b">{strong("In the database,")} permissions are also enforced for six modules: Queue, Treatment Plans, Recalls, Commissions, Purchases and Online Booking. Without the permission, those tables return nothing even through the database interface.</span>,
+          <span key="d">{strong("Staff accounts")} can be added, changed or removed in the database only by an active clinic admin. A staff member cannot change their own permissions or role, and only a super-admin can create or change a super-admin account.</span>,
           <span key="c">{strong("For all other modules,")} the database enforces the clinic boundary but not the individual permission. Those pages are protected by the app&apos;s page checks.</span>,
         ]} />
       </Section>
