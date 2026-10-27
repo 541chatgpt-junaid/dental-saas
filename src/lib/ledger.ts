@@ -17,6 +17,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export const REGISTRATION_NOTE = "[Registration]";
 export const VISIT_NOTE = "[Visit]";
+/** Marks the invoice that holds an advance booking fee until it is applied to a treatment invoice */
+export const ADVANCE_NOTE = "[Advance]";
 
 export interface LedgerItemRow { invoice_id: string; quantity: number | null; unit_price: number | null }
 export interface LedgerPaymentRow {

@@ -22,6 +22,13 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ```
 
+Online payments (optional; without `PAYMENT_SECRETS_KEY` clinics cannot save provider keys):
+```
+PAYMENT_SECRETS_KEY   # 32 random bytes, base64: encrypts each clinic's Stripe/JazzCash/Easypaisa credentials
+APP_URL               # public https origin of the app, used for payment links and provider callbacks
+STRIPE_API_BASE / JAZZCASH_BASE_URL / EASYPAISA_BASE_URL   # only to point at a different (e.g. test) gateway
+```
+
 ## Architecture
 
 **DentEase** is a dental clinic management SaaS. Stack: Next.js 16 (App Router), React 19, TypeScript 5, Tailwind CSS 4, Supabase (PostgreSQL + Auth).

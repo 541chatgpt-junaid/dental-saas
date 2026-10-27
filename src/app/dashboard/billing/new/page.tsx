@@ -7,6 +7,8 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 import TreatmentSelect from "@/components/TreatmentSelect";
+import { ADVANCE_NOTE } from "@/lib/ledger";
+import { formatDate } from "@/lib/dateFormat";
 
 interface Patient { id: number; name: string; phone: string; age: number | null; gender: string; }
 interface Visit { id: number; visit_date: string; treatment: string; }
@@ -21,6 +23,9 @@ export default function NewInvoicePage() {
   const [patientBilling, setPatientBilling] = useState<PatientBilling | null>(null);
   const [visits, setVisits] = useState<Visit[]>([]);
   const [patientId, setPatientId] = useState("");
+  type Advance = { id: string; number: string; paid: number; created: string };
+  const [advLoaded, setAdvLoaded] = useState<{ pid: string; rows: Advance[] } | null>(null);
+  const [advChoice, setAdvChoice] = useState<{ pid: string; id: string } | null>(null);
   const [visitId, setVisitId] = useState("");
   const [items, setItems] = useState<LineItem[]>([{ description: "", quantity: 1, unit_price: 0 }]);
   const [treatmentPresets, setTreatmentPresets] = useState<TreatmentPreset[]>([]);
@@ -71,6 +76,7 @@ export default function NewInvoicePage() {
       .select("total, amount_paid, balance")
       .eq("patient_id", Number(patientId))
       .neq("status", "cancelled")
+      .neq("status", "draft")
       .then(({ data }) => {
         const rows = data || [];
         setPatientBilling({
@@ -80,6 +86,21 @@ export default function NewInvoicePage() {
         });
       });
   }, [patientId]);
+
+  // Paid advance booking fees not yet applied to an invoice (an applied one is cancelled)
+  useEffect(() => {
+    if (!patientId) return;
+    const pid = patientId;
+    createClient().from("invoices").select("id, invoice_number, amount_paid, created_at")
+      .eq("patient_id", Number(patientId)).like("notes", `${ADVANCE_NOTE}%`).not("status", "in", "(cancelled,draft)").gt("amount_paid", 0)
+      .order("created_at").then(({ data }) => {
+        const rows = (data || []).map(r => ({ id: r.id as string, number: r.invoice_number as string, paid: Number(r.amount_paid) || 0, created: r.created_at as string }));
+        setAdvLoaded({ pid, rows });
+      });
+  }, [patientId]);
+  // Only what was loaded for the patient currently selected; the first one is pre-selected
+  const advances = advLoaded && advLoaded.pid === patientId ? advLoaded.rows : [];
+  const applyAdvance = advChoice && advChoice.pid === patientId ? advChoice.id : (advances[0]?.id ?? "");
 
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
   const total = Math.max(0, subtotal - discount);
@@ -155,6 +176,14 @@ export default function NewInvoicePage() {
 
     if (itemsErr) { setError(itemsErr.message); setLoading(false); return; }
 
+    // Deduct a paid advance booking fee: its payment moves onto this invoice
+    const adv = advances.find(a => a.id === applyAdvance);
+    if (adv && !asDraft && adv.paid <= total) {
+      const res = await fetch("/api/advance/apply", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ invoiceId: invoice.id, advanceInvoiceId: adv.id }) }).catch(() => null);
+      const json = res ? await res.json().catch(() => ({})) : {};
+      if (!res?.ok) alert(`The invoice was created, but the advance fee could not be applied: ${json.error || "please try again from the invoice."}`);
+    }
+
     router.push(`/dashboard/billing/${invoice.id}`);
   };
 
@@ -225,6 +254,17 @@ export default function NewInvoicePage() {
                       <TriangleAlert className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Patient has an existing outstanding balance of {symbol} {patientBilling.outstanding.toLocaleString()}. This new invoice will be created separately.
                     </div>
                   )}
+                </div>
+              )}
+
+              {advances.length > 0 && (
+                <div className="rounded-xl border border-gold/40 bg-gold/10 p-3 text-sm text-brand-800">
+                  <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-brand-600">Advance booking fee paid</p>
+                  <select value={applyAdvance} onChange={e => setAdvChoice({ pid: patientId, id: e.target.value })} className="w-full rounded-lg border border-brand-200 bg-white px-3 py-2 text-sm">
+                    <option value="">Do not apply to this invoice</option>
+                    {advances.map(a => <option key={a.id} value={a.id}>{symbol} {a.paid.toLocaleString()} paid on {formatDate(a.created)} ({a.number})</option>)}
+                  </select>
+                  <p className="mt-1.5 text-xs text-brand-500">The fee is deducted from this invoice and shows in its payment history.{advances.find(a => a.id === applyAdvance && a.paid > total) ? " It is more than this invoice's total, so it cannot be applied here." : ""}</p>
                 </div>
               )}
 

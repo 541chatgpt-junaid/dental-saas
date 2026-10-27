@@ -2,7 +2,8 @@
 import { useState, useEffect } from "react";
 import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
-import { ArrowLeft, Check, Printer, Wallet } from "lucide-react";
+import { ArrowLeft, Check, Copy, Link2, Printer, Wallet } from "lucide-react";
+import { waLink } from "@/lib/whatsapp";
 import { createClient } from "@/lib/supabase";
 import { saveErrorMessage } from "@/lib/formSave";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
@@ -73,9 +74,32 @@ export default function InvoiceDetailPage() {
   const [payLoading, setPayLoading] = useState(false);
   const [payError, setPayError] = useState("");
   const [markingStatus, setMarkingStatus] = useState(false);
+  const [payLink, setPayLink] = useState<{ url: string; expiresAt: string } | null>(null);
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [linkError, setLinkError] = useState("");
+  const [linkCopied, setLinkCopied] = useState(false);
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId, clinicName } = useClinic();
+
+  /** Create (or fetch) the shareable payment link of this invoice */
+  const createPayLink = async () => {
+    setLinkBusy(true); setLinkError("");
+    const res = await fetch("/api/payment-links", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ invoiceId: id }) }).catch(() => null);
+    const json = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok || !json.url) setLinkError(json.error || "Could not create the payment link. Please try again.");
+    else setPayLink({ url: json.url, expiresAt: json.expiresAt });
+    setLinkBusy(false);
+  };
+  const revokePayLink = async () => {
+    if (!confirm("Stop this payment link from working?")) return;
+    const res = await fetch(`/api/payment-links?invoiceId=${encodeURIComponent(id)}`, { method: "DELETE" }).catch(() => null);
+    if (res?.ok) setPayLink(null); else setLinkError("Could not revoke the link. Please try again.");
+  };
+  const copyPayLink = async () => {
+    if (!payLink) return;
+    try { await navigator.clipboard.writeText(payLink.url); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2000); } catch { /* the box is selectable as a fallback */ }
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -246,6 +270,12 @@ export default function InvoiceDetailPage() {
               className="border border-brand-200 text-brand-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-50">
               <Printer className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Print
             </button>
+            {invoice.state !== "Paid" && invoice.state !== "Cancelled" && invoice.state !== "Draft" && (
+              <button onClick={createPayLink} disabled={linkBusy}
+                className="border border-brand-200 text-brand-700 px-4 py-2 rounded-xl text-sm font-medium hover:bg-brand-50 disabled:opacity-60">
+                <Link2 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{linkBusy ? "Creating…" : "Payment link"}
+              </button>
+            )}
             {invoice.state !== "Paid" && invoice.state !== "Cancelled" && (
               <button onClick={() => { setShowPayModal(true); setPayError(""); }}
                 className="bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-xl text-sm font-medium">
@@ -254,6 +284,27 @@ export default function InvoiceDetailPage() {
             )}
           </div>
         </div>
+
+        {(payLink || linkError) && (
+          <div className="print-hide mb-6 max-w-3xl rounded-xl border border-brand-200 bg-white p-4">
+            {linkError && <p role="alert" className="text-sm text-red-600">{linkError}</p>}
+            {payLink && (
+              <>
+                <p className="mb-2 text-xs font-medium text-brand-600">Share this link. The patient pays the balance online; the payment appears on this invoice automatically.</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <input readOnly value={payLink.url} onFocus={e => e.target.select()} aria-label="Payment link" className="min-w-0 flex-1 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs" />
+                  <button onClick={copyPayLink} className="rounded-lg border border-brand-200 px-3 py-2 text-xs font-medium text-brand-700 hover:border-gold">
+                    <Copy className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{linkCopied ? "Copied" : "Copy"}
+                  </button>
+                  <a href={waLink(invoice.patients?.phone, `Assalam o Alaikum, you can pay invoice ${invoice.invoice_number} (${symbol} ${invoice.balance.toLocaleString()} due) securely online: ${payLink.url}`)} target="_blank" rel="noopener noreferrer"
+                    className="rounded-lg border border-green-200 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-50">Send on WhatsApp</a>
+                  <button onClick={revokePayLink} className="px-2 py-2 text-xs font-medium text-red-500 hover:underline">Revoke</button>
+                </div>
+                <p className="mt-2 text-[11px] text-brand-400">Link valid until {formatDate(payLink.expiresAt)}.</p>
+              </>
+            )}
+          </div>
+        )}
 
         {/* ── INVOICE DOCUMENT ── */}
         <div className="print-invoice max-w-3xl bg-white rounded-2xl border border-brand-200 shadow-sm overflow-hidden mb-6">

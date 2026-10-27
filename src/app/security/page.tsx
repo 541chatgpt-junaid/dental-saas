@@ -52,6 +52,17 @@ export default function Security() {
         ]} />
       </Section>
 
+      <Section id="payments" title="Online payments">
+        <List items={[
+          "Each clinic connects its own Stripe, JazzCash or Easypaisa account. Their keys are stored encrypted (AES-256-GCM) with a key that lives only on the server, are never sent back to the browser, and cannot be read through the database interface.",
+          "A payment is recorded only after the provider confirms it: a verified Stripe signature (or a direct check with Stripe), a verified JazzCash signature, or a direct inquiry to Easypaisa. A redirect alone is never trusted.",
+          "The amount is always worked out on the server from the invoice and checked against what the provider reports; the browser cannot set it.",
+          "Each provider transaction can be recorded once, so a repeated or replayed confirmation changes nothing.",
+          "Payment links carry a long random token, expire (14 days for invoices, 2 days for booking fees), can be revoked, and show the clinic and invoice number but not the patient's name.",
+          "Card and wallet details are entered on the provider's page; DentEase never receives them.",
+        ]} />
+      </Section>
+
       <Section id="public" title="What is open to the public">
         <p>A clinic&apos;s booking page, if switched on, shows only the clinic&apos;s name, logo, phone and address, a Google Maps map of that address, its active doctors&apos; names, specialisations and working days, and free times. No patient information appears there. Logos are kept in a public file area (PNG, JPG or WebP, up to 1 MB), and only the clinic owner can upload or remove one. Approved reviews on the home page show the reviewer&apos;s name, clinic name, rating and text.</p>
       </Section>

@@ -27,6 +27,7 @@ export default function Privacy() {
           "Files the clinic uploads, such as X-rays, photos and PDFs.",
           "Appointments, walk-in queue tokens, recalls and treatment plans.",
           "Billing and running costs: invoices, payments, expenses, purchases, materials, lab work and doctor commissions.",
+          "Online payments, if the clinic switches them on: for each attempt, the amount, the payment provider used, the status and the provider's reference. Card and wallet details are typed on the provider's own page and never reach DentEase.",
         ]} />
         <p>{strong("Online booking.")} When a patient books through a clinic&apos;s public booking page, we receive their name, phone number, reason for visit and the chosen date and time. This becomes an appointment request in that clinic. If the phone number matches an existing patient it is linked to that patient; otherwise a new patient record is created for that clinic.</p>
         <p>{strong("Website forms.")} A demo request holds your name, phone number, clinic name and your answers to the form. A review holds your name, optional clinic name, rating and text; it is shown on our home page only after it has been approved.</p>
@@ -70,6 +71,7 @@ export default function Privacy() {
         <List items={[
           <span key="sb">{strong("Supabase")} provides the database, sign-in and file storage where all records are kept.</span>,
           <span key="g">{strong("Google.")} Sign in with Google is optional. Our pages also load their fonts from Google Fonts, and a clinic&apos;s booking page shows a Google Maps map of the clinic&apos;s address, so Google receives the usual request details (such as your IP address and browser) when those pages load.</span>,
+          <span key="pay">{strong("Payment providers.")} If a clinic connects Stripe, JazzCash or Easypaisa, a patient who pays online is sent to that provider&apos;s page. The money goes to the clinic&apos;s own merchant account. DentEase keeps the amount, status and reference of the payment so it can be added to the invoice.</span>,
           <span key="w">{strong("WhatsApp.")} Reminder and receipt buttons open WhatsApp with a ready-made message when a staff member clicks them. The message contains the patient&apos;s name and the appointment or invoice details. DentEase does not send WhatsApp messages by itself.</span>,
           <span key="h">{strong("Web hosting.")} Like any website, the server that delivers the app sees standard request information such as IP address.</span>,
         ]} />

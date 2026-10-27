@@ -43,6 +43,15 @@ export default function Terms() {
         <p>Invoice totals, balances, statuses and reports are calculated from the invoices and payments you record. Check them against your own records. DentEase records payments; it does not collect or process them, and it is not an accounting or tax service.</p>
       </Section>
 
+      <Section id="online-payments" title="Online payments">
+        <List items={[
+          "Online payments are optional. A clinic connects its own Stripe, JazzCash or Easypaisa merchant account in Settings, and patients pay the clinic through that provider.",
+          "DentEase does not hold or transfer your money. The provider's own terms, fees, limits and refund rules apply, and the clinic is responsible for its agreement with the provider.",
+          "A payment is added to an invoice only after the provider confirms it. Refunds and disputes are handled with the provider and then recorded by the clinic.",
+          "If you set an advance booking fee, you decide the amount. It is recorded as a payment and deducted from the patient's invoice when you apply it.",
+        ]} />
+      </Section>
+
       <Section id="booking" title="Online booking">
         <p>If you switch on your booking page, patients can send appointment requests. A request is not a confirmed appointment until your clinic confirms it. You are responsible for answering requests and for the working days, hours and doctors you publish.</p>
       </Section>

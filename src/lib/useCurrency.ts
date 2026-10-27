@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { useClinic } from "@/lib/ClinicContext";
+import { CURRENCY_SYMBOLS } from "@/lib/currency";
 
-const currencyMap: Record<string, string> = {
-  PKR: "Rs", USD: "$", AED: "AED", GBP: "£",
-  EUR: "€", SAR: "SAR", CAD: "CA$", AUD: "A$",
-};
+const currencyMap = CURRENCY_SYMBOLS;
 
 // Auto detect currency by timezone/locale
 const getAutoCurrency = (): string => {

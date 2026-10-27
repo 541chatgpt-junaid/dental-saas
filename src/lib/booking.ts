@@ -12,6 +12,8 @@ export interface BookingSettings {
   working_days: string;
   days_ahead: number;
   note: string | null;
+  /** Advance booking fee the clinic charges online; null or 0 = none */
+  advance_fee?: number | null;
 }
 export interface BookingDoctor {
   name: string;
