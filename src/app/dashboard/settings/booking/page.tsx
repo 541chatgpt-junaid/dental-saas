@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
+import { fullDayNames, worksOn } from "@/lib/weekdays";
+import Link from "next/link";
 
 const DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const slugify = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40);
@@ -16,6 +18,7 @@ export default function OnlineBookingSettings() {
   const { clinicId, clinicName } = useClinic();
   const [loaded, setLoaded] = useState(false);
   const [exists, setExists] = useState(false);
+  const [doctorDays, setDoctorDays] = useState<(string | null)[]>([]);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -35,13 +38,16 @@ export default function OnlineBookingSettings() {
 
   useEffect(() => {
     if (!clinicId) return;
+    // Active doctors' working days, to warn about open days nobody is scheduled on
+    createClient().from("doctors").select("working_days").eq("clinic_id", clinicId).eq("status", "Active")
+      .then(({ data }) => setDoctorDays((data || []).map(d => d.working_days)));
     createClient().from("booking_settings").select("*").eq("clinic_id", clinicId).maybeSingle().then(({ data, error: e }) => {
       if (e) setError("Could not load booking settings. Has supabase_online_booking.sql been run?");
       if (data) {
         setExists(true);
         setForm({
           slug: data.slug, enabled: data.enabled, slot_minutes: data.slot_minutes, open_time: data.open_time, close_time: data.close_time,
-          working_days: String(data.working_days).split(",").map((d: string) => d.trim()).filter(Boolean),
+          working_days: fullDayNames(String(data.working_days), DAYS),
           days_ahead: data.days_ahead, note: data.note || "",
         });
       } else if (clinicName) {
@@ -75,6 +81,7 @@ export default function OnlineBookingSettings() {
     setTimeout(() => setSaved(false), 2500);
   };
 
+  const unstaffed = doctorDays.length ? DAYS.filter(d => form.working_days.includes(d) && !doctorDays.some(w => worksOn(w, d))) : [];
   const link = `${origin}/book/${form.slug}`;
   const copy = async () => { try { await navigator.clipboard.writeText(link); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch {} };
   const inputCls = "w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold";
@@ -165,6 +172,13 @@ export default function OnlineBookingSettings() {
                   );
                 })}
               </div>
+
+              {unstaffed.length > 0 && (
+                <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                  No doctor is scheduled on {unstaffed.join(", ")}, so patients cannot book {unstaffed.length > 1 ? "those days" : "that day"} yet.
+                  Add {unstaffed.length > 1 ? "them" : "it"} to a doctor&apos;s working days on the <Link href="/dashboard/doctors" className="font-medium underline">Doctors page</Link>.
+                </p>
+              )}
 
               <label className="mt-5 block">
                 <span className="mb-1 block text-xs text-brand-600">Note for patients (optional)</span>

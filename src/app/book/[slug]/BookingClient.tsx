@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/dateFormat";
 import Link from "next/link";
 import { CalendarCheck, Check, Clock, LoaderCircle, MapPin, MessageCircle, Phone, Stethoscope, UserRound } from "lucide-react";
 import { waLink } from "@/lib/whatsapp";
+import { WEEKDAYS, opensOn, worksOn } from "@/lib/weekdays";
 
 interface Info {
   clinic: { name: string; phone: string | null; address: string | null };
@@ -12,10 +13,8 @@ interface Info {
   settings: { slot_minutes: number; days_ahead: number; working_days: string; note: string | null };
 }
 
-const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const pad = (n: number) => String(n).padStart(2, "0");
 const isoOf = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-const dayList = (s: string | null | undefined) => (s || "").split(",").map(d => d.trim().toLowerCase()).filter(Boolean);
 const fmtTime = (t: string) => { const [h, m] = t.split(":").map(Number); return `${((h + 11) % 12) + 1}:${pad(m)} ${h < 12 ? "AM" : "PM"}`; };
 const fmtDate = (iso: string) => formatDate(iso, { weekday: true });
 
@@ -64,12 +63,14 @@ export default function BookingClient({ slug }: { slug: string }) {
 
   const days = useMemo(() => {
     if (!info) return [];
-    const clinicDays = dayList(info.settings.working_days);
-    const docDays = doctor ? dayList(info.doctors.find(d => d.name === doctor)?.working_days) : [];
+    // The chosen doctor, or (for "any doctor") at least one doctor, must work that day: a day the
+    // clinic is open but nobody is scheduled stays greyed out instead of showing an empty list
+    const chosen = doctor ? info.doctors.filter(d => d.name === doctor) : info.doctors;
     return Array.from({ length: info.settings.days_ahead }, (_, i) => {
       const d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + i);
-      const wd = WEEKDAYS[d.getDay()].toLowerCase();
-      return { iso: isoOf(d), d, open: clinicDays.includes(wd) && (!docDays.length || docDays.includes(wd)) };
+      const wd = WEEKDAYS[d.getDay()];
+      const staffed = !chosen.length || chosen.some(x => worksOn(x.working_days, wd));
+      return { iso: isoOf(d), d, open: opensOn(info.settings.working_days, wd) && staffed };
     });
   }, [info, doctor]);
 

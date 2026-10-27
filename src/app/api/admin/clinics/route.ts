@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { adminClient, verifySuperAdmin } from "@/lib/superAdmin";
 import { invalidateClinic } from "@/lib/clinicCache";
 import { passwordError } from "@/lib/passwordRules";
+import { seedClinicSettings } from "@/lib/clinicSetup";
 
 // GET — list all clinics with counts
 export async function GET() {
@@ -62,6 +63,8 @@ export async function POST(request: Request) {
     user_id: authUser.user.id,
     clinic_id: clinic.id,
   }]);
+
+  await seedClinicSettings(admin, clinic.id, { name, email, phone, address });
 
   return NextResponse.json({ success: true, clinic });
 }

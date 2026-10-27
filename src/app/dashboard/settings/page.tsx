@@ -68,10 +68,11 @@ export default function Settings() {
   const [pEditForm, setPEditForm] = useState({ group_name: "", medicine: "", dosage: "", frequency: "", duration: "", notes: "" });
 
   const router = useRouter();
-  const { clinicId, refresh: refreshClinic } = useClinic();
+  const { clinicId, loading: clinicLoading, refresh: refreshClinic } = useClinic();
   const { symbol } = useCurrency();
 
   useEffect(() => {
+    if (clinicLoading) return;
     const auto = getAutoCurrency();
     setAutoDetected(auto);
     const fetchSettings = async () => {
@@ -79,14 +80,20 @@ export default function Settings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/"); return; }
       const { data } = await supabase.from("settings").select("*").maybeSingle();
-      if (data) {
-        setForm({ clinic_name: data.clinic_name || "", clinic_address: data.clinic_address || "", clinic_phone: data.clinic_phone || "", clinic_email: data.clinic_email || "", currency: data.currency || auto });
-      } else {
-        setForm(f => ({ ...f, currency: auto }));
-      }
+      // What was entered at signup lives on the clinic record: use it for anything not saved here yet
+      const { data: clinic } = clinicId
+        ? await supabase.from("clinics").select("name, email, phone, address").eq("id", clinicId).maybeSingle()
+        : { data: null };
+      setForm({
+        clinic_name: data?.clinic_name || clinic?.name || "",
+        clinic_address: data?.clinic_address || clinic?.address || "",
+        clinic_phone: data?.clinic_phone || clinic?.phone || "",
+        clinic_email: data?.clinic_email || clinic?.email || "",
+        currency: data?.currency || auto,
+      });
     };
     fetchSettings();
-  }, [router]);
+  }, [router, clinicId, clinicLoading]);
 
   useEffect(() => {
     fetchTreatments();

@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
 import { isRateLimited, TOO_MANY } from "@/lib/rateLimit";
 import { passwordError } from "@/lib/passwordRules";
+import { seedClinicSettings } from "@/lib/clinicSetup";
 
 export async function POST(request: Request) {
   const admin = createClient(
@@ -58,6 +59,10 @@ export async function POST(request: Request) {
     await admin.from("clinics").delete().eq("id", clinic.id);
     return NextResponse.json({ error: staffErr.message }, { status: 400 });
   }
+
+  // 4. Settings row with the signup details (a failure here must not undo a working account)
+  const settingsErr = await seedClinicSettings(admin, clinic.id, { name: clinicName, email, phone, address });
+  if (settingsErr) console.error("Could not seed settings for new clinic:", settingsErr.message);
 
   return NextResponse.json({ success: true });
 }

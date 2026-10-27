@@ -26,6 +26,8 @@ const badge = (s: string) =>
 
 export default function Dashboard() {
   const [userName, setUserName] = useState("");
+  const [sampleCount, setSampleCount] = useState(0);
+  const [removing, setRemoving] = useState(false);
   const [todayPatients, setTodayPatients] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
   const [pendingLabs, setPendingLabs] = useState(0);
@@ -43,6 +45,20 @@ export default function Dashboard() {
   const { clinicId } = useClinic();
 
   const today = new Date().toISOString().split("T")[0];
+
+  // Clinics that loaded sample data in the setup wizard get a way to remove it
+  useEffect(() => {
+    fetch("/api/onboarding").then(r => r.json()).then(d => setSampleCount(d.sampleCount || 0)).catch(() => {});
+  }, []);
+
+  const removeSamples = async () => {
+    if (!confirm("Remove the sample patients and appointments? Anything you added to them is removed too. Your own records are not touched.")) return;
+    setRemoving(true);
+    const res = await fetch("/api/onboarding", { method: "DELETE" }).catch(() => null);
+    const json = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok || json.error) { setRemoving(false); alert(json.error || "Could not remove the sample data. Please try again."); return; }
+    window.location.reload();
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -126,6 +142,17 @@ export default function Dashboard() {
           <h2 className="mt-1 text-2xl md:text-3xl font-semibold text-brand-800 tracking-tight">Dashboard</h2>
           <p className="text-sm text-gray-500 mt-1">Welcome back{userName ? `, ${userName}` : ""}</p>
         </div>
+
+        {sampleCount > 0 && (
+          <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-gold/40 bg-gold/10 p-3 md:p-4">
+            <p className="flex-1 text-sm text-brand-800">
+              <span className="font-semibold">You are looking at sample data.</span> It is marked &quot;Sample&quot; and never affects your bills.
+            </p>
+            <button onClick={removeSamples} disabled={removing} className="rounded-lg border border-brand-200 bg-white px-4 py-2 text-sm font-medium text-brand-700 hover:border-gold disabled:opacity-60">
+              {removing ? "Removing…" : "Remove sample data"}
+            </button>
+          </div>
+        )}
 
         {bookingRequests > 0 && (
           <Link href="/dashboard/appointments" className="card-hover mb-4 flex items-center gap-3 rounded-xl border border-gold/40 bg-white p-3 md:p-4">

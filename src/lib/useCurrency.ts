@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
+import { useClinic } from "@/lib/ClinicContext";
 
 const currencyMap: Record<string, string> = {
   PKR: "Rs", USD: "$", AED: "AED", GBP: "£",
@@ -25,18 +26,20 @@ const getAutoCurrency = (): string => {
 export function useCurrency() {
   const [symbol, setSymbol] = useState("Rs");
   const [code, setCode] = useState("PKR");
+  const { clinicId, loading } = useClinic();
 
   useEffect(() => {
+    if (loading) return;
     const fetchCurrency = async () => {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data } = await supabase
-        .from("settings")
-        .select("currency")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // The clinic's settings row (the one the Settings page edits). Not filtered by user_id:
+      // settings belong to the clinic, and that column is not part of the table.
+      let q = supabase.from("settings").select("currency");
+      if (clinicId) q = q.eq("clinic_id", clinicId);
+      const { data } = await q.order("id").limit(1).maybeSingle();
 
       if (data?.currency) {
         setCode(data.currency);
@@ -49,7 +52,7 @@ export function useCurrency() {
       }
     };
     fetchCurrency();
-  }, []);
+  }, [clinicId, loading]);
 
   return { symbol, code };
 }

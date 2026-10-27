@@ -10,12 +10,16 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import * as XLSX from "xlsx";
 import { useCurrency } from "@/lib/useCurrency";
-import { billingByPatient, countedPayments, doctorResolver, loadLedger, NO_BILLS } from "@/lib/ledger";
+import { billingByPatient, countedPayments, doctorResolver, loadLedger, NO_BILLS, type LedgerInvoiceRow, type LedgerPaymentRow } from "@/lib/ledger";
+import { invoiceSheet, patientSheet, paymentSheet } from "@/lib/exportBook";
 import { useClinic } from "@/lib/ClinicContext";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, PieChart, Pie, Cell, Legend
 } from "recharts";
+
+type LedgerInvoices = Awaited<ReturnType<typeof loadLedger<LedgerInvoiceRow & { invoice_number?: string | null }>>>["invoices"];
+type PeriodPayments = ReturnType<typeof countedPayments<LedgerPaymentRow, LedgerInvoices[number]>>;
 
 export default function Reports() {
   const { dark } = useTheme();
@@ -37,6 +41,10 @@ export default function Reports() {
   const [expensePieData, setExpensePieData] = useState<any[]>([]);
   const [treatmentData, setTreatmentData] = useState<any[]>([]);
   const [doctorData, setDoctorData] = useState<any[]>([]);
+  // Ledger rows kept for the export: counted invoices and the period's counted payments
+  const [ledgerInvoices, setLedgerInvoices] = useState<LedgerInvoices>([]);
+  const [periodPayments, setPeriodPayments] = useState<PeriodPayments>([]);
+  const [loaded, setLoaded] = useState(false);
   const router = useRouter();
   const { clinicId } = useClinic();
   const { symbol } = useCurrency();
@@ -54,13 +62,14 @@ export default function Reports() {
     const [{ data: patients }, { data: visitRows }, ledger] = await Promise.all([
       supabase.from("patients").select("*"),
       supabase.from("visits").select("id, doctor_name"),
-      loadLedger(supabase, { clinicId, select: "id, patient_id, visit_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
+      loadLedger(supabase, { clinicId, select: "id, invoice_number, patient_id, visit_id, status, subtotal, discount, total, amount_paid, due_date, created_at, notes" }).catch(() => null),
     ]);
     if (patients) {
       const invoices = (ledger?.invoices || []).filter(i => i.counted);
       const payments = ledger ? countedPayments(ledger.payments, ledger.invoices) : [];
       const billing = billingByPatient(invoices);
       setAllPatients(patients.map(p => ({ ...p, billing: billing[p.id] ?? NO_BILLS })));
+      setLedgerInvoices(ledger?.invoices || []);
 
       const dayKey = (d: string | null | undefined) => { const t = d ? new Date(d) : null; return t && !isNaN(t.getTime()) ? t.toISOString() : ""; };
       const inFilter = (d: string | null | undefined) => {
@@ -69,7 +78,9 @@ export default function Reports() {
         return true;
       };
       const filtered = patients.filter(p => inFilter(p.created_at));
-      setIncome(payments.filter(p => inFilter(p.payment_date)).reduce((sum, p) => sum + (Number(p.amount) || 0), 0));
+      const inPeriod = payments.filter(p => inFilter(p.payment_date));
+      setPeriodPayments(inPeriod);
+      setIncome(inPeriod.reduce((sum, p) => sum + (Number(p.amount) || 0), 0));
       setPatientCount(filtered.length);
       // Pending is what is owed right now: the same figure as the Dashboard and the Patients list
       setPendingFees(invoices.reduce((sum, i) => sum + Math.max(0, i.balance), 0));
@@ -151,6 +162,7 @@ export default function Reports() {
 
     const { data: purchases } = await supabase.from("purchases").select("*");
     if (purchases) setAllPurchases(purchases);
+    setLoaded(true);
   };
 
   useEffect(() => { fetchData(); }, [filter, chartRange, clinicId]);
@@ -160,38 +172,34 @@ export default function Reports() {
 
   const PIE_COLORS = [INK, "#d4af37", "#3b82f6", "#ef4444", "#8b5cf6", "#10b981"];
 
+  const periodLabel = filter === "today" ? "Today" : filter === "month" ? "This month" : "All time";
+
   const exportToExcel = () => {
     const wb = XLSX.utils.book_new();
-    const patientsData = allPatients.map(p => ({
-      ID: p.id, Name: p.name, Phone: p.phone, Age: p.age,
-      Gender: p.gender, Doctor: p.doctor_name, Treatment: p.treatment,
-      "Total Billed": p.billing.totalBilled, Paid: p.billing.totalPaid,
-      Remaining: p.billing.outstanding, Status: p.billing.status,
-      Date: formatDate(p.created_at),
-    }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(patientsData), "Patients");
-    const expensesData = allExpenses.map(e => ({
-      Title: e.title, Category: e.category, Amount: e.amount, Date: e.date,
-    }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(expensesData), "Expenses");
-    const doctorReport = doctorData.map(d => ({
-      Doctor: d.name, Patients: d.patients,
-      Income: d.income, Pending: d.pending,
-    }));
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(doctorReport), "Doctors");
-    const summaryData = [
+    const add = (name: string, rows: object[]) => XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), name);
+    const nameOf = (id: number | null) => allPatients.find(p => p.id === id)?.name ?? "";
+    const inPeriodExpenses = allExpenses.filter(e => filter === "today" ? e.date === today : filter === "month" ? e.date?.startsWith(thisMonth) : true);
+    const sum = (rows: { amount?: number | null }[]) => rows.reduce((t, r) => t + (Number(r.amount) || 0), 0);
+    // Summary first: every figure is the one on screen, and the sheets below add up to it
+    add("Summary", [
+      { Category: "Period", Value: periodLabel },
       { Category: "Total Patients", Value: patientCount },
-      { Category: "Total Income", Value: income },
-      { Category: "Pending Fees", Value: pendingFees },
+      { Category: "Total Income (payments in period)", Value: income },
+      { Category: "Pending Fees (all open invoices)", Value: pendingFees },
       { Category: "Lab Costs", Value: labCost },
       { Category: "Material Costs", Value: materialCost },
       { Category: "Other Expenses", Value: manualExpenses },
       { Category: "Total Expenses", Value: totalExpenses },
       { Category: "Net Profit", Value: profit },
-    ];
-    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(summaryData), "Summary");
-    const date = todayISO();
-    XLSX.writeFile(wb, `DentEase-Report-${date}.xlsx`);
+      { Category: "Check: sum of Payments sheet", Value: sum(periodPayments) },
+      { Category: "Check: sum of open Invoice balances", Value: ledgerInvoices.filter(i => i.counted).reduce((t, i) => t + Math.max(0, i.balance), 0) },
+    ]);
+    add("Patients", patientSheet(allPatients, Object.fromEntries(allPatients.map(p => [p.id, p.billing]))));
+    add("Invoices", invoiceSheet(ledgerInvoices, nameOf));
+    add("Payments", paymentSheet(periodPayments, nameOf));
+    add("Expenses", inPeriodExpenses.map(e => ({ Title: e.title, Category: e.category, Amount: e.amount, Date: formatDate(e.date) })));
+    add("Doctors", doctorData.map(d => ({ Doctor: d.name === "Unassigned" ? d.name : doctorName(d.name), Patients: d.patients, Income: d.income, Pending: d.pending })));
+    XLSX.writeFile(wb, `DentEase-Report-${todayISO()}.xlsx`);
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -219,7 +227,7 @@ export default function Reports() {
             <h2 className="text-xl md:text-2xl font-semibold text-brand-800">Reports</h2>
             <p className="text-sm text-brand-600 mt-1">Profit & Loss Summary</p>
           </div>
-          <button onClick={exportToExcel} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium">
+          <button onClick={exportToExcel} disabled={!loaded} className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 md:px-5 md:py-2.5 rounded-lg text-sm font-medium disabled:opacity-60">
             <BarChart3 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Export
           </button>
         </div>
