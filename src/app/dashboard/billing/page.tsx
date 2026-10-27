@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import EmptyState from "@/components/EmptyState";
 import { Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase";
@@ -8,7 +8,8 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 import Link from "next/link";
-import { loadLedger, type InvoiceStatus } from "@/lib/ledger";
+import { loadInvoicePage, type InvoiceStatus } from "@/lib/ledger";
+import { SkeletonRows } from "@/components/Skeleton";
 
 interface Invoice {
   id: string;
@@ -54,32 +55,61 @@ export default function BillingPage() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState("All");
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  // Server-side pagination: starts[i] is the raw offset where page i begins
+  const [starts, setStarts] = useState<number[]>([0]);
+  const [pageIdx, setPageIdx] = useState(0);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [total, setTotal] = useState<number | null>(null);
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
 
+  const PAGE_SIZE = 25;
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  // One page from the server. Paid / balance / status are still derived from each
+  // invoice's items and payments, exactly as before — only how many rows load changes.
+  const requestId = useRef(0); // ignore a slow response that was overtaken by a newer filter/page
+  const loadPage = async (start: number) => {
+    if (!clinicId) return;
+    const mine = ++requestId.current;
+    setLoading(true);
+    try {
+      const page = await loadInvoicePage<Invoice>(createClient(), {
+        clinicId, select: "*, patients(name)", offset: start, limit: PAGE_SIZE,
+        from: dateFrom || undefined, to: dateTo || undefined, search: debouncedSearch,
+        accept: tab === "All" ? undefined : inv => matchesTab(inv, tab),
+      });
+      if (mine !== requestId.current) return;
+      setInvoices(page.invoices);
+      setNextOffset(page.nextOffset);
+      setTotal(page.total);
+    } catch (e) {
+      console.error("Could not load invoices:", e);
+    } finally {
+      if (mine === requestId.current) setLoading(false);
+    }
+  };
+
+  // Any filter change goes back to page 1
   useEffect(() => {
     if (!clinicId) return;
-    // Paid / balance / status are derived from each invoice's items and payments
-    loadLedger<Invoice>(createClient(), { clinicId, select: "*, patients(name)" })
-      .then(({ invoices }) => setInvoices(invoices))
-      .catch(e => console.error("Could not load invoices:", e))
-      .finally(() => setLoading(false));
-  }, [clinicId]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- reload when a filter changes
+    setStarts([0]); setPageIdx(0); loadPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clinicId, tab, debouncedSearch, dateFrom, dateTo]);
 
-  const filtered = invoices.filter(inv => {
-    const matchTab = matchesTab(inv, tab);
-    const q = search.toLowerCase();
-    const matchSearch = !q ||
-      inv.invoice_number.toLowerCase().includes(q) ||
-      (inv.patients?.name || "").toLowerCase().includes(q);
-    const invDate = inv.created_at.split("T")[0];
-    const matchFrom = !dateFrom || invDate >= dateFrom;
-    const matchTo = !dateTo || invDate <= dateTo;
-    return matchTab && matchSearch && matchFrom && matchTo;
-  });
+  const goNext = () => { if (nextOffset == null) return; setStarts(s => [...s.slice(0, pageIdx + 1), nextOffset]); setPageIdx(i => i + 1); loadPage(nextOffset); };
+  const goPrev = () => { if (pageIdx === 0) return; setPageIdx(i => i - 1); loadPage(starts[pageIdx - 1]); };
+
+  const filtered = invoices; // already filtered and paged on the server
 
   return (
     <div className="min-h-screen flex bg-brand-50">
@@ -155,7 +185,7 @@ export default function BillingPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-20 text-gray-400 text-sm">Loading invoices...</div>
+          <SkeletonRows rows={6} label="Loading invoices" />
         ) : filtered.length === 0 ? (
           <EmptyState icon={Receipt} title="No invoices yet" hint="Create an invoice to start billing patients." />
         ) : (
@@ -245,6 +275,20 @@ export default function BillingPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pager: server-side pages, so only this page's invoices were loaded */}
+            <div className="mt-4 flex items-center justify-between text-xs text-brand-600">
+              <span>
+                Page {pageIdx + 1}
+                {tab === "All" && !debouncedSearch && !dateFrom && !dateTo && total != null ? ` · ${total} invoices in total` : ""}
+              </span>
+              <div className="flex gap-2">
+                <button onClick={goPrev} disabled={pageIdx === 0 || loading}
+                  className="rounded-lg border border-brand-200 px-3 py-1.5 font-medium disabled:opacity-40">← Previous</button>
+                <button onClick={goNext} disabled={nextOffset == null || loading}
+                  className="rounded-lg border border-brand-200 px-3 py-1.5 font-medium disabled:opacity-40">Next →</button>
+              </div>
             </div>
           </>
         )}

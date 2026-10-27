@@ -41,7 +41,7 @@ export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
   useEffect(() => {
     const fetchSettings = async () => {
       const supabase = createClient();
-      const { data } = await supabase.from("settings").select("*").single();
+      const { data } = await supabase.from("settings").select("*").maybeSingle();
       if (data) setSettings(data);
     };
     fetchSettings();

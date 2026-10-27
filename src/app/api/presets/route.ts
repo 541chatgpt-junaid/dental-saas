@@ -26,7 +26,7 @@ async function getAuthenticatedClinicId(): Promise<string | null> {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
-  const { data } = await admin.from("staff").select("clinic_id").eq("user_id", user.id).single();
+  const { data } = await admin.from("staff").select("clinic_id").eq("user_id", user.id).maybeSingle();
   return data?.clinic_id ?? null;
 }
 

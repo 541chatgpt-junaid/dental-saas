@@ -246,6 +246,89 @@ export async function loadLedger<T extends LedgerInvoiceRow = LedgerInvoiceRow &
   return { invoices: ledgered, payments: payments.map(p => ({ ...p, invoice: byId.get(String(p.invoice_id)) })) };
 }
 
+export interface InvoicePage<T extends LedgerInvoiceRow = LedgerInvoiceRow & Record<string, unknown>> {
+  invoices: Ledgered<T>[];
+  /** Offset of the next raw chunk, or null when there are no more invoices */
+  nextOffset: number | null;
+  /** Exact invoice count for the current server-side filters (not the derived-status tab) */
+  total: number | null;
+}
+
+/**
+ * One page of invoices, paginated on the server. Date range and search run in
+ * the database; items and payments are fetched only for the invoices on the
+ * page, so a clinic with thousands of invoices never loads them all.
+ *
+ * Payment status is derived from payments (never stored), so it cannot be a
+ * SQL filter. When a status tab is chosen, `accept` filters AFTER the ledger is
+ * applied, and chunks are read until `limit` matching rows are collected — pages
+ * stay full and totals per invoice are exactly what loadLedger would give.
+ */
+export async function loadInvoicePage<T extends LedgerInvoiceRow = LedgerInvoiceRow & Record<string, unknown>>(
+  supabase: SupabaseClient,
+  opts: {
+    clinicId?: string | null; select?: string; offset?: number; limit?: number;
+    from?: string; to?: string; search?: string;
+    accept?: (inv: Ledgered<T>) => boolean;
+  } = {},
+): Promise<InvoicePage<T>> {
+  const select = opts.select || "*";
+  const limit = opts.limit ?? 25;
+  let offset = opts.offset ?? 0;
+
+  // Patient-name search: resolve matching patients first, then match on their ids
+  const q = (opts.search || "").trim().replace(/[%,()]/g, " ");
+  let patientIds: number[] = [];
+  if (q) {
+    let pq = supabase.from("patients").select("id").ilike("name", `%${q}%`).limit(200);
+    if (opts.clinicId) pq = pq.eq("clinic_id", opts.clinicId);
+    const { data } = await pq;
+    patientIds = (data || []).map(r => Number(r.id));
+  }
+
+  const base = () => {
+    let query = supabase.from("invoices").select(select, { count: "exact" });
+    if (opts.clinicId) query = query.eq("clinic_id", opts.clinicId);
+    if (opts.from) query = query.gte("created_at", `${opts.from}T00:00:00`);
+    if (opts.to) query = query.lte("created_at", `${opts.to}T23:59:59.999`);
+    if (q) query = patientIds.length
+      ? query.or(`invoice_number.ilike.%${q}%,patient_id.in.(${patientIds.join(",")})`)
+      : query.ilike("invoice_number", `%${q}%`);
+    return query.order("created_at", { ascending: false }).order("id", { ascending: false });
+  };
+
+  const CHUNK = Math.max(limit, 25);
+  // Collect limit + 1 matches: the extra one proves there is a next page (so a
+  // status tab never offers an empty trailing page) and marks where it starts.
+  const out: Ledgered<T>[] = [];
+  let next: number | null = null;
+  let total: number | null = null;
+
+  scan: for (;;) {
+    const { data, error, count } = await base().range(offset, offset + CHUNK - 1);
+    if (error) throw new Error(error.message);
+    if (total === null) total = count ?? null;
+    const raw = (data || []) as unknown as T[];
+    if (!raw.length) break;
+
+    const ids = raw.map(i => String(i.id));
+    const [items, payments] = await Promise.all([
+      byInvoiceIds<LedgerItemRow>(supabase, "invoice_items", "invoice_id, quantity, unit_price", ids),
+      byInvoiceIds<LedgerPaymentRow>(supabase, "payments", "*", ids),
+    ]);
+    const ledgered = applyLedger(raw, items, payments);
+    for (let i = 0; i < ledgered.length; i++) {
+      if (opts.accept && !opts.accept(ledgered[i])) continue;
+      if (out.length === limit) { next = offset + i; break scan; }
+      out.push(ledgered[i]);
+    }
+    offset += raw.length;
+    if (raw.length < CHUNK) break;
+  }
+
+  return { invoices: out, nextOffset: next, total };
+}
+
 // ── Writing ─────────────────────────────────────────────────
 
 /** True when an error is only about a column a not-yet-run migration adds */
@@ -257,7 +340,7 @@ const missingColumn = (e: { message?: string } | null, col: string) => !!e && (e
  */
 export async function syncInvoice(supabase: SupabaseClient, invoiceId: string) {
   const [{ data: inv }, { data: items }, { data: pays }] = await Promise.all([
-    supabase.from("invoices").select("id, patient_id, status, subtotal, discount, total, due_date").eq("id", invoiceId).single(),
+    supabase.from("invoices").select("id, patient_id, status, subtotal, discount, total, due_date").eq("id", invoiceId).maybeSingle(),
     supabase.from("invoice_items").select("invoice_id, quantity, unit_price").eq("invoice_id", invoiceId),
     supabase.from("payments").select("invoice_id, amount, payment_date").eq("invoice_id", invoiceId),
   ]);

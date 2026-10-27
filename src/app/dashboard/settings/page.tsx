@@ -68,7 +68,7 @@ export default function Settings() {
   const [pEditForm, setPEditForm] = useState({ group_name: "", medicine: "", dosage: "", frequency: "", duration: "", notes: "" });
 
   const router = useRouter();
-  const { clinicId } = useClinic();
+  const { clinicId, refresh: refreshClinic } = useClinic();
   const { symbol } = useCurrency();
 
   useEffect(() => {
@@ -78,7 +78,7 @@ export default function Settings() {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/"); return; }
-      const { data } = await supabase.from("settings").select("*").single();
+      const { data } = await supabase.from("settings").select("*").maybeSingle();
       if (data) {
         setForm({ clinic_name: data.clinic_name || "", clinic_address: data.clinic_address || "", clinic_phone: data.clinic_phone || "", clinic_email: data.clinic_email || "", currency: data.currency || auto });
       } else {
@@ -117,6 +117,7 @@ export default function Settings() {
       : await supabase.from("settings").insert([{ ...form, clinic_id: clinicId }]);
     setLoading(false);
     if (error) { setSaveError(saveErrorMessage(error, "settings")); return; }
+    await refreshClinic(); // expire the server-side clinic cache so the edit shows immediately
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };

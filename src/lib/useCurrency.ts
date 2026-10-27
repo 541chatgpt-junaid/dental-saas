@@ -36,7 +36,7 @@ export function useCurrency() {
         .from("settings")
         .select("currency")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (data?.currency) {
         setCode(data.currency);

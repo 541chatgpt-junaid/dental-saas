@@ -21,7 +21,7 @@ async function verifySuperAdmin(): Promise<boolean> {
   if (!user) return false;
 
   const admin = adminClient();
-  const { data } = await admin.from("staff").select("role").eq("user_id", user.id).single();
+  const { data } = await admin.from("staff").select("role").eq("user_id", user.id).maybeSingle();
   return data?.role === "superadmin";
 }
 
