@@ -1,9 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { getClinicForUser, invalidateClinic, invalidateUser } from "@/lib/clinicCache";
 
-export async function GET() {
+async function currentUser() {
   const cookieStore = await cookies();
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,33 +19,29 @@ export async function GET() {
       },
     }
   );
-
   const { data: { user } } = await supabase.auth.getUser();
+  return user;
+}
+
+// GET — the caller's clinic id + name. The auth check always runs; only the
+// clinic lookups behind it are cached (see lib/clinicCache.ts).
+export async function GET() {
+  const user = await currentUser();
   if (!user) return NextResponse.json({ clinicId: null, clinicName: null });
 
-  const admin = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!
-  );
+  const clinic = await getClinicForUser(user.id);
+  if (!clinic) return NextResponse.json({ clinicId: null, clinicName: null });
+  return NextResponse.json(clinic);
+}
 
-  const { data: staffData } = await admin
-    .from("staff")
-    .select("clinic_id")
-    .eq("user_id", user.id)
-    .single();
-
-  if (!staffData?.clinic_id) {
-    return NextResponse.json({ clinicId: null, clinicName: null });
-  }
-
-  const { data: clinicData } = await admin
-    .from("clinics")
-    .select("name")
-    .eq("id", staffData.clinic_id)
-    .single();
-
-  return NextResponse.json({
-    clinicId: staffData.clinic_id,
-    clinicName: clinicData?.name ?? null,
-  });
+// POST — expire the caller's cached clinic data right after they edit it
+// (e.g. the Settings page), so the next GET reads fresh data. Only ever
+// expires the caller's own entries.
+export async function POST() {
+  const user = await currentUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const clinic = await getClinicForUser(user.id);
+  if (clinic) invalidateClinic(clinic.clinicId);
+  invalidateUser(user.id);
+  return NextResponse.json({ success: true });
 }

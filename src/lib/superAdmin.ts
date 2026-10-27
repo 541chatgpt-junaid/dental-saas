@@ -24,7 +24,7 @@ export async function verifySuperAdmin(): Promise<string | null> {
     .from("staff")
     .select("role")
     .eq("user_id", user.id)
-    .single();
+    .maybeSingle();
 
   return data?.role === "superadmin" ? user.id : null;
 }

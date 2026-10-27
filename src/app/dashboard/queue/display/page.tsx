@@ -9,7 +9,9 @@ import { localToday, type Token } from "@/lib/queue";
 export default function QueueDisplay() {
   const { clinicName } = useClinic();
   const [tokens, setTokens] = useState<Token[]>([]);
-  const [now, setNow] = useState(() => new Date());
+  // The clock is client-only: the server cannot know the viewer's time or timezone, so both
+  // sides first render the same placeholder and the real time appears after mount.
+  const [now, setNow] = useState<Date | null>(null);
   const [sound, setSound] = useState(false);
   const announced = useRef<Set<string> | null>(null);
 
@@ -23,6 +25,8 @@ export default function QueueDisplay() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- initial fetch
     load();
     const poll = setInterval(load, 5000);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- start the client-only clock after mount
+    setNow(new Date());
     const clock = setInterval(() => setNow(new Date()), 1000);
     return () => { clearInterval(poll); clearInterval(clock); };
   }, [load]);
@@ -59,7 +63,7 @@ export default function QueueDisplay() {
       <header className="flex items-center justify-between px-8 py-6 md:px-12">
         <p className="font-display text-2xl font-semibold md:text-3xl">{clinicName || <>Dent<span className="text-gold">Ease</span></>}</p>
         <div className="flex items-center gap-4">
-          <p className="font-display text-2xl tabular-nums text-white/80 md:text-3xl">{now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</p>
+          <p className="font-display text-2xl tabular-nums text-white/80 md:text-3xl">{now ? now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" }) : "--:--"}</p>
           <button onClick={() => setSound(s => !s)} aria-pressed={sound} title={sound ? "Mute announcements" : "Turn on announcements"}
             className="rounded-full border border-white/20 p-2.5 text-white/70 hover:border-gold hover:text-gold">
             {sound ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}

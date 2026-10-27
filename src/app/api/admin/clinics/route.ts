@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { adminClient, verifySuperAdmin } from "@/lib/superAdmin";
+import { invalidateClinic } from "@/lib/clinicCache";
 
 // GET — list all clinics with counts
 export async function GET() {
@@ -68,6 +69,8 @@ export async function PATCH(request: Request) {
 
   const { clinicId, is_active } = await request.json();
   const admin = adminClient();
-  await admin.from("clinics").update({ is_active }).eq("id", clinicId);
+  const { error } = await admin.from("clinics").update({ is_active }).eq("id", clinicId);
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+  invalidateClinic(clinicId);
   return NextResponse.json({ success: true });
 }

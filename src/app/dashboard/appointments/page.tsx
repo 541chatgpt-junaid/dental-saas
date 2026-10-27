@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
+import { SkeletonRows } from "@/components/Skeleton";
 import { CalendarCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -70,10 +71,13 @@ export default function Appointments() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const [listLoading, setListLoading] = useState(true);
+
   const fetchAppointments = async () => {
     const supabase = createClient();
     const { data } = await supabase.from("appointments").select("*").order("date", { ascending: true });
     if (data) setAppointments(data);
+    setListLoading(false);
   };
 
   // Patient phone numbers by name, for WhatsApp reminders (appointments only store the name)
@@ -386,7 +390,9 @@ export default function Appointments() {
           <h3 className="text-sm font-semibold text-brand-800 mb-3">Today's Appointments</h3>
           <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
             <div className="md:hidden divide-y divide-brand-50">
-              {todayAppts.length === 0 ? (
+              {listLoading ? (
+                <div className="p-3"><SkeletonRows rows={3} label="Loading appointments" /></div>
+              ) : todayAppts.length === 0 ? (
                 <EmptyState icon={CalendarCheck} title="No appointments today" hint="Nothing is scheduled for today." compact />
               ) : (
                 todayAppts.map(a => <AppointmentCard key={a.id} a={a} />)
@@ -405,7 +411,9 @@ export default function Appointments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {todayAppts.length === 0 ? (
+                  {listLoading ? (
+                    <tr><td colSpan={6}><div className="p-3"><SkeletonRows rows={3} label="Loading appointments" /></div></td></tr>
+                  ) : todayAppts.length === 0 ? (
                     <tr><td colSpan={6}><EmptyState icon={CalendarCheck} title="No appointments today" hint="Nothing is scheduled for today." compact /></td></tr>
                   ) : (
                     todayAppts.map(a => (
@@ -453,7 +461,9 @@ export default function Appointments() {
           <h3 className="text-sm font-semibold text-brand-800 mb-3">All Appointments</h3>
           <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
             <div className="md:hidden divide-y divide-brand-50">
-              {appointments.length === 0 ? (
+              {listLoading ? (
+                <div className="p-3"><SkeletonRows rows={4} label="Loading appointments" /></div>
+              ) : appointments.length === 0 ? (
                 <EmptyState icon={CalendarCheck} title="No appointments yet" hint="Book your first appointment with + Add." />
               ) : (
                 appointments.map(a => <AppointmentCard key={a.id} a={a} />)
@@ -473,7 +483,9 @@ export default function Appointments() {
                   </tr>
                 </thead>
                 <tbody>
-                  {appointments.length === 0 ? (
+                  {listLoading ? (
+                    <tr><td colSpan={7}><div className="p-3"><SkeletonRows rows={4} label="Loading appointments" /></div></td></tr>
+                  ) : appointments.length === 0 ? (
                     <tr><td colSpan={7}><EmptyState icon={CalendarCheck} title="No appointments yet" hint="Book your first appointment with + Add." /></td></tr>
                   ) : (
                     appointments.map(a => (

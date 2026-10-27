@@ -58,7 +58,7 @@ export async function middleware(request: NextRequest) {
         .from("staff")
         .select("permissions, status, role")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       // Agar staff record hai (matlab yeh owner nahi, staff member hai)
       if (staffRecord) {

@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import EmptyState from "@/components/EmptyState";
+import { SkeletonRows } from "@/components/Skeleton";
 import { Users } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -170,6 +171,8 @@ export default function Patients() {
   const { symbol } = useCurrency();
   const { clinicId } = useClinic();
 
+  const [listLoading, setListLoading] = useState(true);
+
   const fetchPatients = async () => {
     const supabase = createClient();
     const { data } = await supabase.from("patients").select("*").order("created_at", { ascending: true });
@@ -177,6 +180,7 @@ export default function Patients() {
       setAllPatients(data);
       setPatients([...data].reverse());
     }
+    setListLoading(false);
   };
 
   const fetchDoctors = async () => {
@@ -199,7 +203,7 @@ export default function Patients() {
 
   const fetchMedicalHistory = async (patientId: number) => {
     const supabase = createClient();
-    const { data } = await supabase.from("medical_history").select("*").eq("patient_id", patientId).single();
+    const { data } = await supabase.from("medical_history").select("*").eq("patient_id", patientId).maybeSingle();
     if (data) {
       setMedicalHistory(data);
       setMedicalForm({
@@ -1286,7 +1290,9 @@ export default function Patients() {
             <div className="bg-white rounded-xl border border-brand-100 overflow-hidden">
               {/* Mobile */}
               <div className="md:hidden divide-y divide-brand-50">
-                {filteredPatients.length === 0 ? (
+                {listLoading ? (
+                  <div className="p-3"><SkeletonRows rows={5} label="Loading patients" /></div>
+                ) : filteredPatients.length === 0 ? (
                   <EmptyState icon={Users} title="No patients found" hint="Try a different search, or add your first patient." />
                 ) : (
                   filteredPatients.map(p => (
@@ -1340,7 +1346,9 @@ export default function Patients() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredPatients.length === 0 ? (
+                    {listLoading ? (
+                      <tr><td colSpan={10}><div className="p-3"><SkeletonRows rows={5} label="Loading patients" /></div></td></tr>
+                    ) : filteredPatients.length === 0 ? (
                       <tr><td colSpan={10}><EmptyState icon={Users} title="No patients found" hint="Try a different search, or add your first patient." /></td></tr>
                     ) : (
                       filteredPatients.map(p => (

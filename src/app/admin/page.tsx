@@ -44,7 +44,7 @@ export default function AdminPanel() {
         .from("staff")
         .select("role")
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (staffData?.role !== "superadmin") {
         router.push("/unauthorized");
