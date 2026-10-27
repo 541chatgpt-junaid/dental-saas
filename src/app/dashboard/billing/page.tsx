@@ -147,7 +147,7 @@ export default function BillingPage() {
               ))}
             </div>
             <input
-              placeholder="Search invoice # or patient..."
+              placeholder="Search invoice # or patient…"
               value={search}
               onChange={e => setSearch(e.target.value)}
               className="flex-1 border border-brand-200 shadow-sm rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white"
@@ -226,7 +226,7 @@ export default function BillingPage() {
             </div>
 
             {/* Desktop */}
-            <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
+            <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-brand-50 border-b border-brand-200">
                   <tr>

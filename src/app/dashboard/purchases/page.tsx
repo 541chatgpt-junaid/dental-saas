@@ -204,7 +204,7 @@ export default function Purchases() {
             )}
             <div className="flex gap-3 mt-4">
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : editingId ? "Update Purchase" : "Save Purchase"}
+                {loading ? "Saving…" : editingId ? "Update Purchase" : "Save Purchase"}
               </button>
               <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
@@ -212,7 +212,7 @@ export default function Purchases() {
         )}
 
         <div className="flex flex-col md:flex-row gap-3 mb-4">
-          <input placeholder="Search item or supplier..." value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border border-brand-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
+          <input placeholder="Search item or supplier…" value={search} onChange={e => setSearch(e.target.value)} className="flex-1 border border-brand-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
           <div className="flex gap-2">
             {["all", "today", "month"].map(f => (
               <button key={f} onClick={() => setFilter(f)} className={`flex-1 md:flex-none px-3 py-2 rounded-lg text-xs font-medium ${filter === f ? "bg-brand-600 text-white" : "bg-white text-brand-700 border border-brand-200"}`}>

@@ -183,7 +183,7 @@ export default function InvoiceDetailPage() {
   if (loading) return (
     <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm mt-14 md:mt-0">Loading invoice...</div>
+      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm mt-14 md:mt-0">Loading invoice…</div>
     </div>
   );
 
@@ -305,7 +305,7 @@ export default function InvoiceDetailPage() {
           </div>
 
           {/* Items Table */}
-          <div className="overflow-hidden">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-brand-50 border-b border-brand-200">
@@ -407,6 +407,7 @@ export default function InvoiceDetailPage() {
           {payments.length === 0 ? (
             <EmptyState icon={Wallet} title="No payments yet" hint="Payments recorded against this invoice will show here." compact />
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-brand-50 border-b border-brand-100 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                 <tr>
@@ -429,6 +430,7 @@ export default function InvoiceDetailPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
 
@@ -460,7 +462,7 @@ export default function InvoiceDetailPage() {
                 <div>
                   <label className="text-xs text-brand-600 mb-1 block font-medium">Notes (optional)</label>
                   <input value={payNotes} onChange={e => setPayNotes(e.target.value)}
-                    placeholder="Any notes..."
+                    placeholder="Any notes…"
                     className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                   />
                 </div>
@@ -468,7 +470,7 @@ export default function InvoiceDetailPage() {
                 <div className="flex gap-3 pt-1">
                   <button onClick={handleRecordPayment} disabled={payLoading}
                     className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">
-                    {payLoading ? "Recording..." : "Record Payment"}
+                    {payLoading ? "Recording…" : "Record Payment"}
                   </button>
                   <button onClick={() => setShowPayModal(false)}
                     className="flex-1 border border-brand-200 text-brand-700 py-2.5 rounded-xl text-sm">

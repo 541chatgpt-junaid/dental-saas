@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
   const { name, email, phone, address, adminPassword } = await request.json();
   if (!name || !email || !adminPassword)
-    return NextResponse.json({ error: "name, email and adminPassword required" }, { status: 400 });
+    return NextResponse.json({ error: "Name, email and admin password are required." }, { status: 400 });
 
   const admin = adminClient();
 

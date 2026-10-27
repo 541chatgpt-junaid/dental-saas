@@ -42,7 +42,7 @@ export default function ResetPassword() {
       setError(error.message);
       setLoading(false);
     } else {
-      setSuccess("Password updated successfully! Redirecting...");
+      setSuccess("Password updated successfully! Redirecting…");
       setTimeout(() => router.push("/"), 2000);
     }
   };
@@ -99,7 +99,7 @@ export default function ResetPassword() {
               disabled={loading}
               className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:opacity-60"
             >
-              {loading ? "Updating..." : "Update Password"}
+              {loading ? "Updating…" : "Update Password"}
             </button>
           </div>
         )}

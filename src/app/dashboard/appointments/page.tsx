@@ -269,7 +269,7 @@ export default function Appointments() {
         {st === "Requested" && (
           <>
             <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold"><Check className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Confirm</button>
-            <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Tell patient</a>
+            <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Notify patient</a>
             <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium"><X className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Decline</button>
           </>
         )}
@@ -369,7 +369,7 @@ export default function Appointments() {
             </div>
             <div className="flex gap-3 mt-4">
               <button onClick={editingId ? handleEdit : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {loading ? "Saving..." : editingId ? "Update Appointment" : "Save Appointment"}
+                {loading ? "Saving…" : editingId ? "Update Appointment" : "Save Appointment"}
               </button>
               <button onClick={() => { setShowForm(false); setEditingId(null); setSaveError(""); setForm(emptyForm()); }} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
@@ -433,7 +433,7 @@ export default function Appointments() {
                             {effectiveApptStatus(a) === "Requested" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold"><Check className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Confirm</button>
-                                <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Tell patient</a>
+                                <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Notify patient</a>
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium"><X className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Decline</button>
                               </>
                             )}
@@ -506,7 +506,7 @@ export default function Appointments() {
                             {effectiveApptStatus(a) === "Requested" && (
                               <>
                                 <button onClick={() => updateStatus(a.id, "Scheduled")} className="text-green-600 text-xs font-semibold"><Check className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Confirm</button>
-                                <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Tell patient</a>
+                                <a href={confirmLink(a)} target="_blank" rel="noreferrer" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Notify patient</a>
                                 <button onClick={() => updateStatus(a.id, "Cancelled")} className="text-red-500 text-xs font-medium"><X className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Decline</button>
                               </>
                             )}

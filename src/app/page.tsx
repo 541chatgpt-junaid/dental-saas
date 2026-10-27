@@ -731,7 +731,7 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <button type="submit" disabled={reviewSubmitting} className="rounded-full bg-navy px-7 py-3 text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-0.5 hover:shadow-lg disabled:cursor-wait disabled:opacity-70 disabled:hover:translate-y-0 disabled:hover:shadow-none">
-                  {reviewSubmitting ? "Submitting..." : "Submit review"}
+                  {reviewSubmitting ? "Submitting…" : "Submit review"}
                 </button>
               </div>
               {reviewError && <p role="alert" className="mt-4 text-sm font-medium text-red-600">{reviewError}</p>}

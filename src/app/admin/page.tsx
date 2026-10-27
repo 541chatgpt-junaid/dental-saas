@@ -69,7 +69,7 @@ export default function AdminPanel() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ clinicId: clinic.id, is_active: !clinic.is_active }),
     }).catch(() => null);
-    const json = res ? await res.json().catch(() => ({})) : { error: "no connection to the server" };
+    const json = res ? await res.json().catch(() => ({})) : { error: "No connection to the server." };
     if (!res?.ok || json.error) alert(`Could not change ${clinic.name}: ${json.error || res?.statusText || "request failed"}`);
     fetchClinics();
   };
@@ -148,7 +148,7 @@ export default function AdminPanel() {
             {formError && <p className="text-red-600 text-sm mb-3"><CircleX className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />{formError}</p>}
             <div className="flex gap-3">
               <button onClick={handleAddClinic} disabled={formLoading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">
-                {formLoading ? "Creating..." : "Create Clinic"}
+                {formLoading ? "Creating…" : "Create Clinic"}
               </button>
               <button onClick={() => setShowForm(false)} className="border border-brand-200 text-gray-600 px-5 py-2 rounded-lg text-sm">Cancel</button>
             </div>
@@ -156,7 +156,7 @@ export default function AdminPanel() {
         )}
 
         {loading ? (
-          <div className="text-center py-20 text-gray-400 text-sm">Loading clinics...</div>
+          <div className="text-center py-20 text-gray-400 text-sm">Loading clinics…</div>
         ) : (
           <>
             {/* Mobile */}
@@ -191,7 +191,7 @@ export default function AdminPanel() {
             </div>
 
             {/* Desktop */}
-            <div className="hidden md:block bg-white rounded-xl border border-brand-200 overflow-hidden">
+            <div className="hidden md:block bg-white rounded-xl border border-brand-200 overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-brand-50 border-b border-brand-200">
                   <tr>

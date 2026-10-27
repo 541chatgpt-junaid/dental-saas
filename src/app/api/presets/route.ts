@@ -80,7 +80,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ data });
   }
 
-  return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  return NextResponse.json({ error: "Invalid type." }, { status: 400 });
 }
 
 // POST /api/presets  — body: { type, ...fields }
@@ -125,7 +125,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   }
 
-  return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  return NextResponse.json({ error: "Invalid type." }, { status: 400 });
 }
 
 // PATCH /api/presets  — body: { type, id, ...fields }
@@ -163,7 +163,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ success: true });
   }
 
-  return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  return NextResponse.json({ error: "Invalid type." }, { status: 400 });
 }
 
 // DELETE /api/presets?type=treatments|prescriptions&id=xxx
@@ -174,10 +174,10 @@ export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
   const type = searchParams.get("type");
   const id = searchParams.get("id");
-  if (!id) return NextResponse.json({ error: "Missing id" }, { status: 400 });
+  if (!id) return NextResponse.json({ error: "Missing id." }, { status: 400 });
 
   const table = type === "treatments" ? "treatment_presets" : type === "prescriptions" ? "prescription_presets" : null;
-  if (!table) return NextResponse.json({ error: "Invalid type" }, { status: 400 });
+  if (!table) return NextResponse.json({ error: "Invalid type." }, { status: 400 });
 
   const { error } = await admin().from(table).delete().eq("id", id).eq("clinic_id", clinicId);
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });

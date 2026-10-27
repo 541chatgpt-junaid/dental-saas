@@ -888,7 +888,7 @@ export default function Patients() {
                   <input placeholder="Notes (optional)" value={appointmentForm.notes} onChange={e => setAppointmentForm({...appointmentForm, notes: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                 </div>
                 <div className="flex gap-3">
-                  <button onClick={handleAddAppointment} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Book Appointment"}</button>
+                  <button onClick={handleAddAppointment} disabled={loading} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving…" : "Book Appointment"}</button>
                   <button onClick={() => setShowAppointmentForm(false)} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
@@ -908,7 +908,7 @@ export default function Patients() {
                     {doctors.map(d => <option key={d.id} value={d.name}>{doctorName(d.name)}</option>)}
                   </select>
                   <div>
-                    <TreatmentSelect value={visitForm.treatment} placeholder="Select treatment done"
+                    <TreatmentSelect value={visitForm.treatment} placeholder="Select treatment performed"
                       onPick={(name, fee) => setVisitForm(f => ({ ...f, treatment: name, fee: f.fee || (fee ? String(fee) : "") }))} />
                   </div>
                   <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
@@ -964,12 +964,12 @@ export default function Patients() {
                 <ToothChart selected={visitTeeth} onToggle={toggleVisitTooth} />
                 {visitForm.fee && visitForm.fee_paid && (
                   <div className="mt-3 bg-brand-50 rounded-lg px-4 py-2 flex justify-between items-center">
-                    <span className="text-xs text-brand-600">This visit remaining:</span>
+                    <span className="text-xs text-brand-600">Remaining for this visit:</span>
                     <span className="text-sm font-semibold text-orange-600">{symbol} {(parseInt(visitForm.fee) || 0) - (parseInt(visitForm.fee_paid) || 0)}</span>
                   </div>
                 )}
                 <div className="flex gap-3 mt-4">
-                  <button onClick={editingVisitId ? handleEditVisit : handleAddVisit} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingVisitId ? "Update Visit" : "Save Visit"}</button>
+                  <button onClick={editingVisitId ? handleEditVisit : handleAddVisit} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving…" : editingVisitId ? "Update Visit" : "Save Visit"}</button>
                   <button onClick={resetVisitForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
@@ -999,7 +999,7 @@ export default function Patients() {
                   {visits.length === 0 ? (
                     <div className="text-center py-10">
                       <p className="text-brand-400 text-sm mb-1">No visits recorded yet</p>
-                      <p className="text-brand-300 text-xs">Click "+ Visit" to add first visit</p>
+                      <p className="text-brand-300 text-xs">Click "+ Visit" to add the first visit.</p>
                     </div>
                   ) : (
                     visits.map((v, i) => (
@@ -1176,11 +1176,11 @@ export default function Patients() {
                         </div>
                         <div className="md:col-span-2">
                           <label className="block text-xs font-medium text-red-700 mb-1">Additional Notes</label>
-                          <textarea placeholder="Any other important medical information..." value={medicalForm.notes} onChange={e => setMedicalForm({...medicalForm, notes: e.target.value})} rows={3} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
+                          <textarea placeholder="Any other important medical information…" value={medicalForm.notes} onChange={e => setMedicalForm({...medicalForm, notes: e.target.value})} rows={3} className="w-full border border-red-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400" />
                         </div>
                       </div>
                       <div className="flex gap-3 mt-4">
-                        <button onClick={handleSaveMedical} disabled={loading} className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : "Save"}</button>
+                        <button onClick={handleSaveMedical} disabled={loading} className="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving…" : "Save"}</button>
                         <button onClick={() => setShowMedicalForm(false)} className="border border-red-200 text-red-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                       </div>
                     </div>
@@ -1236,7 +1236,7 @@ export default function Patients() {
             </div>
 
             <div className="mb-5">
-              <input placeholder="Search by name or patient number..." value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-brand-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
+              <input placeholder="Search by name or patient number…" value={search} onChange={e => setSearch(e.target.value)} className="w-full border border-brand-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold bg-white" />
             </div>
 
             {showAnyForm && (
@@ -1277,7 +1277,7 @@ export default function Patients() {
                   <input placeholder="Fee Paid" type="number" value={form.fee_paid} onChange={e => setForm({...form, fee_paid: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                 </div>
                 <div className="flex gap-3 mt-4">
-                  <button onClick={editingPatientId ? handleEditPatient : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving..." : editingPatientId ? "Update Patient" : "Save Patient"}</button>
+                  <button onClick={editingPatientId ? handleEditPatient : handleAdd} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-60">{loading ? "Saving…" : editingPatientId ? "Update Patient" : "Save Patient"}</button>
                   <button onClick={resetForm} className="border border-brand-200 text-brand-700 px-5 py-2 rounded-lg text-sm">Cancel</button>
                 </div>
               </div>
@@ -1415,7 +1415,7 @@ export default function Patients() {
                 <input
                   value={payForm.notes}
                   onChange={e => setPayForm({ ...payForm, notes: e.target.value })}
-                  placeholder="Any notes..."
+                  placeholder="Any notes…"
                   className="w-full border border-brand-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 />
               </div>
@@ -1426,7 +1426,7 @@ export default function Patients() {
                   disabled={payLoading}
                   className="flex-1 bg-brand-600 hover:bg-brand-700 text-white py-2.5 rounded-xl text-sm font-medium disabled:opacity-60"
                 >
-                  {payLoading ? "Saving..." : "Confirm Payment"}
+                  {payLoading ? "Saving…" : "Confirm Payment"}
                 </button>
                 <button
                   onClick={() => setPayingPatient(null)}

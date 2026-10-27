@@ -315,3 +315,15 @@
   body[data-print-plan] .print-only { display: block; }
   body[data-print-plan] .no-print { display: none !important; }
 }
+
+/* Layout: page content must be allowed to shrink inside the flex row, otherwise a wide table
+   stretches the whole page instead of scrolling inside its own wrapper */
+.de-app .animate-page { min-width: 0; }
+
+/* Small screens: 16px fields stop iOS from zooming in on focus; chips and buttons get a thumb-sized target */
+@media (max-width: 767px) {
+  .de-app input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  .de-app select,
+  .de-app textarea { font-size: 16px; }
+  .de-app button { min-height: 36px; }
+}

@@ -61,7 +61,7 @@ export default function ForgotPassword() {
               disabled={loading}
               className="w-full bg-brand-600 hover:bg-brand-700 text-white font-medium py-2.5 rounded-lg transition-colors text-sm disabled:opacity-60"
             >
-              {loading ? "Sending..." : "Send Reset Email"}
+              {loading ? "Sending…" : "Send Reset Email"}
             </button>
           </div>
         )}

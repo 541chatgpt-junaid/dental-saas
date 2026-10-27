@@ -391,6 +391,7 @@ export default function TreatmentPlans() {
                         <p className="text-sm">Treatment estimate for {p.patient_name}{p.doctor_name ? ` · ${doctorName(p.doctor_name)}` : ""} · {formatDate(new Date())}</p>
                         <h2 className="mt-3 text-lg font-semibold">{p.title}</h2>
                       </div>
+                      <div className="overflow-x-auto">
                       <table className="w-full text-sm">
                         <thead>
                           <tr className="text-left text-xs uppercase tracking-wide text-brand-500">
@@ -422,6 +423,7 @@ export default function TreatmentPlans() {
                           <tr className="border-t-2 border-brand-200 font-semibold text-brand-800"><td className="no-print"></td><td colSpan={2} className="py-2">Total</td><td className="py-2 text-right">{money(planTotal(p))}</td></tr>
                         </tfoot>
                       </table>
+                      </div>
                       {p.notes && <p className="mt-3 whitespace-pre-line rounded-lg bg-brand-50 p-3 text-sm text-brand-600">{p.notes}</p>}
 
                       <div className="no-print mt-4 flex flex-wrap items-center gap-2">

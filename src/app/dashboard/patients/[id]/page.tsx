@@ -94,7 +94,7 @@ export default function PatientHistoryPage() {
   if (loading) return (
     <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
-      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm mt-14 md:mt-0">Loading...</div>
+      <div className="flex-1 flex items-center justify-center text-gray-400 text-sm mt-14 md:mt-0">Loading…</div>
     </div>
   );
 
@@ -196,7 +196,7 @@ export default function PatientHistoryPage() {
                   ))}
                 </div>
                 {/* Desktop */}
-                <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
+                <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-brand-50 border-b border-brand-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                       <tr>
@@ -260,7 +260,7 @@ export default function PatientHistoryPage() {
                   ))}
                 </div>
                 {/* Desktop */}
-                <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-hidden">
+                <div className="hidden md:block bg-white rounded-xl border border-brand-200 shadow-sm overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead className="bg-brand-50 border-b border-brand-200 text-xs text-gray-500 font-semibold uppercase tracking-wide">
                       <tr>

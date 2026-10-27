@@ -50,7 +50,7 @@ export default function SetupClinicPage() {
   if (checking) {
     return (
       <main className="min-h-screen flex items-center justify-center bg-brand-50">
-        <p className="text-brand-500 text-sm">Loading...</p>
+        <p className="text-brand-500 text-sm">Loading…</p>
       </main>
     );
   }
@@ -100,7 +100,7 @@ export default function SetupClinicPage() {
             disabled={loading}
             className="w-full bg-brand-600 hover:bg-brand-700 text-white py-3 rounded-xl text-sm font-medium transition-colors disabled:opacity-60"
           >
-            {loading ? "Setting up your clinic..." : "Complete Setup"}
+            {loading ? "Setting up your clinic…" : "Complete Setup"}
           </button>
         </div>
 
