@@ -22,7 +22,7 @@ export interface BookingDoctor {
 }
 export interface BookingContext {
   settings: BookingSettings;
-  clinic: { name: string; phone: string | null; address: string | null };
+  clinic: { name: string; phone: string | null; address: string | null; logo_url: string | null };
   doctors: BookingDoctor[];
 }
 
@@ -42,15 +42,18 @@ export const weekdayOf = (iso: string) => WEEKDAYS[new Date(`${iso}T00:00:00Z`).
 export async function loadBookingContext(admin: SupabaseClient, slug: string): Promise<BookingContext | null> {
   const { data: settings } = await admin.from("booking_settings").select("*").eq("slug", slug.toLowerCase()).maybeSingle();
   if (!settings || !settings.enabled) return null;
-  const [{ data: clinic }, { data: doctors }] = await Promise.all([
+  // logo_url is read separately so a database without that column still serves the page
+  const [{ data: clinicRow }, { data: logoRow }, { data: doctors }] = await Promise.all([
     admin.from("clinics").select("name, phone, address, is_active").eq("id", settings.clinic_id).maybeSingle(),
+    admin.from("clinics").select("logo_url").eq("id", settings.clinic_id).maybeSingle(),
     admin.from("doctors").select("name, specialization, timing_start, timing_end, working_days")
       .eq("clinic_id", settings.clinic_id).eq("status", "Active").order("name"),
   ]);
+  const clinic = clinicRow;
   if (!clinic || clinic.is_active === false) return null;
   return {
     settings: settings as BookingSettings,
-    clinic: { name: clinic.name, phone: clinic.phone, address: clinic.address },
+    clinic: { name: clinic.name, phone: clinic.phone, address: clinic.address, logo_url: (logoRow as { logo_url?: string | null } | null)?.logo_url ?? null },
     doctors: (doctors || []) as BookingDoctor[],
   };
 }

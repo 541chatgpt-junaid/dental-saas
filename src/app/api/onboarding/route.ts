@@ -1,6 +1,5 @@
-import { createClient } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { currentUser } from "@/lib/serverUser";
+import { clinicOwner } from "@/lib/serverUser";
 import { invalidateClinic } from "@/lib/clinicCache";
 import { clean } from "@/lib/formInput";
 import { WEEKDAYS } from "@/lib/weekdays";
@@ -15,19 +14,11 @@ const TIME_RE = /^\d{2}:\d{2}$/;
 const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
 const fail = (error: string, status = 400) => NextResponse.json({ error }, { status });
 
-const admin = () => createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
+type Db = NonNullable<Awaited<ReturnType<typeof clinicOwner>>>["db"];
 
-async function owner() {
-  const user = await currentUser();
-  if (!user) return null;
-  const db = admin();
-  const { data } = await db.from("staff").select("clinic_id, role").eq("user_id", user.id).maybeSingle();
-  const role = String(data?.role || "").toLowerCase();
-  if (!data?.clinic_id || (role !== "admin" && role !== "superadmin")) return null;
-  return { db, clinicId: data.clinic_id as string, email: user.email ?? "" };
-}
+const owner = clinicOwner;
 
-async function sampleCount(db: ReturnType<typeof admin>, clinicId: string) {
+async function sampleCount(db: Db, clinicId: string) {
   const { count } = await db.from("patients").select("id", { count: "exact", head: true }).eq("clinic_id", clinicId).eq("is_sample", true);
   return count ?? 0;
 }
