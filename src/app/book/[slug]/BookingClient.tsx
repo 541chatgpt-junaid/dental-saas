@@ -50,7 +50,7 @@ export default function BookingClient({ slug }: { slug: string }) {
   const [date, setDate] = useState<string | null>(null);
   const [slots, setSlots] = useState<string[] | null>(null);
   const [time, setTime] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", reason: "", website: "" });
+  const [form, setForm] = useState({ name: "", phone: "", reason: "", website: "", consent: false });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [booked, setBooked] = useState<{ date: string; time: string; doctor: string | null; pay: { url: string; fee: number; symbol: string } | null } | null>(null);
@@ -269,6 +269,10 @@ export default function BookingClient({ slug }: { slug: string }) {
                       <span className="mb-1 block text-xs font-semibold text-navy/70">Reason for visit</span>
                       <input value={form.reason} onChange={e => setForm({ ...form, reason: e.target.value })} placeholder="e.g. Toothache, check-up, cleaning"
                         className="w-full rounded-xl border-2 border-navy/10 bg-cream-2 px-4 py-3 text-navy outline-none transition-colors focus:border-gold" />
+                    </label>
+                    <label className="flex items-start gap-2.5 text-xs text-navy/70 sm:col-span-2">
+                      <input type="checkbox" checked={form.consent} onChange={e => setForm({ ...form, consent: e.target.checked })} className="mt-0.5 h-4 w-4 accent-gold" />
+                      Send me appointment reminders and a follow-up message on WhatsApp. I can stop them at any time.
                     </label>
                     <input value={form.website} onChange={e => setForm({ ...form, website: e.target.value })} tabIndex={-1} autoComplete="off" aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 opacity-0" />
                   </div>

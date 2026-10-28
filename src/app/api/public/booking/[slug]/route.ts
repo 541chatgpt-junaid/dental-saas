@@ -76,6 +76,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       .insert([{ clinic_id: clinicId, name, phone, status: "Pending" }]).select("id").single();
     patientId = created?.id ?? null;
   }
+  // Reminders are only ever sent to a patient who agreed: the booking tick-box is that agreement
+  if (patientId && body.consent === true) {
+    await db.from("patients").update({ contact_consent: true, contact_consent_at: new Date().toISOString(), contact_consent_source: "online_booking" }).eq("id", patientId).eq("clinic_id", clinicId);
+  }
   if (!patientId) {
     console.error("Online booking could not resolve a patient for", slug);
     return NextResponse.json({ error: "Could not save your booking. Please call the clinic." }, { status: 500 });

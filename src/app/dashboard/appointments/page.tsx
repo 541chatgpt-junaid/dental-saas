@@ -10,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
+import ReadyMessages from "./ReadyMessages";
 import { CalendarDays, CalendarRange, List } from "lucide-react";
 import AppointmentCalendar, { slotKey } from "./AppointmentCalendar";
 import TreatmentSelect from "@/components/TreatmentSelect";
@@ -334,6 +335,8 @@ export default function Appointments() {
             </button>
           </div>
         </div>
+
+        <ReadyMessages />
 
         {(showForm || !!editingId) && (
           <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
