@@ -9,6 +9,7 @@ interface FormRow { id: string; kind: "history" | "consent" | "portal"; created_
 interface Submission { id: string; submitted_at: string; flagged: { allergies?: string[]; conditions?: string[] } }
 interface Consent { id: string; title: string; signer_name: string; signer_relation: string | null; signed_at: string; signature_png: string }
 interface Template { id: string; title: string }
+interface Consent2 { contact_consent: boolean; contact_consent_at: string | null; contact_consent_source: string | null }
 
 const KIND_LABEL = { history: "Medical history", consent: "Consent", portal: "Portal invitation" } as const;
 const stamp = (iso: string) => `${formatDate(iso)}, ${new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
@@ -23,15 +24,18 @@ export default function PatientFormsPanel({ patientId, patientName, phone, clini
   const [error, setError] = useState("");
   const [link, setLink] = useState<{ kind: FormRow["kind"]; url: string } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [msgConsent, setMsgConsent] = useState<Consent2 | null>(null);
 
   const load = useCallback(async () => {
     const db = createClient();
-    const [f, s, c, t] = await Promise.all([
+    const [f, s, c, t, pc] = await Promise.all([
       db.from("patient_forms").select("id, kind, created_at, expires_at, submitted_at, revoked").eq("patient_id", patientId).order("created_at", { ascending: false }),
       db.from("patient_form_submissions").select("id, submitted_at, flagged").eq("patient_id", patientId).order("submitted_at", { ascending: false }),
       db.from("consent_records").select("id, title, signer_name, signer_relation, signed_at, signature_png").eq("patient_id", patientId).order("signed_at", { ascending: false }),
       db.from("consent_templates").select("id, title").eq("active", true).order("title"),
+      db.from("patients").select("contact_consent, contact_consent_at, contact_consent_source").eq("id", patientId).maybeSingle(),
     ]);
+    setMsgConsent((pc.data as Consent2) || null);
     setForms((f.data as FormRow[]) || []); setSubs((s.data as Submission[]) || []); setConsents((c.data as Consent[]) || []);
     const tpl = (t.data as Template[]) || [];
     setTemplates(tpl); setTemplateId(cur => cur || tpl[0]?.id || "");
@@ -53,6 +57,12 @@ export default function PatientFormsPanel({ patientId, patientName, phone, clini
     await fetch(`/api/forms/links?id=${id}`, { method: "DELETE" }).catch(() => null);
     load();
   };
+  const setConsent = async (consent: boolean) => {
+    setError(""); setMsgConsent(m => ({ contact_consent_at: null, contact_consent_source: null, ...m, contact_consent: consent }));
+    const res = await fetch("/api/reminders/consent", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ patientId, consent }) }).catch(() => null);
+    const json = res ? await res.json().catch(() => ({})) : {};
+    if (!res?.ok || json.error) setError(json.error || "Could not update. Please try again."); else load();
+  };
   const copy = async () => { if (link) { await navigator.clipboard?.writeText(link.url).catch(() => null); setCopied(true); } };
   const message = (kind: FormRow["kind"], url: string) =>
     `Hello ${patientName}, ${clinicName} sent you ${kind === "history" ? "a medical history form to fill in before your visit" : kind === "consent" ? "a consent form to read and sign" : "an invitation to your patient portal"}: ${url}`;
@@ -62,6 +72,13 @@ export default function PatientFormsPanel({ patientId, patientName, phone, clini
 
   return (
     <div className="p-4 md:p-6 space-y-6">
+      <section aria-label="WhatsApp messages" className="rounded-lg border border-brand-200 p-3">
+        <label className="flex items-start gap-2.5 text-sm text-brand-800">
+          <input type="checkbox" checked={!!msgConsent?.contact_consent} onChange={e => setConsent(e.target.checked)} className="mt-0.5 h-4 w-4 accent-gold" />
+          <span><strong>Allow WhatsApp messages</strong> (appointment reminders, rebooking follow-up, review request)
+            <span className="block text-xs text-brand-400">{msgConsent?.contact_consent ? `Agreed ${msgConsent.contact_consent_at ? formatDate(msgConsent.contact_consent_at) : ""}${msgConsent.contact_consent_source === "online_booking" ? " on the booking page" : ""}.` : msgConsent?.contact_consent_source === "patient_opt_out" ? "The patient opted out." : "No agreement on record, so no automatic messages are sent to this patient."}</span></span>
+        </label>
+      </section>
       <section aria-label="Send a form">
         <h3 className="text-sm font-semibold text-brand-800">Send to patient</h3>
         <div className="mt-3 flex flex-wrap items-center gap-2">

@@ -61,6 +61,15 @@ export default function Terms() {
         ]} />
       </Section>
 
+      <Section id="messages" title="Automatic messages">
+        <List items={[
+          "Automatic reminders, follow-ups and review requests are optional and off until the clinic switches them on and sets its times in Settings.",
+          "The clinic is responsible for having each patient's agreement to be messaged and for recording it correctly. DentEase sends only to patients marked as agreed, and stops when a patient opts out, but it cannot tell whether the agreement was properly obtained.",
+          "Messages go through the clinic's own WhatsApp Business account, or are prepared for the clinic to send by hand. The clinic must follow WhatsApp's business terms and the rules that apply to its messaging, and pays any charges WhatsApp makes.",
+          "Messages are sent on a best-effort schedule when the scheduler runs. DentEase does not guarantee that a message is delivered or read at a particular moment.",
+        ]} />
+      </Section>
+
       <Section id="booking" title="Online booking">
         <p>If you switch on your booking page, patients can send appointment requests. A request is not a confirmed appointment until your clinic confirms it. You are responsible for answering requests and for the working days, hours and doctors you publish.</p>
       </Section>
