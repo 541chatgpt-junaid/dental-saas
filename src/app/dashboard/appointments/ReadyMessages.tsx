@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase";
 import { waLink } from "@/lib/whatsapp";
 
 interface Row { id: string; kind: string; to_phone: string | null; body: string | null; patients: { name: string } | null }
-const KIND: Record<string, string> = { reminder_day_before: "Reminder", reminder_same_day: "Reminder", noshow_followup: "Rebooking follow-up", review_request: "Review request" };
+const KIND: Record<string, string> = { reminder_day_before: "Reminder", reminder_same_day: "Reminder", noshow_followup: "Rebooking follow-up", review_request: "Review request", recall_followup: "Recall message" };
 
 /** Messages the scheduler has prepared for a clinic without a WhatsApp API connection: one tap sends each. */
 export default function ReadyMessages() {

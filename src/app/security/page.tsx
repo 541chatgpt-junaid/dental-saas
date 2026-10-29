@@ -108,6 +108,16 @@ export default function Security() {
         ]} />
       </Section>
 
+      <Section id="ai" title="AI drafting">
+        <List items={[
+          "Off until the clinic owner switches it on. The AI key lives only on the server (an environment variable); it is never in the code or sent to the browser.",
+          "Nothing AI-written is sent or saved without a member of staff approving it. Approval is a separate step on the server, recorded with who approved it and the exact text; a recall or review message approved this way goes into the same queue as the automatic messages, with the same consent rule and stop link.",
+          "The AI is given only a small block of facts from the record (never a patient's phone number, address, CNIC or medical history). Its answer is then checked: a message that brings in a date, number or link that is not in the facts is thrown away and replaced by a plain template; a dictated-note draft keeps only what is backed by words the clinician actually said, and shows those words next to each part.",
+          "A review reply is written never to say the reviewer is a patient or mention any treatment or health detail.",
+          "Each clinic can make a limited number of drafts per hour. A log of every draft (facts sent, answer, approval) is kept and readable by clinic admins.",
+        ]} />
+      </Section>
+
       <Section id="messages" title="Automatic messages">
         <List items={[
           "A patient with no agreement to be messaged on record is never sent a reminder, follow-up or review request. Every existing patient starts without one.",

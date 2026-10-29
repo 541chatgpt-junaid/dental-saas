@@ -4,13 +4,15 @@ import { doctorName } from "@/lib/personName";
 import { formatDate } from "@/lib/dateFormat";
 import EmptyState from "@/components/EmptyState";
 import { SkeletonRows } from "@/components/Skeleton";
-import { CalendarCheck, Check, FileText, Globe, MessageCircle, Pencil, RotateCcw, Trash2, TriangleAlert, X } from "lucide-react";
+import { CalendarCheck, Check, FileText, Globe, MessageCircle, Pencil, RotateCcw, Sparkles, Trash2, TriangleAlert, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import { useClinic } from "@/lib/ClinicContext";
 import { waLink } from "@/lib/whatsapp";
 import ReadyMessages from "./ReadyMessages";
+import AiDraftModal from "@/components/AiDraftModal";
+import { useAiStatus } from "@/lib/useAi";
 import { CalendarDays, CalendarRange, List } from "lucide-react";
 import AppointmentCalendar, { slotKey } from "./AppointmentCalendar";
 import TreatmentSelect from "@/components/TreatmentSelect";
@@ -251,6 +253,13 @@ export default function Appointments() {
   );
 
 
+  const ai = useAiStatus();
+  const [aiAppt, setAiAppt] = useState<Appointment | null>(null);
+  /** After a completed visit: draft the review request with AI (staff review and approve it before it is queued) */
+  const reviewButton = (a: Appointment) => ai?.ready && a.patient_id && a.status === "Completed" ? (
+    <button onClick={() => setAiAppt(a)} className="text-[#8a6d12] text-xs font-medium"><Sparkles className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Review request</button>
+  ) : null;
+
   const AppointmentCard = ({ a }: { a: Appointment }) => {
     const st = effectiveApptStatus(a);
     return (
@@ -282,6 +291,7 @@ export default function Appointments() {
           </>
         )}
         {st === NO_SHOW && <button onClick={() => rebook(a)} className="text-brand-600 text-xs font-semibold"><RotateCcw className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Rebook</button>}
+        {reviewButton(a)}
         <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
         <button onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium"><Trash2 className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Delete</button>
       </div>
@@ -337,6 +347,7 @@ export default function Appointments() {
         </div>
 
         <ReadyMessages />
+        {aiAppt && <AiDraftModal tool="review_request" refId={aiAppt.id} title={`Review request for ${aiAppt.patient_name}`} onClose={() => setAiAppt(null)} />}
 
         {(showForm || !!editingId) && (
           <div className="form-panel bg-white rounded-xl p-4 md:p-6 border border-brand-100 mb-6">
@@ -448,6 +459,7 @@ export default function Appointments() {
                             )}
                             {effectiveApptStatus(a) === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Remind</a>}
                                 {effectiveApptStatus(a) === NO_SHOW && <button onClick={() => rebook(a)} className="text-brand-600 text-xs font-semibold"><RotateCcw className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Rebook</button>}
+        {reviewButton(a)}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
                             <button aria-label="Delete" title="Delete" onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                           </div>
@@ -521,6 +533,7 @@ export default function Appointments() {
                             )}
                             {effectiveApptStatus(a) === "Scheduled" && <a href={reminderLink(a)} target="_blank" rel="noreferrer" title="Send WhatsApp reminder" className="text-[#128C7E] text-xs font-medium"><MessageCircle className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Remind</a>}
                                 {effectiveApptStatus(a) === NO_SHOW && <button onClick={() => rebook(a)} className="text-brand-600 text-xs font-semibold"><RotateCcw className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Rebook</button>}
+        {reviewButton(a)}
                             <button onClick={() => openEdit(a)} className="text-brand-600 text-xs font-medium"><Pencil className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />Edit</button>
                             <button aria-label="Delete" title="Delete" onClick={() => deleteAppointment(a.id)} className="text-red-400 text-xs font-medium"><Trash2 className="inline h-4 w-4" aria-hidden="true" /></button>
                           </div>

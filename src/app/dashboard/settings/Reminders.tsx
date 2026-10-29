@@ -9,7 +9,7 @@ interface Row { id: string; kind: string; status: string; reason: string | null;
 const input = "w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold";
 const card = "bg-white rounded-xl border border-brand-200 p-5 shadow-sm";
 const ZONES = ["Asia/Karachi", "Asia/Dubai", "Asia/Riyadh", "Europe/London", "Europe/Paris", "America/New_York", "America/Toronto", "Australia/Sydney"];
-const KIND: Record<string, string> = { reminder_day_before: "Day-before reminder", reminder_same_day: "Same-day reminder", noshow_followup: "No-show follow-up", review_request: "Review request" };
+const KIND: Record<string, string> = { reminder_day_before: "Day-before reminder", reminder_same_day: "Same-day reminder", noshow_followup: "No-show follow-up", review_request: "Review request", recall_followup: "Recall message" };
 const REASON: Record<string, string> = {
   no_consent: "no contact consent on record", no_phone: "no phone number", rescheduled: "appointment was moved", not_scheduled: "appointment no longer scheduled", too_late: "too close to the appointment",
   superseded: "replaced by the same-day reminder", not_a_no_show: "patient came or booking changed", not_completed: "visit not completed", no_review_link: "no Google review link set",

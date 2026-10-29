@@ -43,6 +43,15 @@ export default function Terms() {
         <p>Invoice totals, balances, statuses and reports are calculated from the invoices and payments you record. Check them against your own records. DentEase records payments; it does not collect or process them, and it is not an accounting or tax service.</p>
       </Section>
 
+      <Section id="ai" title="AI drafting">
+        <List items={[
+          "AI drafting is optional and off until the clinic owner switches it on. It needs the server to be connected to an AI service; if it is not, the tools do not appear.",
+          "Every AI result is a draft. Staff must read, edit and approve it: nothing is sent to a patient or added to a record without that approval. You are responsible for what you approve and send.",
+          "The AI is given facts from your records and told to use nothing else, and DentEase checks its answer against those facts, but AI can still be wrong or badly worded. Never rely on a draft for a clinical decision; clinical notes remain the clinician's responsibility.",
+          "Messages are drafted only for patients who agreed to be messaged, and the stop link is added to each one.",
+        ]} />
+      </Section>
+
       <Section id="branches" title="Branches, audit log, two-factor sign-in and backups">
         <List items={[
           "The clinic owner decides which branches exist and which staff may open each one, and is responsible for assigning them correctly.",

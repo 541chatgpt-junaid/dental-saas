@@ -2,7 +2,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDate } from "@/lib/dateFormat";
 import { useRouter } from "next/navigation";
-import { BellRing, CalendarCheck, Check, MessageCircle, Plus, RotateCw, Trash2, X } from "lucide-react";
+import { BellRing, CalendarCheck, Check, MessageCircle, Plus, RotateCw, Sparkles, Trash2, X } from "lucide-react";
+import AiDraftModal from "@/components/AiDraftModal";
+import { useAiStatus } from "@/lib/useAi";
 import { createClient } from "@/lib/supabase";
 import Sidebar from "@/components/Sidebar";
 import EmptyState from "@/components/EmptyState";
@@ -122,6 +124,9 @@ export default function Recalls() {
     if (e) { setError(saveErrorMessage(e, "recall").replace("save", "delete")); load(); }
   };
 
+  const ai = useAiStatus();
+  const [aiFor, setAiFor] = useState<Recall | null>(null);
+
   const message = (r: Recall) =>
     `Assalam o Alaikum ${r.patient_name}, this is a friendly reminder from ${clinicName || "your dental clinic"} that your ${r.reason.toLowerCase()} is due${daysFromToday(r.due_date) < 0 ? "" : ` on ${fmtDate(r.due_date)}`}. Please reply to book a convenient time. Thank you!`;
 
@@ -138,6 +143,7 @@ export default function Recalls() {
   return (
     <div className="min-h-screen flex bg-brand-50">
       <Sidebar />
+      {aiFor && <AiDraftModal tool="recall" refId={aiFor.id} title={`Recall message for ${aiFor.patient_name}`} onClose={() => setAiFor(null)} onSent={() => { if (aiFor.status === "pending") setStatus(aiFor, "contacted"); }} />}
       <div className="animate-page flex-1 p-4 md:p-8 mt-14 md:mt-0">
         <div className="flex flex-wrap justify-between items-center gap-3 mb-6">
           <div>
@@ -242,6 +248,11 @@ export default function Recalls() {
                             className="inline-flex items-center gap-1.5 rounded-lg bg-[#25D366] px-3 py-1.5 text-xs font-medium text-white hover:opacity-90">
                             <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                           </a>
+                          {ai?.ready && r.patient_id && (
+                            <button onClick={() => setAiFor(r)} className="inline-flex items-center gap-1.5 rounded-lg border border-gold/50 bg-gold/10 px-3 py-1.5 text-xs font-medium text-[#8a6d12] hover:bg-gold/20">
+                              <Sparkles className="h-3.5 w-3.5" aria-hidden="true" /> AI draft
+                            </button>
+                          )}
                           <button onClick={() => setStatus(r, "booked")} className="inline-flex items-center gap-1.5 rounded-lg border border-brand-200 px-3 py-1.5 text-xs font-medium text-brand-700 hover:border-gold">
                             <CalendarCheck className="h-3.5 w-3.5" /> Booked
                           </button>
