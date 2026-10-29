@@ -8,6 +8,8 @@ import {
   CheckCircle2, ChevronDown, ClipboardList, FileText, MessageCircle, Pencil, Plus, Printer, Trash2, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase";
+import { loadVatConfig } from "@/lib/ledger";
+import { invoiceTotals, rateForNewInvoice } from "@/lib/vat";
 import { firstError, readAmount, saveErrorMessage } from "@/lib/formSave";
 import Sidebar from "@/components/Sidebar";
 import EmptyState from "@/components/EmptyState";
@@ -196,6 +198,9 @@ export default function TreatmentPlans() {
     setError("");
     const supabase = createClient();
     const subtotal = p.treatment_plan_items.reduce((s, i) => s + (Number(i.fee) || 0), 0);
+    // VAT (when the clinic charges it) is added on top of the plan, at the invoice
+    const vatRate = rateForNewInvoice(await loadVatConfig(supabase, clinicId));
+    const t = invoiceTotals(subtotal, Number(p.discount) || 0, vatRate);
     const { data: invNum } = await supabase.rpc("generate_invoice_number", { p_clinic_id: clinicId });
     const { data: invoice, error: invErr } = await supabase.from("invoices").insert([{
       clinic_id: clinicId,
@@ -204,7 +209,8 @@ export default function TreatmentPlans() {
       status: "unpaid",
       subtotal,
       discount: Number(p.discount) || 0,
-      total: planTotal(p),
+      total: t.total,
+      ...(vatRate > 0 ? { vat_rate: vatRate, vat_amount: t.vat } : {}),
       amount_paid: 0,
       notes: `Treatment plan: ${p.title}`,
     }]).select().single();

@@ -30,6 +30,7 @@ interface Settings {
   clinic_address: string;
   clinic_phone: string;
   clinic_email: string;
+  vat_trn?: string | null;
 }
 
 export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
@@ -79,6 +80,7 @@ export default function Receipt({ patient, billing, onClose }: ReceiptProps) {
             {settings.clinic_address && <p className="text-xs text-gray-400">{settings.clinic_address}</p>}
             {settings.clinic_phone && <p className="text-xs text-gray-400">{settings.clinic_phone}</p>}
             {settings.clinic_email && <p className="text-xs text-gray-400">{settings.clinic_email}</p>}
+            {settings.vat_trn && <p className="text-xs text-gray-400">VAT/TRN: {settings.vat_trn}</p>}
           </div>
 
           {/* Divider */}

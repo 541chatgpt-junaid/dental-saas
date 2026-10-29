@@ -12,6 +12,7 @@ import { readAmount, saveErrorMessage } from "@/lib/formSave";
 import OnlinePayments from "./OnlinePayments";
 import ConsentForms from "./ConsentForms";
 import Reminders from "./Reminders";
+import { DEFAULT_VAT_RATE, validTrn, vatConfigOf } from "@/lib/vat";
 
 const currencies = [
   { code: "PKR", symbol: "Rs", name: "Pakistani Rupee" },
@@ -54,6 +55,8 @@ export default function Settings() {
   const [saveError, setSaveError] = useState("");
   const [autoDetected, setAutoDetected] = useState("");
   const [form, setForm] = useState({ clinic_name: "", clinic_address: "", clinic_phone: "", clinic_email: "", currency: "PKR" });
+  const [vatForm, setVatForm] = useState({ enabled: false, rate: String(DEFAULT_VAT_RATE), trn: "" });
+  const [vatLoaded, setVatLoaded] = useState({ enabled: false, rate: String(DEFAULT_VAT_RATE), trn: "" });
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoBusy, setLogoBusy] = useState(false);
   const [logoError, setLogoError] = useState("");
@@ -98,6 +101,9 @@ export default function Settings() {
         clinic_email: data?.clinic_email || clinic?.email || "",
         currency: data?.currency || auto,
       });
+      const v = vatConfigOf(data);
+      const vf = { enabled: v.enabled, rate: String(v.rate), trn: v.trn };
+      setVatForm(vf); setVatLoaded(vf);
     };
     fetchSettings();
   }, [router, clinicId, clinicLoading]);
@@ -122,16 +128,25 @@ export default function Settings() {
   // General save
   const handleSave = async () => {
     if (!form.clinic_name.trim()) { setSaveError("Clinic name is required."); return; }
+    // VAT columns are only written when the VAT fields were changed, so saving anything else never depends on them
+    const vatChanged = vatForm.enabled !== vatLoaded.enabled || vatForm.rate !== vatLoaded.rate || vatForm.trn.trim() !== vatLoaded.trn;
+    const vatRate = Number(vatForm.rate);
+    if (vatChanged) {
+      if (vatForm.enabled && !(vatForm.rate.trim() !== "" && Number.isFinite(vatRate) && vatRate >= 0 && vatRate <= 100)) { setSaveError("Enter the VAT rate as a percentage between 0 and 100."); return; }
+      if (!validTrn(vatForm.trn.trim())) { setSaveError("The VAT/TRN number can use letters, numbers, spaces and dashes (4 to 30 characters)."); return; }
+    }
+    const vatCols = vatChanged ? { vat_enabled: vatForm.enabled, vat_rate: Number.isFinite(vatRate) && vatForm.rate.trim() !== "" ? vatRate : DEFAULT_VAT_RATE, vat_trn: vatForm.trn.trim() || null } : {};
     setLoading(true);
     setSaveError("");
     const supabase = createClient();
     const { data: existing } = await supabase.from("settings").select("id").maybeSingle();
     const { error } = existing
-      ? await supabase.from("settings").update({ clinic_name: form.clinic_name, clinic_address: form.clinic_address, clinic_phone: form.clinic_phone, clinic_email: form.clinic_email, currency: form.currency }).eq("id", existing.id)
-      : await supabase.from("settings").insert([{ ...form, clinic_id: clinicId }]);
+      ? await supabase.from("settings").update({ clinic_name: form.clinic_name, clinic_address: form.clinic_address, clinic_phone: form.clinic_phone, clinic_email: form.clinic_email, currency: form.currency, ...vatCols }).eq("id", existing.id)
+      : await supabase.from("settings").insert([{ ...form, ...vatCols, clinic_id: clinicId }]);
     setLoading(false);
     if (error) { setSaveError(saveErrorMessage(error, "settings")); return; }
     await refreshClinic(); // expire the server-side clinic cache so the edit shows immediately
+    setVatLoaded({ enabled: vatForm.enabled, rate: vatForm.rate, trn: vatForm.trn.trim() });
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
   };
@@ -351,6 +366,25 @@ export default function Settings() {
                   </div>
                 )}
               </div>
+            </div>
+            <div className="mt-6 border-t border-brand-100 pt-5">
+              <h4 className="text-sm font-semibold text-brand-800">VAT</h4>
+              <p className="mt-1 text-xs text-gray-400">For clinics that charge value-added tax (the UAE and Saudi standard rate is 5%). VAT is added on top of the items, after any discount. Check with your tax adviser whether your services are taxable and what rate applies.</p>
+              <label className="mt-3 flex items-center gap-2 text-sm text-brand-700">
+                <input type="checkbox" checked={vatForm.enabled} onChange={e => setVatForm({ ...vatForm, enabled: e.target.checked })} className="h-4 w-4 accent-gold" />
+                Charge VAT on invoices
+              </label>
+              <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">VAT rate (%)</label>
+                  <input type="number" min={0} max={100} step="0.01" disabled={!vatForm.enabled} value={vatForm.rate} onChange={e => setVatForm({ ...vatForm, rate: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold disabled:bg-gray-50 disabled:text-gray-400" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">VAT registration number (TRN), optional</label>
+                  <input placeholder="Shown on invoices when filled in" value={vatForm.trn} onChange={e => setVatForm({ ...vatForm, trn: e.target.value })} className="w-full border border-brand-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-gray-400">New invoices use the rate set here. An invoice already issued keeps the rate it was made with.</p>
             </div>
             <div className="mt-6 flex items-center gap-4">
               <button onClick={handleSave} disabled={loading} className="bg-brand-600 hover:bg-brand-700 text-white px-6 py-2.5 rounded-xl text-sm font-medium disabled:opacity-60">

@@ -26,7 +26,7 @@ export default function Privacy() {
           "Clinical records: visits, treatments, tooth chart, medical history (allergies, conditions, medications, previous surgeries, notes) and prescriptions.",
           "Files the clinic uploads, such as X-rays, photos and PDFs.",
           "Appointments, walk-in queue tokens, recalls and treatment plans.",
-          "Billing and running costs: invoices, payments, expenses, purchases, materials, lab work and doctor commissions.",
+          "Billing and running costs: invoices (including the VAT rate and amount, if the clinic charges VAT), payments, expenses, purchases, materials, lab work and doctor commissions. The clinic can also record its own VAT registration number (TRN), which is printed on its invoices.",
           "Online payments, if the clinic switches them on: for each attempt, the amount, the payment provider used, the status and the provider's reference. Card and wallet details are typed on the provider's own page and never reach DentEase.",
         ]} />
         <p>{strong("Forms and the patient portal, if the clinic uses them.")} A clinic can send a patient a link to fill in a medical history form or to sign a consent form. A history answer (allergies, conditions, medicines, surgeries, blood group) is added to that patient&apos;s record. A signed consent stores the wording the patient saw, the name they typed, their drawn signature (an image), the date and time, and a one-way hash of their IP address. A patient can also be invited to create a portal login (an email address and a password handled by Supabase Auth).</p>

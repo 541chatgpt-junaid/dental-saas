@@ -24,7 +24,7 @@ export const invoiceSheet = (invoices: Invoice[], patientName: (id: number | nul
   invoices.map(i => ({
     "Invoice #": i.invoice_number ?? "", Patient: patientName(i.patient_id), Date: formatDate(i.created_at),
     "Due Date": i.due_date ? formatDate(i.due_date) : "", Status: i.state, "Counts in totals": i.counted ? "Yes" : "No",
-    Total: i.total, Paid: i.amount_paid, Balance: i.balance,
+    Subtotal: i.subtotal, Discount: Number((i as { discount?: number | null }).discount) || 0, VAT: i.vat, Total: i.total, Paid: i.amount_paid, Balance: i.balance,
   }));
 
 /** Only payments on counted invoices, the same set every total uses */
