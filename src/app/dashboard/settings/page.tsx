@@ -16,6 +16,7 @@ import Branches from "./Branches";
 import SecurityTab from "./SecurityTab";
 import AuditLog from "./AuditLog";
 import BackupsExport from "./BackupsExport";
+import AiAssistant from "./AiAssistant";
 import { DEFAULT_VAT_RATE, validTrn, vatConfigOf } from "@/lib/vat";
 
 const currencies = [
@@ -47,7 +48,7 @@ const getAutoCurrency = (): string => {
 interface TreatmentPreset { id: string; name: string; price: number; }
 interface PrescriptionPreset { id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string; }
 
-type Tab = "general" | "treatments" | "prescriptions" | "payments" | "consent" | "reminders" | "branches" | "security" | "audit" | "backups";
+type Tab = "general" | "treatments" | "prescriptions" | "payments" | "consent" | "reminders" | "branches" | "security" | "audit" | "backups" | "ai";
 
 export default function Settings() {
   const [tab, setTab] = useState<Tab>("general");
@@ -285,6 +286,7 @@ export default function Settings() {
     { key: "security", label: "Security" },
     { key: "audit", label: "Audit log" },
     { key: "backups", label: "Backups & export" },
+    { key: "ai", label: "AI assistant" },
   ] as const;
 
   return (
@@ -322,6 +324,8 @@ export default function Settings() {
         {tab === "audit" && <AuditLog />}
 
         {tab === "backups" && <BackupsExport />}
+
+        {tab === "ai" && <AiAssistant />}
 
         {tab === "general" && (
           <div className="bg-white rounded-xl p-5 border border-brand-200 shadow-sm w-full md:max-w-2xl">

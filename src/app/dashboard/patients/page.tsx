@@ -7,6 +7,8 @@ import { SkeletonRows } from "@/components/Skeleton";
 import { ArrowLeft, Calendar, Check, Clock, Mail, Pencil, Printer, Trash2, TriangleAlert, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase";
 import PatientFormsPanel from "./PatientFormsPanel";
+import ScribePanel, { type ScribeResult } from "@/components/ScribePanel";
+import { useAiStatus } from "@/lib/useAi";
 import { useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import Receipt from "@/components/Receipt";
@@ -167,6 +169,8 @@ export default function Patients() {
   const router = useRouter();
   const { symbol } = useCurrency();
   const { clinicId, clinicName } = useClinic();
+  const ai = useAiStatus();
+  const [aiFilled, setAiFilled] = useState(false);
 
   const [listLoading, setListLoading] = useState(true);
 
@@ -278,6 +282,7 @@ export default function Patients() {
     setVisitForm({ doctor_name: "", treatment: "", notes: "", fee: "", fee_paid: "", visit_date: todayISO(), status: "Pending" });
     setVisitTeeth([]);
     setShowVisitForm(false);
+    setAiFilled(false);
     setEditingVisitId(null);
     setVisitError("");
   };
@@ -915,7 +920,17 @@ export default function Patients() {
                   <input placeholder={`Visit Fee (${symbol})`} type="number" value={visitForm.fee} onChange={e => setVisitForm({...visitForm, fee: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <input placeholder={`Fee Paid Now (${symbol})`} type="number" value={visitForm.fee_paid} onChange={e => setVisitForm({...visitForm, fee_paid: e.target.value})} className="border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                   <div className="md:col-span-2">
-                    <input placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
+                    {ai?.ready && selectedPatient && (
+                      <div className="mb-3">
+                        <ScribePanel patientId={selectedPatient.id} onApply={(r: ScribeResult) => {
+                          setVisitForm(f => ({ ...f, notes: f.notes ? `${f.notes}\n${r.notes}` : r.notes, treatment: f.treatment || r.treatment || "" }));
+                          if (r.teeth.length) setVisitTeeth(t => [...new Set([...t, ...r.teeth])]);
+                          setAiFilled(true);
+                        }} />
+                      </div>
+                    )}
+                    {aiFilled && <p className="mb-2 rounded-lg bg-gold/15 px-3 py-2 text-xs font-medium text-[#8a6d12]"><span className="font-bold uppercase tracking-wide">AI-assisted:</span> the notes below came from an AI draft you approved. Check them, then press Save.</p>}
+                    <textarea rows={3} placeholder="Notes / Prescription" value={visitForm.notes} onChange={e => setVisitForm({...visitForm, notes: e.target.value})} className="w-full border border-brand-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold" />
                     {prescriptionPresets.length > 0 && (() => {
                       const rxGroups = prescriptionPresets.reduce<Record<string, typeof prescriptionPresets>>((acc, rx) => {
                         const k = rx.group_name || "Other";

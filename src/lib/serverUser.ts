@@ -39,5 +39,9 @@ export async function staffContext() {
   const role = String(data.role || "").toLowerCase();
   const owner = role === "admin" || role === "superadmin";
   const perms = String(data.permissions || "").split(",").map((p: string) => p.trim());
-  return { db, userId: user.id, clinicId: data.clinic_id as string, owner, billing: owner || perms.includes("Billing"), patients: owner || perms.includes("Patients"), appointments: owner || perms.includes("Appointments") };
+  return {
+    db, userId: user.id, clinicId: data.clinic_id as string, owner, billing: owner || perms.includes("Billing"), patients: owner || perms.includes("Patients"), appointments: owner || perms.includes("Appointments"),
+    /** Whether this member of staff may use a module (owners may use all) */
+    can: (module: string) => owner || perms.includes(module),
+  };
 }
