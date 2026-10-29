@@ -43,6 +43,15 @@ export default function Terms() {
         <p>Invoice totals, balances, statuses and reports are calculated from the invoices and payments you record. Check them against your own records. DentEase records payments; it does not collect or process them, and it is not an accounting or tax service.</p>
       </Section>
 
+      <Section id="vat" title="VAT">
+        <List items={[
+          "VAT is optional and off until the clinic switches it on in Settings and enters its rate. DentEase has no tax rate of its own; the clinic chooses the rate and is responsible for it being the right one, for the services it covers, and for its VAT registration.",
+          "An invoice keeps the rate it was made with. Changing the rate later affects new invoices only.",
+          "An invoice shows the VAT as a line and includes it in the total. The clinic's VAT registration number (TRN) appears on it only if the clinic has entered one. DentEase makes no claim that its invoices meet the form or content rules of any tax authority; check them against the rules that apply to you.",
+          "Amounts are kept in the clinic's own currency. DentEase does not convert between currencies and uses no exchange rate.",
+        ]} />
+      </Section>
+
       <Section id="online-payments" title="Online payments">
         <List items={[
           "Online payments are optional. A clinic connects its own Stripe, JazzCash or Easypaisa merchant account in Settings, and patients pay the clinic through that provider.",

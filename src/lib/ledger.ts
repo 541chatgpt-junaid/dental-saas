@@ -1,11 +1,13 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { invoiceTotals, round2, rateForNewInvoice, vatConfigOf, vatOf } from "@/lib/vat";
 
 /**
  * The billing ledger: every money figure in the app is derived from
  * invoices (+ their line items) and payments — never from the fee fields on
  * patients or visits.
  *
- *   total   = SUM(items.quantity × items.unit_price) − discount
+ *   total   = SUM(items.quantity × items.unit_price) − discount + VAT
+ *   VAT     = (items − discount) × the invoice's own vat_rate (0 for invoices without VAT)
  *   paid    = SUM(payments.amount)
  *   balance = total − paid
  *   state   = getInvoiceStatus(): Paid · Partial · Unpaid · Overdue (· Draft · Cancelled)
@@ -36,6 +38,9 @@ export interface LedgerInvoiceRow {
   status: string | null;
   subtotal?: number | null;
   discount?: number | null;
+  /** Rate (percent) this invoice was issued with; missing or 0 means no VAT */
+  vat_rate?: number | null;
+  vat_amount?: number | null;
   total?: number | null;
   amount_paid?: number | null;
   balance?: number | null;
@@ -49,6 +54,8 @@ export type PatientStatus = "Paid" | "Partial" | "Unpaid" | "Overdue" | "—";
 
 export type Ledgered<T> = T & {
   subtotal: number;
+  /** VAT on the invoice (0 when none); total already includes it */
+  vat: number;
   total: number;
   amount_paid: number;
   balance: number;
@@ -133,11 +140,14 @@ export function applyLedger<T extends LedgerInvoiceRow>(invoices: T[], items: Le
     const k = String(inv.id);
     const it = itemSum[k];
     // Invoices always carry line items; the stored total is only a fallback for very old rows
-    const subtotal = it ? it.sum : num(inv.subtotal ?? inv.total);
-    const total = it ? Math.max(0, subtotal - num(inv.discount)) : num(inv.total);
-    const paid = paidSum[k] || 0;
+    const subtotal = it ? round2(it.sum) : num(inv.subtotal ?? inv.total);
+    const taxable = Math.max(0, round2(subtotal - num(inv.discount)));
+    const vat = it ? vatOf(taxable, num(inv.vat_rate)) : num(inv.vat_amount);
+    const total = it ? round2(taxable + vat) : num(inv.total);
+    // Whole cents, so decimal VAT amounts can never leave a 0.0000001 balance that reads "Partial"
+    const paid = round2(paidSum[k] || 0);
     return {
-      ...inv, subtotal, total, amount_paid: paid, balance: total - paid, status: (inv.status || "").toLowerCase(),
+      ...inv, subtotal, vat, total, amount_paid: paid, balance: round2(total - paid), status: (inv.status || "").toLowerCase(),
       state: getInvoiceStatus({ status: inv.status, total, paid, due_date: inv.due_date }), counted: !isExcluded(inv.status),
     };
   });
@@ -180,6 +190,15 @@ export function sumPaymentsBetween(payments: LedgerPaymentRow[], start?: Date | 
 
 const PAGE = 1000;
 
+/**
+ * The VAT migration adds vat_rate / vat_amount to invoices. Readers that name their
+ * columns get them added here, and fall back to the old column list if the
+ * migration has not been run yet, so billing keeps working in the meantime.
+ */
+let vatColumnsMissing = false;
+const withVat = (select: string) => vatColumnsMissing || select.includes("*") || select.includes("vat_rate") ? select : `${select}, vat_rate, vat_amount`;
+const vatMissing = (msg?: string) => /vat_rate|vat_amount/.test(msg || "");
+
 /** Supabase returns at most 1000 rows per request; read every page */
 async function fetchAll<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) {
   const rows: T[] = [];
@@ -220,12 +239,15 @@ export async function loadLedger<T extends LedgerInvoiceRow = LedgerInvoiceRow &
 ): Promise<LoadedLedger<T>> {
   const select = opts.select || "*";
   const clinic = opts.clinicId ?? undefined;
-  const invoices = await fetchAll<T>((a, b) => {
-    let q = supabase.from("invoices").select(select);
+  const readInvoices = () => fetchAll<T>((a, b) => {
+    let q = supabase.from("invoices").select(withVat(select));
     if (clinic) q = q.eq("clinic_id", clinic);
     if (opts.patientId != null) q = q.eq("patient_id", opts.patientId);
     return q.order("created_at", { ascending: false }).range(a, b) as unknown as PromiseLike<{ data: T[] | null; error: { message: string } | null }>;
   });
+  let invoices: T[];
+  try { invoices = await readInvoices(); }
+  catch (e) { if (!vatMissing((e as Error).message)) throw e; vatColumnsMissing = true; invoices = await readInvoices(); }
 
   let items: LedgerItemRow[];
   let payments: LedgerPaymentRow[];
@@ -289,7 +311,7 @@ export async function loadInvoicePage<T extends LedgerInvoiceRow = LedgerInvoice
   }
 
   const base = () => {
-    let query = supabase.from("invoices").select(select, { count: "exact" });
+    let query = supabase.from("invoices").select(withVat(select), { count: "exact" });
     if (opts.clinicId) query = query.eq("clinic_id", opts.clinicId);
     if (opts.from) query = query.gte("created_at", `${opts.from}T00:00:00`);
     if (opts.to) query = query.lte("created_at", `${opts.to}T23:59:59.999`);
@@ -307,7 +329,8 @@ export async function loadInvoicePage<T extends LedgerInvoiceRow = LedgerInvoice
   let total: number | null = null;
 
   scan: for (;;) {
-    const { data, error, count } = await base().range(offset, offset + CHUNK - 1);
+    let { data, error, count } = await base().range(offset, offset + CHUNK - 1);
+    if (error && vatMissing(error.message)) { vatColumnsMissing = true; ({ data, error, count } = await base().range(offset, offset + CHUNK - 1)); }
     if (error) throw new Error(error.message);
     if (total === null) total = count ?? null;
     const raw = (data || []) as unknown as T[];
@@ -341,16 +364,23 @@ const missingColumn = (e: { message?: string } | null, col: string) => !!e && (e
  * screens and exports agree with the ledger. The ledger itself never trusts them.
  */
 export async function syncInvoice(supabase: SupabaseClient, invoiceId: string) {
-  const [{ data: inv }, { data: items }, { data: pays }] = await Promise.all([
-    supabase.from("invoices").select("id, patient_id, status, subtotal, discount, total, due_date").eq("id", invoiceId).maybeSingle(),
+  const readInvoice = (cols: string) => supabase.from("invoices").select(cols).eq("id", invoiceId).maybeSingle();
+  const [first, { data: items }, { data: pays }] = await Promise.all([
+    readInvoice(withVat("id, patient_id, status, subtotal, discount, total, due_date")),
     supabase.from("invoice_items").select("invoice_id, quantity, unit_price").eq("invoice_id", invoiceId),
     supabase.from("payments").select("invoice_id, amount, payment_date").eq("invoice_id", invoiceId),
   ]);
+  let inv = first.data as unknown as (LedgerInvoiceRow & { due_date?: string | null }) | null;
+  if (first.error && vatMissing(first.error.message)) {
+    vatColumnsMissing = true;
+    inv = (await readInvoice("id, patient_id, status, subtotal, discount, total, due_date")).data as unknown as typeof inv;
+  }
   if (!inv) return;
   const [l] = applyLedger([inv as LedgerInvoiceRow], items || [], pays || []);
   // Screens never read these stored figures, so a failure here changes nothing shown; still say so
   const { error } = await supabase.from("invoices").update({
     subtotal: l.subtotal, total: l.total, amount_paid: l.amount_paid,
+    ...(inv.vat_rate !== undefined ? { vat_amount: l.vat } : {}),
     status: storedStatus({ status: l.status, total: l.total, paid: l.amount_paid, due_date: l.due_date }),
   }).eq("id", invoiceId);
   if (error) console.warn(`Stored invoice figures not updated: ${error.message}`);
@@ -371,15 +401,25 @@ export async function recordPayment(supabase: SupabaseClient, p: {
   return null;
 }
 
+/** The clinic's VAT settings; a clinic that has not run the VAT migration reads as "VAT off" */
+export async function loadVatConfig(supabase: SupabaseClient, clinicId: string | null) {
+  let q = supabase.from("settings").select("*");
+  if (clinicId) q = q.eq("clinic_id", clinicId);
+  const { data } = await q.order("id").limit(1).maybeSingle();
+  return vatConfigOf(data);
+}
+
 export async function createInvoice(supabase: SupabaseClient, p: {
   clinicId: string | null; patientId: number; visitId?: number | null; notes: string;
   items: { description: string; quantity: number; unit_price: number }[];
 }) {
   const { data: invNum } = await supabase.rpc("generate_invoice_number", { p_clinic_id: p.clinicId });
-  const subtotal = p.items.reduce((s, i) => s + i.quantity * i.unit_price, 0);
+  const rate = rateForNewInvoice(await loadVatConfig(supabase, p.clinicId));
+  const t = invoiceTotals(p.items.reduce((s, i) => s + i.quantity * i.unit_price, 0), 0, rate);
   const { data: invoice, error } = await supabase.from("invoices").insert([{
     clinic_id: p.clinicId, patient_id: p.patientId, visit_id: p.visitId ?? null, invoice_number: invNum,
-    status: subtotal > 0 ? "unpaid" : "paid", subtotal, discount: 0, total: subtotal, amount_paid: 0, notes: p.notes,
+    status: t.total > 0 ? "unpaid" : "paid", subtotal: t.subtotal, discount: 0, total: t.total, amount_paid: 0, notes: p.notes,
+    ...(rate > 0 ? { vat_rate: rate, vat_amount: t.vat } : {}),
   }]).select("id").single();
   if (error || !invoice) return { id: null, error: error?.message || "Could not create the invoice." };
   const { error: itemsErr } = await supabase.from("invoice_items").insert(

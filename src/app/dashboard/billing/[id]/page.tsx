@@ -11,6 +11,8 @@ import Sidebar from "@/components/Sidebar";
 import { useCurrency } from "@/lib/useCurrency";
 import { useClinic } from "@/lib/ClinicContext";
 import { applyLedger, recordPayment, type InvoiceStatus } from "@/lib/ledger";
+import { useVat } from "@/lib/useVat";
+import { fmtMoney } from "@/lib/vat";
 
 interface Invoice {
   id: string;
@@ -19,6 +21,9 @@ interface Invoice {
   status: string;
   subtotal: number;
   discount: number;
+  /** Rate (percent) and amount of VAT on this invoice; 0 when the invoice has none */
+  vat_rate?: number | null;
+  vat: number;
   total: number;
   amount_paid: number;
   balance: number;
@@ -64,6 +69,7 @@ export default function InvoiceDetailPage() {
   const searchParams = useSearchParams();
   const id = params.id as string;
   const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const hasVat = Number(invoice?.vat_rate) > 0;
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +86,7 @@ export default function InvoiceDetailPage() {
   const [linkCopied, setLinkCopied] = useState(false);
   const router = useRouter();
   const { symbol } = useCurrency();
+  const vat = useVat();
   const { clinicId, clinicName } = useClinic();
 
   /** Create (or fetch) the shareable payment link of this invoice */
@@ -166,9 +173,11 @@ export default function InvoiceDetailPage() {
       `*TREATMENTS:*`,
       treatmentLines,
       sep,
-      `Subtotal:  ${symbol} ${invoice.subtotal.toLocaleString()}`,
-      invoice.discount > 0 ? `Discount:  - ${symbol} ${invoice.discount.toLocaleString()}` : null,
-      `*Total:    ${symbol} ${invoice.total.toLocaleString()}*`,
+      `Subtotal:  ${symbol} ${fmtMoney(invoice.subtotal, hasVat)}`,
+      invoice.discount > 0 ? `Discount:  - ${symbol} ${fmtMoney(invoice.discount, hasVat)}` : null,
+      hasVat ? `VAT (${invoice.vat_rate}%):  ${symbol} ${fmtMoney(invoice.vat, true)}` : null,
+      `*Total:    ${symbol} ${fmtMoney(invoice.total, hasVat)}*`,
+      vat.trn ? `VAT/TRN: ${vat.trn}` : null,
       invoice.amount_paid > 0 ? `Paid:      ${symbol} ${invoice.amount_paid.toLocaleString()}` : null,
       sep,
       invoice.balance > 0
@@ -316,6 +325,7 @@ export default function InvoiceDetailPage() {
                 {clinicName || "Clinic"}
               </h1>
               <p className="text-brand-200 text-xs mt-0.5 tracking-wider uppercase">Dental Care</p>
+              {vat.trn && <p className="text-brand-100 text-xs mt-1">VAT/TRN: <span className="font-semibold">{vat.trn}</span></p>}
             </div>
             <div className="text-right">
               <p className="text-brand-100 text-xs uppercase tracking-widest font-semibold">Invoice</p>
@@ -387,22 +397,28 @@ export default function InvoiceDetailPage() {
               <div className="w-full max-w-xs space-y-2">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Subtotal</span>
-                  <span className="font-medium">{symbol} {invoice.subtotal.toLocaleString()}</span>
+                  <span className="font-medium">{symbol} {fmtMoney(invoice.subtotal, hasVat)}</span>
                 </div>
                 {invoice.discount > 0 && (
                   <div className="flex justify-between text-sm text-emerald-600">
                     <span>Discount</span>
-                    <span>− {symbol} {invoice.discount.toLocaleString()}</span>
+                    <span>− {symbol} {fmtMoney(invoice.discount, hasVat)}</span>
+                  </div>
+                )}
+                {hasVat && (
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>VAT ({invoice.vat_rate}%)</span>
+                    <span className="font-medium">{symbol} {fmtMoney(invoice.vat, true)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-base font-bold text-brand-900 pt-2 border-t border-brand-200">
                   <span>Total</span>
-                  <span>{symbol} {invoice.total.toLocaleString()}</span>
+                  <span>{symbol} {fmtMoney(invoice.total, hasVat)}</span>
                 </div>
                 {invoice.amount_paid > 0 && (
                   <div className="flex justify-between text-sm text-emerald-600">
                     <span>Amount Paid</span>
-                    <span>− {symbol} {invoice.amount_paid.toLocaleString()}</span>
+                    <span>− {symbol} {fmtMoney(invoice.amount_paid, hasVat)}</span>
                   </div>
                 )}
                 {/* Balance Box */}
@@ -422,7 +438,7 @@ export default function InvoiceDetailPage() {
                       isFullyPaid ? "text-green-700" :
                       invoice.state === "Partial" ? "text-orange-700" : "text-red-700"
                     }`}>
-                      {symbol} {Math.max(0, invoice.balance).toLocaleString()}
+                      {symbol} {fmtMoney(Math.max(0, invoice.balance), hasVat)}
                     </span>
                   </div>
                 </div>

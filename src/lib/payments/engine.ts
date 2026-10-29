@@ -41,8 +41,9 @@ export interface Due {
 
 /** What is still owed on an invoice, worked out from its items and payments (never from stored totals) */
 export async function invoiceDue(db: SupabaseClient, invoiceId: string): Promise<Due | null> {
+  // "*" so the invoice's VAT rate is always included: what a patient is asked to pay must carry the VAT
   const [{ data: inv }, { data: items }, { data: pays }] = await Promise.all([
-    db.from("invoices").select("id, clinic_id, patient_id, invoice_number, status, subtotal, discount, total, due_date, notes").eq("id", invoiceId).maybeSingle(),
+    db.from("invoices").select("*").eq("id", invoiceId).maybeSingle(),
     db.from("invoice_items").select("invoice_id, quantity, unit_price").eq("invoice_id", invoiceId),
     db.from("payments").select("invoice_id, amount, payment_date").eq("invoice_id", invoiceId),
   ]);

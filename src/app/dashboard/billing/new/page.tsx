@@ -9,6 +9,8 @@ import { useClinic } from "@/lib/ClinicContext";
 import TreatmentSelect from "@/components/TreatmentSelect";
 import { ADVANCE_NOTE } from "@/lib/ledger";
 import { formatDate } from "@/lib/dateFormat";
+import { useVat } from "@/lib/useVat";
+import { fmtMoney, invoiceTotals, rateForNewInvoice } from "@/lib/vat";
 
 interface Patient { id: number; name: string; phone: string; age: number | null; gender: string; }
 interface Visit { id: number; visit_date: string; treatment: string; }
@@ -102,8 +104,10 @@ export default function NewInvoicePage() {
   const advances = advLoaded && advLoaded.pid === patientId ? advLoaded.rows : [];
   const applyAdvance = advChoice && advChoice.pid === patientId ? advChoice.id : (advances[0]?.id ?? "");
 
+  const vatCfg = useVat();
+  const vatRate = rateForNewInvoice(vatCfg);
   const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unit_price, 0);
-  const total = Math.max(0, subtotal - discount);
+  const { vat, total } = invoiceTotals(subtotal, discount, vatRate);
 
   const addItem = () => setItems([...items, { description: "", quantity: 1, unit_price: 0 }]);
   const removeItem = (idx: number) => setItems(items.filter((_, i) => i !== idx));
@@ -151,6 +155,7 @@ export default function NewInvoicePage() {
         subtotal,
         discount,
         total,
+        ...(vatRate > 0 ? { vat_rate: vatRate, vat_amount: vat } : {}),
         amount_paid: 0,
         notes: (notes + installmentNote) || null,
         due_date: dueDate || null,
@@ -369,7 +374,7 @@ export default function NewInvoicePage() {
             <div className="max-w-xs ml-auto space-y-2.5">
               <div className="flex justify-between text-sm text-brand-700">
                 <span>Subtotal</span>
-                <span>{symbol} {subtotal.toLocaleString()}</span>
+                <span>{symbol} {fmtMoney(subtotal, vatRate > 0)}</span>
               </div>
               <div className="flex justify-between items-center text-sm text-brand-700">
                 <span>Discount</span>
@@ -380,9 +385,15 @@ export default function NewInvoicePage() {
                   className="w-32 border border-brand-200 rounded-lg px-3 py-1.5 text-sm text-right focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
                 />
               </div>
+              {vatRate > 0 && (
+                <div className="flex justify-between text-sm text-brand-700">
+                  <span>VAT ({vatRate}%)</span>
+                  <span>{symbol} {fmtMoney(vat, true)}</span>
+                </div>
+              )}
               <div className="flex justify-between text-base font-semibold text-brand-800 pt-2 border-t border-brand-100">
                 <span>Total</span>
-                <span>{symbol} {total.toLocaleString()}</span>
+                <span>{symbol} {fmtMoney(total, vatRate > 0)}</span>
               </div>
             </div>
           </div>
