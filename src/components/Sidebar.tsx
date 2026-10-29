@@ -1,4 +1,5 @@
 "use client";
+import BranchSwitcher from "@/components/BranchSwitcher";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
@@ -109,6 +110,7 @@ export default function Sidebar() {
 
   const nav = (onClick?: () => void) => (
     <nav className="flex flex-1 flex-col gap-1" aria-label="Dashboard">
+      <BranchSwitcher />
       {visibleItems.map((item, i) => (
         <NavLink key={item.href} {...item} pathname={pathname} index={i} onClick={onClick} animate={!!onClick} />
       ))}

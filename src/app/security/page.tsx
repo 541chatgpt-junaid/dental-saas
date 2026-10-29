@@ -73,6 +73,41 @@ export default function Security() {
         ]} />
       </Section>
 
+      <Section id="branches" title="Branches">
+        <List items={[
+          "A clinic can have several branches. Patients, appointments, visits, prescriptions, billing, expenses, stock and the other branch records carry the branch they belong to.",
+          "The database enforces the branch as well as the clinic: a signed-in staff member can read or write only rows of the branches they may open (owners and admins: all; other staff: the branches assigned to them, or the Main branch when none is assigned). In our tests, a branch A user read zero branch B rows on all 23 branch-scoped tables, and could not read, change, delete or create a branch B row by guessing its id.",
+          "The branch a screen works in is chosen in the app and can only narrow what a user may already see, never widen it.",
+          "Records made by the server for a clinic (online booking requests, for example) go to the Main branch.",
+        ]} />
+      </Section>
+
+      <Section id="audit" title="Audit log">
+        <List items={[
+          "The database itself records who created, changed or deleted a sensitive record, which record, what changed (old and new values) and when. It does not depend on the app screens, so it also records changes made through the database interface.",
+          "Only the clinic's admins can read it. There is no way to edit, delete or add entries through the API.",
+          "It does not record who viewed a record. Changes made by the server for the clinic (a payment confirmed by a payment provider, for example) are recorded as System.",
+        ]} />
+      </Section>
+
+      <Section id="twofactor" title="Two-factor sign-in">
+        <List items={[
+          "Any user can turn on two-factor sign-in in Settings > Security. After the password, sign-in asks for a 6-digit code from an authenticator app (Google Authenticator, Microsoft Authenticator, Authy and similar).",
+          "The codes are provided by our sign-in service, Supabase Auth. DentEase does not store the authenticator secret.",
+          "The check is made on every dashboard and admin page, so a password alone does not open them once two-factor sign-in is on.",
+          "A clinic owner can reset a staff member's two-factor sign-in if their phone is lost. It is optional per user; it is not yet required for a whole clinic.",
+        ]} />
+      </Section>
+
+      <Section id="backups" title="Backups and data export">
+        <List items={[
+          "DentEase takes a snapshot of each clinic's data about once a day (when the scheduler runs) and keeps the latest 30 in a private storage area that only the app's server can read. Credentials and secret links are left out.",
+          "The clinic owner can download a snapshot and use Restore to put back records that were deleted since it was taken. Restore never overwrites a record that still exists.",
+          "The clinic owner can export all of the clinic's data as Excel or JSON.",
+          "Snapshots are a second layer. A whole lost database is recovered from our database provider's own backups (daily on paid plans, point-in-time recovery as an add-on).",
+        ]} />
+      </Section>
+
       <Section id="messages" title="Automatic messages">
         <List items={[
           "A patient with no agreement to be messaged on record is never sent a reminder, follow-up or review request. Every existing patient starts without one.",
@@ -101,10 +136,10 @@ export default function Security() {
 
       <Section id="limits" title="What DentEase does not do">
         <List items={[
-          "It does not keep an audit trail of who viewed or changed each record.",
-          "It does not offer two-factor authentication.",
+          "It does not keep a record of who merely viewed a record (changes are logged; views are not).",
+          "It cannot yet require two-factor sign-in for a whole clinic; each user turns it on for themselves.",
           "It does not sign users out after a period of inactivity (only the Remember me choice above).",
-          "It does not run its own backups; any backups are made by the database provider under the plan we use.",
+          "It does not copy the files uploaded to patient records into its snapshots, and its snapshots do not replace the database provider's own backups.",
           "It does not hold a formal security certification, and we make no claim of compliance with any specific healthcare-privacy regulation.",
         ]} />
       </Section>

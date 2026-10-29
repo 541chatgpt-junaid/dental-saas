@@ -39,7 +39,7 @@ const PLANS = [
     label: "Contact us for pricing",
     blurb: "For clinics that run more than one location.",
     points: [
-      "Each DentEase clinic account covers one clinic today. Tell us about your locations and we will talk it through.",
+      "One clinic account can have several branches, each with its own patients, billing and stock, and staff assigned to the branches they work in. Tell us about your locations and we will talk it through.",
       "We do not publish a price for this.",
     ],
     cta: { href: WHATSAPP, text: "Contact us on WhatsApp", external: true },
