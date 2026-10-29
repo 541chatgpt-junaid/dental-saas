@@ -21,7 +21,7 @@ export const BACKUP_TABLES = [
   "recalls", "queue_tokens", "treatment_plans", "treatment_plan_items", "invoices", "invoice_items", "payments",
   "consent_templates", "consent_records", "patient_form_submissions", "expenses", "purchases", "materials", "labs",
   "doctor_payouts", "treatment_presets", "prescription_presets", "booking_settings", "reminder_settings", "settings",
-  "staff", "staff_branches", "patient_portal_users", "message_outbox", "payment_attempts", "audit_log",
+  "staff", "staff_branches", "patient_portal_users", "message_outbox", "payment_attempts", "audit_log", "ai_settings", "ai_drafts",
 ] as const;
 
 /** Clinic tables deliberately left out: they hold credentials or secret links */
@@ -35,7 +35,7 @@ export const RESTORE_TABLES = [
   "doctor_payouts", "treatment_presets", "prescription_presets",
 ] as const;
 
-const ORDER_BY: Record<string, string> = { booking_settings: "clinic_id", reminder_settings: "clinic_id", staff_branches: "staff_id", patient_portal_users: "user_id" };
+const ORDER_BY: Record<string, string> = { booking_settings: "clinic_id", reminder_settings: "clinic_id", staff_branches: "staff_id", patient_portal_users: "user_id", ai_settings: "clinic_id" };
 const CONFLICT: Record<string, string> = { staff_branches: "staff_id,branch_id" };
 /** Columns the database computes itself; they cannot be written back */
 const GENERATED: Record<string, string[]> = { invoices: ["balance"], invoice_items: ["total"] };
