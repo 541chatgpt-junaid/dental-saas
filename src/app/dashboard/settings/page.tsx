@@ -12,6 +12,10 @@ import { readAmount, saveErrorMessage } from "@/lib/formSave";
 import OnlinePayments from "./OnlinePayments";
 import ConsentForms from "./ConsentForms";
 import Reminders from "./Reminders";
+import Branches from "./Branches";
+import SecurityTab from "./SecurityTab";
+import AuditLog from "./AuditLog";
+import BackupsExport from "./BackupsExport";
 import { DEFAULT_VAT_RATE, validTrn, vatConfigOf } from "@/lib/vat";
 
 const currencies = [
@@ -43,7 +47,7 @@ const getAutoCurrency = (): string => {
 interface TreatmentPreset { id: string; name: string; price: number; }
 interface PrescriptionPreset { id: string; group_name: string; medicine: string; dosage: string; frequency: string; duration: string; notes: string; }
 
-type Tab = "general" | "treatments" | "prescriptions" | "payments" | "consent" | "reminders";
+type Tab = "general" | "treatments" | "prescriptions" | "payments" | "consent" | "reminders" | "branches" | "security" | "audit" | "backups";
 
 export default function Settings() {
   const [tab, setTab] = useState<Tab>("general");
@@ -277,6 +281,10 @@ export default function Settings() {
     { key: "payments", label: "Online payments" },
     { key: "consent", label: "Consent forms" },
     { key: "reminders", label: "Reminders" },
+    { key: "branches", label: "Branches" },
+    { key: "security", label: "Security" },
+    { key: "audit", label: "Audit log" },
+    { key: "backups", label: "Backups & export" },
   ] as const;
 
   return (
@@ -306,6 +314,14 @@ export default function Settings() {
         {tab === "consent" && <ConsentForms />}
 
         {tab === "reminders" && <Reminders />}
+
+        {tab === "branches" && <Branches />}
+
+        {tab === "security" && <SecurityTab />}
+
+        {tab === "audit" && <AuditLog />}
+
+        {tab === "backups" && <BackupsExport />}
 
         {tab === "general" && (
           <div className="bg-white rounded-xl p-5 border border-brand-200 shadow-sm w-full md:max-w-2xl">

@@ -43,6 +43,15 @@ export default function Terms() {
         <p>Invoice totals, balances, statuses and reports are calculated from the invoices and payments you record. Check them against your own records. DentEase records payments; it does not collect or process them, and it is not an accounting or tax service.</p>
       </Section>
 
+      <Section id="branches" title="Branches, audit log, two-factor sign-in and backups">
+        <List items={[
+          "The clinic owner decides which branches exist and which staff may open each one, and is responsible for assigning them correctly.",
+          "DentEase keeps an audit log of changes to sensitive records for the clinic's admins. It is a record kept by the software, not a substitute for the clinic's own record-keeping duties.",
+          "Two-factor sign-in is optional for each user. A user who loses their authenticator app needs the clinic owner to reset it. Keep at least one owner able to sign in.",
+          "Automatic snapshots and the restore tool are an extra safeguard, not a guarantee: a snapshot is taken when the scheduler runs, restore puts back deleted records only, and files uploaded to patient records are not copied. Keep your own copy of anything you cannot lose, for example by using the full data export.",
+        ]} />
+      </Section>
+
       <Section id="vat" title="VAT">
         <List items={[
           "VAT is optional and off until the clinic switches it on in Settings and enters its rate. DentEase has no tax rate of its own; the clinic chooses the rate and is responsible for it being the right one, for the services it covers, and for its VAT registration.",
